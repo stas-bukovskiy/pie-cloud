@@ -65,7 +65,7 @@ public class PieServiceTest {
                                         .price(BigDecimal.valueOf(78.2))
                                         .groupId(groups.get(0).getId())
                                         .build()
-                        ).flatMap(ingredientService::createIngredient)
+                        ).flatMap(ingredientDto -> ingredientService.createIngredient(Mono.just(ingredientDto)))
                         .collectList()
         );
     }

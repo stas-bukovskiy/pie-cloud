@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuples;
 
 @Service
 @Slf4j
@@ -37,30 +37,36 @@ public class IngredientServiceImpl implements IngredientService{
     }
 
     @Override
-    public Mono<Ingredient> createIngredient(IngredientDto ingredientDto) {
-        return groupService.getIngredientGroup(ingredientDto.getGroupId())
-                .map(group ->
+    public Mono<Ingredient> createIngredient(Mono<IngredientDto> ingredientDtoMono) {
+        return ingredientDtoMono
+                .zipWhen(ingredientDto -> groupService.getIngredientGroup(ingredientDto.getGroupId()))
+                .onErrorStop()
+                .map(ingredientDtoIngredientGroupTuple2 ->
                         Ingredient.builder()
-                                .name(ingredientDto.getName())
-                                .price(ingredientDto.getPrice())
-                                .group(group)
+                                .name(ingredientDtoIngredientGroupTuple2.getT1().getName())
+                                .price(ingredientDtoIngredientGroupTuple2.getT1().getPrice())
+                                .group(ingredientDtoIngredientGroupTuple2.getT2())
                                 .build()).flatMap(repository::save)
                 .doFinally(newIngredient -> log.debug("created new ingredient: " + newIngredient));
     }
 
     @Override
-    public Mono<Ingredient> updateIngredient(String id, IngredientDto ingredientDto) {
+    public Mono<Ingredient> updateIngredient(String id, Mono<IngredientDto> ingredientDtoMono) {
         checkId(id);
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found such ingredient")))
-                .publishOn(Schedulers.boundedElastic())
-                .map(ingredient -> {
-                    ingredient.setName(ingredientDto.getName());
-                    ingredient.setPrice(ingredientDto.getPrice());
-                    groupService.getIngredientGroup(ingredientDto.getGroupId())
-                            .subscribe(ingredient::setGroup);
-                    return ingredient;
+        return getIngredient(id)
+                .onErrorStop()
+                .zipWith(ingredientDtoMono)
+                .zipWhen(ingredientIngredientDtoTuple2 ->
+                        groupService.getIngredientGroup(ingredientIngredientDtoTuple2.getT2().getGroupId()),
+                        (ingredientIngredientDtoTuple2, ingredientGroup) -> Tuples.of(
+                                ingredientIngredientDtoTuple2.getT1(),
+                                ingredientIngredientDtoTuple2.getT2(),
+                                ingredientGroup))
+                .map(objects -> {
+                    objects.getT1().setName(objects.getT2().getName());
+                    objects.getT1().setPrice(objects.getT2().getPrice());
+                    objects.getT1().setGroup(objects.getT3());
+                    return objects.getT1();
                 })
                 .flatMap(repository::save);
     }

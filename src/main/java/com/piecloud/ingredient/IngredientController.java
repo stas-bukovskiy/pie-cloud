@@ -29,13 +29,13 @@ public class IngredientController {
 
     @PutMapping("/{id}")
     public Mono<Ingredient> updateIngredientGroup(@PathVariable String id,
-                                                  @Valid @RequestBody IngredientDto ingredientDto) {
-        return service.updateIngredient(id, ingredientDto);
+                                                  @Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
+        return service.updateIngredient(id, ingredientDtoMono);
     }
 
     @PostMapping("/")
-    public Mono<Ingredient> createIngredientGroup(@Valid @RequestBody IngredientDto ingredientDto) {
-        return service.createIngredient(ingredientDto);
+    public Mono<Ingredient> createIngredientGroup(@Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
+        return service.createIngredient(ingredientDtoMono);
     }
 
     @DeleteMapping("/{id}")
