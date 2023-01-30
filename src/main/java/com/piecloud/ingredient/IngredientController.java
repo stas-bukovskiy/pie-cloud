@@ -24,13 +24,13 @@ public class IngredientController {
 
     @GetMapping("/{id}")
     public Mono<Ingredient> getIngredient(@PathVariable String id) {
-        return service.getIngredientById(id);
+        return service.getIngredient(id);
     }
 
     @PutMapping("/{id}")
     public Mono<Ingredient> updateIngredientGroup(@PathVariable String id,
                                                   @Valid @RequestBody IngredientDto ingredientDto) {
-        return service.updateIngredientById(id, ingredientDto);
+        return service.updateIngredient(id, ingredientDto);
     }
 
     @PostMapping("/")
@@ -40,6 +40,6 @@ public class IngredientController {
 
     @DeleteMapping("/{id}")
     public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
-        return service.deleteIngredientById(id);
+        return service.deleteIngredient(id);
     }
 }

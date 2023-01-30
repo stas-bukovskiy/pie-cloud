@@ -1,13 +1,7 @@
 package com.piecloud;
 
-import com.piecloud.ingredient.Ingredient;
-import com.piecloud.ingredient.IngredientController;
-import com.piecloud.ingredient.IngredientDto;
-import com.piecloud.ingredient.IngredientService;
-import com.piecloud.ingredient.group.IngredientGroup;
-import com.piecloud.ingredient.group.IngredientGroupController;
-import com.piecloud.ingredient.group.IngredientGroupDto;
-import com.piecloud.ingredient.group.IngredientGroupService;
+import com.piecloud.ingredient.*;
+import com.piecloud.ingredient.group.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

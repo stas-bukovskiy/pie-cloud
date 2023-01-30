@@ -1,16 +1,11 @@
 package com.piecloud;
 
-import com.piecloud.ingredient.Ingredient;
-import com.piecloud.ingredient.IngredientDto;
-import com.piecloud.ingredient.IngredientRepository;
-import com.piecloud.ingredient.IngredientService;
-import com.piecloud.ingredient.group.IngredientGroup;
-import com.piecloud.ingredient.group.IngredientGroupDto;
-import com.piecloud.ingredient.group.IngredientGroupRepository;
-import com.piecloud.ingredient.group.IngredientGroupService;
+import com.piecloud.ingredient.*;
+import com.piecloud.ingredient.group.*;
 import com.piecloud.pie.PieDto;
 import com.piecloud.pie.PieRepository;
 import com.piecloud.pie.PieService;
+import com.piecloud.pie.PieServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,16 +28,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class PieServiceTest {
 
     @InjectMocks
-    private PieService pieService;
+    private PieServiceImpl pieService;
     @Mock
     private PieRepository pieRepository;
 
     @InjectMocks
-    private IngredientService ingredientService;
+    private IngredientServiceImpl ingredientService;
     @Mock
     private IngredientRepository ingredientRepository;
     @InjectMocks
-    private IngredientGroupService ingredientGroupService;
+    private IngredientGroupServiceImpl ingredientGroupService;
     @Mock
     private IngredientGroupRepository groupRepository;
 
@@ -50,7 +45,7 @@ public class PieServiceTest {
         return Flux.just(
                         IngredientGroupDto.builder().name("group_1").build(),
                         IngredientGroupDto.builder().name("group_2").build()
-                ).flatMap(ingredientGroupService::create)
+                ).flatMap(ingredientGroupService::createIngredientGroup)
                 .collectList();
     }
 

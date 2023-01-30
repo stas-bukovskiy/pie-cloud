@@ -21,27 +21,27 @@ public class AdditionGroupController {
 
     @GetMapping("/")
     public Flux<AdditionGroup> getIngredientGroups() {
-        return service.getAll();
+        return service.getAllAdditionGroups();
     }
 
     @GetMapping("/{id}")
     public Mono<AdditionGroup> getIngredientGroup(@PathVariable String id) {
-        return service.getById(id);
+        return service.getAdditionGroup(id);
     }
 
     @PutMapping("/{id}")
     public Mono<AdditionGroup> updateIngredientGroup(@PathVariable String id,
                                                      @Valid @RequestBody AdditionGroupDto groupDto) {
-        return service.updateById(id, groupDto);
+        return service.updateAdditionGroup(id, groupDto);
     }
 
     @PostMapping("/")
     public Mono<AdditionGroup> createIngredientGroup(@Valid @RequestBody AdditionGroupDto groupDto) {
-        return service.create(groupDto);
+        return service.createAdditionGroup(groupDto);
     }
 
     @DeleteMapping("/{id}")
     public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
-        return service.deleteById(id);
+        return service.deleteAdditionGroup(id);
     }
 }

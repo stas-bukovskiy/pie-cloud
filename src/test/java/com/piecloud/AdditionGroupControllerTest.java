@@ -1,9 +1,6 @@
 package com.piecloud;
 
-import com.piecloud.addition.group.AdditionGroup;
-import com.piecloud.addition.group.AdditionGroupController;
-import com.piecloud.addition.group.AdditionGroupDto;
-import com.piecloud.addition.group.AdditionGroupService;
+import com.piecloud.addition.group.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,16 +35,14 @@ public class AdditionGroupControllerTest {
 
     @Test
     public void testGet_shouldReturnCreatedGroups() {
-        postAndReturn3AdditionGroups().subscribe(additionGroup -> {
-           webTestClient
-                   .get()
-                   .uri("/api/addition/group/{id}", additionGroup.getId())
-                   .exchange()
-                   .expectStatus()
-                   .isOk()
-                   .expectBody(AdditionGroup.class)
-                   .value(System.out::println);
-        });
+        postAndReturn3AdditionGroups().subscribe(additionGroup -> webTestClient
+                .get()
+                .uri("/api/addition/group/{id}", additionGroup.getId())
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(AdditionGroup.class)
+                .value(System.out::println));
     }
 
     private Flux<AdditionGroup> postAndReturn3AdditionGroups() {

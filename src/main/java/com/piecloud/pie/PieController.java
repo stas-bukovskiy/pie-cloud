@@ -24,13 +24,13 @@ public class PieController {
 
     @GetMapping("/{id}")
     public Mono<Pie> getPie(@PathVariable String id) {
-        return service.getPieById(id);
+        return service.getPie(id);
     }
 
     @PutMapping("/{id}")
     public Mono<Pie> updatePieGroup(@PathVariable String id,
                                     @Valid @RequestBody PieDto pieDto) {
-        return service.updatePieById(id, pieDto);
+        return service.updatePie(id, pieDto);
     }
 
     @PostMapping("/")
@@ -40,7 +40,7 @@ public class PieController {
 
     @DeleteMapping("/{id}")
     public Mono<Void> deletePieGroup(@PathVariable String id) {
-        return service.deletePietById(id);
+        return service.deletePie(id);
     }
 
 }

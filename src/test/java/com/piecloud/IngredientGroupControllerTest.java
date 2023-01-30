@@ -1,9 +1,6 @@
 package com.piecloud;
 
-import com.piecloud.ingredient.group.IngredientGroup;
-import com.piecloud.ingredient.group.IngredientGroupController;
-import com.piecloud.ingredient.group.IngredientGroupDto;
-import com.piecloud.ingredient.group.IngredientGroupService;
+import com.piecloud.ingredient.group.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,19 +46,17 @@ public class IngredientGroupControllerTest {
     @Test
     public void testPut_shouldReturn200AndChangedGroup() {
         String newName = "changed";
-        createAndSaveTestGroup().subscribe(testId -> {
-            webClient.put()
-                    .uri("/api/ingredient/group/{id}", testId)
-                    .bodyValue(IngredientGroupDto.builder().name(newName).build())
-                    .exchange()
-                    .expectStatus()
-                    .isOk()
-                    .expectBody(IngredientGroup.class)
-                    .isEqualTo(IngredientGroup.builder()
-                            .id(testId)
-                            .name(newName)
-                            .build());
-        });
+        createAndSaveTestGroup().subscribe(testId -> webClient.put()
+                .uri("/api/ingredient/group/{id}", testId)
+                .bodyValue(IngredientGroupDto.builder().name(newName).build())
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(IngredientGroup.class)
+                .isEqualTo(IngredientGroup.builder()
+                        .id(testId)
+                        .name(newName)
+                        .build()));
     }
 
 

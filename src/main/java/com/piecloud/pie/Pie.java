@@ -3,7 +3,6 @@ package com.piecloud.pie;
 import com.piecloud.ingredient.Ingredient;
 import lombok.Builder;
 import lombok.Data;
-import org.apache.commons.compress.harmony.pack200.BandSet;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
