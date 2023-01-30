@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 @Slf4j
 @Service
@@ -35,9 +36,9 @@ public class AdditionServiceImpl implements AdditionService {
     }
 
     @Override
-    public Mono<Addition> createAddition(AdditionDto additionDto) {
-        return Mono.just(additionDto)
-                .zipWith(groupService.getAdditionGroup(additionDto.getGroupId()))
+    public Mono<Addition> createAddition(Mono<AdditionDto> additionDtoMono) {
+        return additionDtoMono
+                .zipWhen(additionDto -> groupService.getAdditionGroup(additionDto.getGroupId()))
                 .onErrorStop()
                 .map(additionDtoAndGroup -> Addition.builder()
                         .name(additionDtoAndGroup.getT1().getName())
@@ -49,15 +50,22 @@ public class AdditionServiceImpl implements AdditionService {
     }
 
     @Override
-    public Mono<Addition> updateAddition(String id, AdditionDto additionDto) {
+    public Mono<Addition> updateAddition(String id, Mono<AdditionDto> additionDtoMono) {
         return getAddition(id)
-                .zipWith(groupService.getAdditionGroup(additionDto.getGroupId()))
+                .zipWith(additionDtoMono)
+                .zipWhen(additionAndAdditionDto ->
+                        groupService.getAdditionGroup(additionAndAdditionDto.getT2().getGroupId()),
+                        (additionAndAdditionDto, additionGroup) -> Tuples.of(
+                                additionAndAdditionDto.getT1(),
+                                additionAndAdditionDto.getT2(),
+                                additionGroup
+                        ))
                 .onErrorStop()
-                .map(additionDtoAndGroup -> {
-                    additionDtoAndGroup.getT1().setName(additionDto.getName());
-                    additionDtoAndGroup.getT1().setPrice(additionDto.getPrice());
-                    additionDtoAndGroup.getT1().setGroup(additionDtoAndGroup.getT2());
-                    return additionDtoAndGroup.getT1();
+                .map(additionAndAdditionDtoAndGroup -> {
+                    additionAndAdditionDtoAndGroup.getT1().setName(additionAndAdditionDtoAndGroup.getT2().getName());
+                    additionAndAdditionDtoAndGroup.getT1().setPrice(additionAndAdditionDtoAndGroup.getT2().getPrice());
+                    additionAndAdditionDtoAndGroup.getT1().setGroup(additionAndAdditionDtoAndGroup.getT3());
+                    return additionAndAdditionDtoAndGroup.getT1();
                 })
                 .flatMap(repository::save)
                 .doFinally(addition -> log.debug("updated addition: " + addition));

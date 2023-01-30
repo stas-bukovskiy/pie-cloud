@@ -28,14 +28,14 @@ public class AdditionController {
     }
 
     @PostMapping("/")
-    public Mono<Addition> create(@RequestBody @Valid AdditionDto additionDto) {
-        return service.createAddition(additionDto);
+    public Mono<Addition> create(@RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
+        return service.createAddition(additionDtoMono);
     }
 
     @PutMapping("/{id}")
     public Mono<Addition> update(@PathVariable String id,
-                                 @RequestBody @Valid AdditionDto additionDto) {
-        return service.updateAddition(id, additionDto);
+                                 @RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
+        return service.updateAddition(id, additionDtoMono);
     }
 
     @DeleteMapping("/{id}")
