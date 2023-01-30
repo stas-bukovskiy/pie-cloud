@@ -33,8 +33,8 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
     }
 
     @Override
-    public Mono<IngredientGroup> createIngredientGroup(IngredientGroupDto ingredientGroupDto) {
-        return Mono.just(ingredientGroupDto)
+    public Mono<IngredientGroup> createIngredientGroup(Mono<IngredientGroupDto> ingredientGroupDtoMono) {
+        return ingredientGroupDtoMono
                 .map(g -> IngredientGroup.builder()
                         .name(g.getName())
                         .build())
@@ -43,14 +43,16 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
     }
 
     @Override
-    public Mono<IngredientGroup> updateIngredientGroup(String id, IngredientGroupDto ingredientGroupDto) {
+    public Mono<IngredientGroup> updateIngredientGroup(String id, Mono<IngredientGroupDto> ingredientGroupDtoMono) {
         checkId(id);
         return repository.findById(id)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such ingredient group")))
-                .map(group -> {
-                    group.setName(ingredientGroupDto.getName());
-                    return group;
+                .zipWith(ingredientGroupDtoMono)
+                .map(ingredientGroupAndIngredientGroupDto -> {
+                    ingredientGroupAndIngredientGroupDto.getT1()
+                            .setName(ingredientGroupAndIngredientGroupDto.getT2().getName());
+                    return ingredientGroupAndIngredientGroupDto.getT1();
                 })
                 .flatMap(repository::save);
     }

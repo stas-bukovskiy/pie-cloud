@@ -4,7 +4,6 @@ import com.piecloud.ingredient.*;
 import com.piecloud.ingredient.group.*;
 import com.piecloud.pie.PieDto;
 import com.piecloud.pie.PieRepository;
-import com.piecloud.pie.PieService;
 import com.piecloud.pie.PieServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +44,7 @@ public class PieServiceTest {
         return Flux.just(
                         IngredientGroupDto.builder().name("group_1").build(),
                         IngredientGroupDto.builder().name("group_2").build()
-                ).flatMap(ingredientGroupService::createIngredientGroup)
+                ).flatMap(groupDto -> ingredientGroupService.createIngredientGroup(Mono.just(groupDto)))
                 .collectList();
     }
 
