@@ -31,13 +31,13 @@ public class AdditionGroupController {
 
     @PutMapping("/{id}")
     public Mono<AdditionGroup> updateIngredientGroup(@PathVariable String id,
-                                                     @Valid @RequestBody AdditionGroupDto groupDto) {
-        return service.updateAdditionGroup(id, groupDto);
+                                                     @Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
+        return service.updateAdditionGroup(id, groupDtoMono);
     }
 
     @PostMapping("/")
-    public Mono<AdditionGroup> createIngredientGroup(@Valid @RequestBody AdditionGroupDto groupDto) {
-        return service.createAdditionGroup(groupDto);
+    public Mono<AdditionGroup> createIngredientGroup(@Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
+        return service.createAdditionGroup(groupDtoMono);
     }
 
     @DeleteMapping("/{id}")

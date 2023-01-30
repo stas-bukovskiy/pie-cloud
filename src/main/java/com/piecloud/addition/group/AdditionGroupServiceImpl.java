@@ -33,8 +33,8 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     }
 
     @Override
-    public Mono<AdditionGroup> createAdditionGroup(AdditionGroupDto groupDto) {
-        return Mono.just(groupDto)
+    public Mono<AdditionGroup> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono) {
+        return groupDtoMono
                 .map(g -> AdditionGroup.builder()
                         .name(g.getName())
                         .build())
@@ -43,14 +43,15 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     }
 
     @Override
-    public Mono<AdditionGroup> updateAdditionGroup(String id, AdditionGroupDto ingredientGroup) {
+    public Mono<AdditionGroup> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono) {
         checkId(id);
         return repository.findById(id)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such addition group")))
-                .map(group -> {
-                    group.setName(ingredientGroup.getName());
-                    return group;
+                .zipWith(groupDtoMono)
+                .map(groupAndGroupDto -> {
+                    groupAndGroupDto.getT1().setName(groupAndGroupDto.getT2().getName());
+                    return groupAndGroupDto.getT1();
                 })
                 .flatMap(repository::save);
     }
