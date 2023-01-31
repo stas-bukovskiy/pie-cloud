@@ -11,7 +11,7 @@ import java.math.RoundingMode;
 
 @Slf4j
 @Component
-public class PriceCounterMongoEventListener extends AbstractMongoEventListener<Pie> {
+public class PiePriceCounterMongoEventListener extends AbstractMongoEventListener<Pie> {
     @Override
     public void onBeforeConvert(BeforeConvertEvent<Pie> event) {
         Pie sourcePie = event.getSource();
