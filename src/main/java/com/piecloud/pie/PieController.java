@@ -29,13 +29,13 @@ public class PieController {
 
     @PutMapping("/{id}")
     public Mono<Pie> updatePieGroup(@PathVariable String id,
-                                    @Valid @RequestBody PieDto pieDto) {
-        return service.updatePie(id, pieDto);
+                                    @Valid @RequestBody Mono<PieDto> pieDtoMono) {
+        return service.updatePie(id, pieDtoMono);
     }
 
     @PostMapping("/")
-    public Mono<Pie> createPieGroup(@Valid @RequestBody PieDto pieDto) {
-        return service.createPie(pieDto);
+    public Mono<Pie> createPieGroup(@Valid @RequestBody Mono<PieDto> pieDtoMono) {
+        return service.createPie(pieDtoMono);
     }
 
     @DeleteMapping("/{id}")

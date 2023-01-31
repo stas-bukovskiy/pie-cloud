@@ -80,7 +80,7 @@ public class PieServiceTest {
                     .build();
 
             StepVerifier
-                    .create(pieService.createPie(pieDto))
+                    .create(pieService.createPie(Mono.just(pieDto)))
                     .consumeNextWith(pie -> {
                         assertTrue(pie.getIngredients().contains(ingredients.get(0)));
                         assertTrue(pie.getIngredients().contains(ingredients.get(1)));
