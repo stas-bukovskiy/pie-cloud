@@ -45,7 +45,7 @@ public class IngredientServiceImpl implements IngredientService{
                         Ingredient.builder()
                                 .name(ingredientDtoIngredientGroupTuple2.getT1().getName())
                                 .price(ingredientDtoIngredientGroupTuple2.getT1().getPrice())
-                                .group(ingredientDtoIngredientGroupTuple2.getT2())
+//                                .group(ingredientDtoIngredientGroupTuple2.getT2())
                                 .build()).flatMap(repository::save)
                 .doFinally(newIngredient -> log.debug("created new ingredient: " + newIngredient));
     }
@@ -65,7 +65,7 @@ public class IngredientServiceImpl implements IngredientService{
                 .map(objects -> {
                     objects.getT1().setName(objects.getT2().getName());
                     objects.getT1().setPrice(objects.getT2().getPrice());
-                    objects.getT1().setGroup(objects.getT3());
+//                    objects.getT1().setGroup(objects.getT3());
                     return objects.getT1();
                 })
                 .flatMap(repository::save);

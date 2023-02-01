@@ -14,6 +14,8 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith(SpringExtension.class)
 @WebFluxTest({IngredientController.class, IngredientGroupController.class})
 public class IngredientControllerTest {
@@ -44,17 +46,17 @@ public class IngredientControllerTest {
     @Test
     public void testPut_shouldReturn200AndChangedIngredient() {
         String newName = "changed";
+        IngredientGroupDto ingredientGroupDto = new IngredientGroupDto();
+        ingredientGroupDto.setName(newName);
+
         postTestIngredient().subscribe(testId -> webClient.put()
                 .uri("/api/ingredient/{id}", testId)
-                .bodyValue(IngredientGroupDto.builder().name(newName).build())
+                .bodyValue(ingredientGroupDto)
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBody(IngredientGroup.class)
-                .isEqualTo(IngredientGroup.builder()
-                        .id(testId)
-                        .name(newName)
-                        .build()));
+                .expectBody(IngredientGroupDto.class)
+                .value(changedGroup -> assertEquals(newName, changedGroup.getName())));
     }
 
     @Test
@@ -68,13 +70,16 @@ public class IngredientControllerTest {
     }
 
     public Mono<String> postTestGroup() {
+        IngredientGroupDto ingredientGroupDto = new IngredientGroupDto();
+        ingredientGroupDto.setName("ingredient_group");
+
         return WebClient.create()
                 .post()
                 .uri("/api/ingredient/group/")
-                .bodyValue(IngredientGroupDto.builder().id("").name("test"))
+                .bodyValue(ingredientGroupDto)
                 .retrieve()
-                .bodyToMono(IngredientGroup.class)
-                .map(IngredientGroup::getId);
+                .bodyToMono(IngredientGroupDto.class)
+                .map(IngredientGroupDto::getId);
     }
 
     public Mono<String> postTestIngredient() {

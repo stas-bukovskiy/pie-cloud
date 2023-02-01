@@ -39,12 +39,19 @@ public class PieServiceTest {
     private IngredientGroupServiceImpl ingredientGroupService;
     @Mock
     private IngredientGroupRepository groupRepository;
+    @InjectMocks
+    private IngredientGroupConverter groupConverter;
 
     public Mono<List<IngredientGroup>> createIngredientGroups() {
+        IngredientGroupDto ingredientGroupDto1 = new IngredientGroupDto();
+        ingredientGroupDto1.setName("group_1");
+        IngredientGroupDto ingredientGroupDto2 = new IngredientGroupDto();
+        ingredientGroupDto2.setName("group_1");
         return Flux.just(
-                        IngredientGroupDto.builder().name("group_1").build(),
-                        IngredientGroupDto.builder().name("group_2").build()
+                        ingredientGroupDto1,
+                        ingredientGroupDto2
                 ).flatMap(groupDto -> ingredientGroupService.createIngredientGroup(Mono.just(groupDto)))
+                .map(groupConverter::convertDtoToDocument)
                 .collectList();
     }
 
