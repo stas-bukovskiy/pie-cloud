@@ -13,59 +13,60 @@ import reactor.core.publisher.Mono;
 public class IngredientGroupServiceImpl implements IngredientGroupService {
 
     private final IngredientGroupRepository repository;
+    private final IngredientGroupConverter converter;
 
     @Autowired
-    public IngredientGroupServiceImpl(IngredientGroupRepository ingredientGroupRepository) {
+    public IngredientGroupServiceImpl(IngredientGroupRepository ingredientGroupRepository,
+                                      IngredientGroupConverter converter) {
         this.repository = ingredientGroupRepository;
+        this.converter = converter;
     }
 
     @Override
-    public Flux<IngredientGroup> getAllIngredientGroups() {
-        return repository.findAll();
+    public Flux<IngredientGroupDto> getAllIngredientGroups() {
+        return repository.findAll()
+                .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<IngredientGroup> getIngredientGroup(String id) {
-        checkId(id);
+    public Mono<IngredientGroupDto> getIngredientGroup(String id) {
         return repository.findById(id)
+                .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such ingredient group")));
     }
 
     @Override
-    public Mono<IngredientGroup> createIngredientGroup(Mono<IngredientGroupDto> ingredientGroupDtoMono) {
+    public Mono<IngredientGroupDto> createIngredientGroup(Mono<IngredientGroupDto> ingredientGroupDtoMono) {
         return ingredientGroupDtoMono
-                .map(g -> IngredientGroup.builder()
-                        .name(g.getName())
-                        .build())
+                .map(converter::convertDtoToDocument)
                 .flatMap(repository::save)
-                .doFinally(newGroup -> log.debug("created new ingredient group: " + newGroup));
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("created new ingredient group"));
     }
 
     @Override
-    public Mono<IngredientGroup> updateIngredientGroup(String id, Mono<IngredientGroupDto> ingredientGroupDtoMono) {
-        checkId(id);
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found such ingredient group")))
+    public Mono<IngredientGroupDto> updateIngredientGroup(String id, Mono<IngredientGroupDto> ingredientGroupDtoMono) {
+        return findByIdOrIfEmptySwitchToError(id)
                 .zipWith(ingredientGroupDtoMono)
                 .map(ingredientGroupAndIngredientGroupDto -> {
                     ingredientGroupAndIngredientGroupDto.getT1()
                             .setName(ingredientGroupAndIngredientGroupDto.getT2().getName());
                     return ingredientGroupAndIngredientGroupDto.getT1();
                 })
-                .flatMap(repository::save);
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto);
     }
 
     @Override
     public Mono<Void> deleteIngredientGroup(String id) {
-        checkId(id);
         return repository.deleteById(id);
     }
 
-    private void checkId(String id) {
-        if (id == null || id.equals(""))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id must not be empty");
+    private Mono<IngredientGroup> findByIdOrIfEmptySwitchToError(String id) {
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found ingredient group with such id = "  + id)));
     }
 
 }
