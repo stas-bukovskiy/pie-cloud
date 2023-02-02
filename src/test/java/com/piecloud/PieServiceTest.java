@@ -56,25 +56,21 @@ public class PieServiceTest {
     }
 
     public Mono<List<Ingredient>> createIngredients() {
-        return createIngredientGroups().flatMap(groups -> Flux.just(
-                                IngredientDto.builder()
-                                        .name("ingredient_1")
-                                        .price(BigDecimal.valueOf(12.2))
-                                        .groupId(groups.get(0).getId())
-                                        .build(),
-                                IngredientDto.builder()
-                                        .name("ingredient_2")
-                                        .price(BigDecimal.valueOf(0.25))
-                                        .groupId(groups.get(1).getId())
-                                        .build(),
-                                IngredientDto.builder()
-                                        .name("ingredient_3")
-                                        .price(BigDecimal.valueOf(78.2))
-                                        .groupId(groups.get(0).getId())
-                                        .build()
-                        ).flatMap(ingredientDto -> ingredientService.createIngredient(Mono.just(ingredientDto)))
-                        .collectList()
-        );
+        IngredientDto ingredientDto1 = new IngredientDto();
+        ingredientDto1.setName("ingredient_1");
+        ingredientDto1.setPrice(BigDecimal.valueOf(12.2));
+//        ingredientDto1.setGroupId(groups.get(0).getId());
+
+        IngredientDto ingredientDto2 = new IngredientDto();
+        ingredientDto2.setName("ingredient_2");
+        ingredientDto2.setPrice(BigDecimal.valueOf(56.2));
+//        ingredientDto2.setGroupId(groups.get(0).getId());
+
+        IngredientDto ingredientDto3 = new IngredientDto();
+        ingredientDto3.setName("ingredient_3");
+        ingredientDto3.setPrice(BigDecimal.valueOf(56.9));
+//        ingredientDto3.setGroupId(groups.get(0).getId());
+        return null;
     }
 
     @Test

@@ -1,17 +1,15 @@
 package com.piecloud.ingredient;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.piecloud.ingredient.group.IngredientGroupDto;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
-@Builder
 public class IngredientDto {
     private String id;
 
@@ -24,6 +22,5 @@ public class IngredientDto {
     private BigDecimal price;
 
     @NotNull(message = "group_id must not be null")
-    @JsonProperty("group_id")
-    private String groupId;
+    private IngredientGroupDto group;
 }

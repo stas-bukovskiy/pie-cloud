@@ -47,7 +47,7 @@ public class PieServiceImpl implements PieService{
                                 .onErrorStop()
                                 .collectList())
                 .map(pieDtoListTuple2 -> Pie.builder()
-                        .ingredients(new HashSet<>(pieDtoListTuple2.getT2()))
+                        .ingredients(new HashSet<>())
                         .build())
                 .flatMap(repository::save)
                 .doFinally(newIngredient -> log.debug("created new pie: " + newIngredient));
@@ -71,7 +71,7 @@ public class PieServiceImpl implements PieService{
                         ))
                 .map(piePieDtoListTuple3 -> {
                     piePieDtoListTuple3.getT1()
-                            .setIngredients(new HashSet<>(piePieDtoListTuple3.getT3()));
+                            .setIngredients(new HashSet<>());
                     return piePieDtoListTuple3.getT1();
                 })
                 .flatMap(repository::save);

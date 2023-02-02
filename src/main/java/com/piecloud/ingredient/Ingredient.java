@@ -1,7 +1,6 @@
 package com.piecloud.ingredient;
 
 import com.piecloud.ingredient.group.IngredientGroup;
-import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -13,7 +12,6 @@ import java.math.BigDecimal;
 import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
 
 @Data
-@Builder
 @Document
 public class Ingredient {
     @Id
