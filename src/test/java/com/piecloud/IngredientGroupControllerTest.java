@@ -3,7 +3,6 @@ package com.piecloud;
 import com.piecloud.ingredient.group.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -38,6 +37,8 @@ public class IngredientGroupControllerTest {
         IngredientGroupDto postedGroupDto = createGroupDto();
 
         Mockito.when(repository.save(postedGroup)).thenReturn(Mono.just(postedGroup));
+        Mockito.when(converter.convertDocumentToDto(postedGroup)).thenReturn(postedGroupDto);
+        Mockito.when(converter.convertDtoToDocument(postedGroupDto)).thenReturn(postedGroup);
 
         webClient
                 .post()
@@ -70,6 +71,7 @@ public class IngredientGroupControllerTest {
         IngredientGroupDto groupDto = createGroupDto();
 
         Mockito.when(repository.findById(GROUP_ID)).thenReturn(Mono.just(group));
+        Mockito.when(converter.convertDocumentToDto(group)).thenReturn(groupDto);
 
         webClient.get()
                 .uri("/api/ingredient/group/{id}", GROUP_ID)
@@ -81,11 +83,9 @@ public class IngredientGroupControllerTest {
 
     @Test
     public void testDelete_shouldReturnGroup() {
-        IngredientGroup group = createGroup();
         Mono<Void> voidReturn  = Mono.empty();
 
-        Mockito.when(repository.findById(GROUP_ID)).thenReturn(Mono.just(group));
-        Mockito.when(repository.delete(group)).thenReturn(voidReturn);
+        Mockito.when(repository.deleteById(GROUP_ID)).thenReturn(voidReturn);
 
         webClient.delete()
                 .uri("/api/ingredient/group/{id}", GROUP_ID)
