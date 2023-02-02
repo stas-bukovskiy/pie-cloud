@@ -10,23 +10,23 @@ import org.springframework.stereotype.Component;
 public class IngredientGroupConverter {
 
     private final ModelMapper modelMapper;
-    private final ModelMapper modelMapperWithIgnoredId;
 
     public IngredientGroupConverter() {
-        this.modelMapper = new ModelMapper();
+        modelMapper = createModelMapperWithSkippingIdInOneWay();
+    }
 
-        this.modelMapperWithIgnoredId = new ModelMapper();
-        this.modelMapperWithIgnoredId.getConfiguration().setAmbiguityIgnored(true);
-        PropertyMap<IngredientGroupDto, IngredientGroup> clientPropertyMap =
+    private ModelMapper createModelMapperWithSkippingIdInOneWay() {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setAmbiguityIgnored(true);
+        PropertyMap<IngredientGroupDto, IngredientGroup> propertyMapWithSkippedIdInDtoToDocWay =
                 new PropertyMap<>() {
                     @Override
                     protected void configure() {
                         skip(destination.getId());
                     }
                 };
-        this.modelMapperWithIgnoredId.addMappings(clientPropertyMap);
-
-
+        modelMapper.addMappings(propertyMapWithSkippedIdInDtoToDocWay);
+        return modelMapper;
     }
 
     public IngredientGroupDto convertDocumentToDto(IngredientGroup ingredientGroup){
@@ -36,7 +36,7 @@ public class IngredientGroupConverter {
 
     public IngredientGroup convertDtoToDocument(IngredientGroupDto ingredientGroupDto) {
         log.debug("converting " + ingredientGroupDto + " to document");
-        return modelMapperWithIgnoredId.map(ingredientGroupDto, IngredientGroup.class);
+        return modelMapper.map(ingredientGroupDto, IngredientGroup.class);
     }
 
 }
