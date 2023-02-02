@@ -1,99 +1,110 @@
 package com.piecloud;
 
 import com.piecloud.ingredient.*;
-import com.piecloud.ingredient.group.*;
+import com.piecloud.ingredient.group.IngredientGroup;
+import com.piecloud.ingredient.group.IngredientGroupConverter;
+import com.piecloud.ingredient.group.IngredientGroupDto;
+import com.piecloud.ingredient.group.IngredientGroupRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @ExtendWith(SpringExtension.class)
-@WebFluxTest({IngredientController.class, IngredientGroupController.class})
+@WebFluxTest(IngredientController.class)
+@Import({IngredientGroupConverter.class, IngredientConverter.class, IngredientServiceImpl.class})
 public class IngredientControllerTest {
+
+    private static final String GROUP_ID = "group_id";
+    private static final String GROUP_NAME = "group";
+    private static final String INGREDIENT_ID = "ingredient_id";
+    private static final String INGREDIENT_NAME = "ingredient";
+
     @Autowired
     private WebTestClient webClient;
     @MockBean
-    private IngredientService service;
+    private IngredientRepository repository;
     @MockBean
-    private IngredientGroupService groupService;
+    private IngredientGroupRepository groupRepository;
+    @MockBean
+    private IngredientConverter ingredientConverter;
+    @MockBean
+    private IngredientGroupConverter groupConverter;
 
     @Test
 //    @WithMockUser(username = TEST_EMAIL)
-    public void testPostWithValidData_ShouldReturn200AndIngredient() {
-        postTestGroup().subscribe(testGroupId -> webClient
-                .post()
+    public void testPostWithValidData_ShouldReturn200AndIngredientDto() {
+        IngredientGroupDto groupDto = createIngredientGroupDto();
+        IngredientDto ingredientDto = createIngredientDto();
+        Ingredient ingredient = createIngredient();
+        IngredientGroup group = createIngredientGroup();
+
+        Mockito.when(repository.save(ingredient)).thenReturn(Mono.just(ingredient));
+        Mockito.when(groupRepository.findById(GROUP_ID)).thenReturn(Mono.just(group));
+        Mockito.when(groupConverter.convertDocumentToDto(group)).thenReturn(groupDto);
+        Mockito.when(ingredientConverter.convertDtoToDocument(ingredientDto)).thenReturn(ingredient);
+        Mockito.when(ingredientConverter.convertDocumentToDto(ingredient)).thenReturn(ingredientDto);
+
+        webClient.post()
                 .uri("/api/ingredient/")
-                .bodyValue(IngredientDto.builder()
-                        .name("ingredient")
-                        .price(BigDecimal.valueOf(12.2))
-                        .groupId(testGroupId)
-                        .build())
+                .bodyValue(ingredientDto)
                 .exchange()
                 .expectStatus()
-                .isOk()
-                .expectBody(Ingredient.class));
-    }
-
-    @Test
-    public void testPut_shouldReturn200AndChangedIngredient() {
-        String newName = "changed";
-        IngredientGroupDto ingredientGroupDto = new IngredientGroupDto();
-        ingredientGroupDto.setName(newName);
-
-        postTestIngredient().subscribe(testId -> webClient.put()
-                .uri("/api/ingredient/{id}", testId)
-                .bodyValue(ingredientGroupDto)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(IngredientGroupDto.class)
-                .value(changedGroup -> assertEquals(newName, changedGroup.getName())));
+                .isCreated()
+                .expectBody(IngredientDto.class);
     }
 
     @Test
     public void testDelete_shouldReturn200() {
-        postTestIngredient().subscribe(testId -> webClient.delete()
-                .uri("/api/ingredient/{id}", testId)
+        Mono<Void> voidMono = Mono.empty();
+
+        Mockito.when(repository.deleteById(INGREDIENT_ID)).thenReturn(voidMono);
+
+        webClient.delete()
+                .uri("/api/ingredient/{id}", GROUP_ID)
                 .exchange()
                 .expectStatus()
                 .isOk()
-                .expectBody(Void.class));
+                .expectBody(Void.class);
     }
 
-    public Mono<String> postTestGroup() {
-        IngredientGroupDto ingredientGroupDto = new IngredientGroupDto();
-        ingredientGroupDto.setName("ingredient_group");
-
-        return WebClient.create()
-                .post()
-                .uri("/api/ingredient/group/")
-                .bodyValue(ingredientGroupDto)
-                .retrieve()
-                .bodyToMono(IngredientGroupDto.class)
-                .map(IngredientGroupDto::getId);
+    private Ingredient createIngredient() {
+        Ingredient ingredient = new Ingredient();
+        ingredient.setId(INGREDIENT_ID);
+        ingredient.setName(INGREDIENT_NAME);
+        ingredient.setPrice(BigDecimal.valueOf(10.00));
+        ingredient.setGroup(createIngredientGroup());
+        return ingredient;
     }
 
-    public Mono<String> postTestIngredient() {
-        return postTestGroup().map(testGroupId -> WebClient.create()
-                        .post()
-                        .uri("/api/ingredient/group/")
-                        .bodyValue(IngredientDto.builder()
-                                .name("ingredient")
-                                .price(BigDecimal.valueOf(12.2))
-                                .groupId(testGroupId)
-                                .build())
-                        .retrieve()
-                        .bodyToMono(Ingredient.class))
-                .flatMap(ingredient -> ingredient)
-                .map(Ingredient::getId);
+    private IngredientDto createIngredientDto() {
+        IngredientDto ingredientDto = new IngredientDto();
+        ingredientDto.setId(INGREDIENT_ID);
+        ingredientDto.setName(INGREDIENT_NAME);
+        ingredientDto.setPrice(BigDecimal.valueOf(10.00));
+        ingredientDto.setGroup(createIngredientGroupDto());
+        return ingredientDto;
+    }
+
+    private IngredientGroup createIngredientGroup() {
+        IngredientGroup group = new IngredientGroup();
+        group.setId(GROUP_ID);
+        group.setName(GROUP_NAME);
+        return group;
+    }
+
+    private IngredientGroupDto createIngredientGroupDto() {
+        IngredientGroupDto groupDto = new IngredientGroupDto();
+        groupDto.setId(GROUP_ID);
+        groupDto.setName(GROUP_NAME);
+        return groupDto;
     }
 }

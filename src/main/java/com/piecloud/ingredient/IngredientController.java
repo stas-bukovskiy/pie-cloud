@@ -2,6 +2,7 @@ package com.piecloud.ingredient;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,23 +19,24 @@ public class IngredientController {
     }
 
     @GetMapping("/")
-    public Flux<Ingredient> getIngredients() {
+    public Flux<IngredientDto> getIngredients() {
         return service.getAllIngredients();
     }
 
     @GetMapping("/{id}")
-    public Mono<Ingredient> getIngredient(@PathVariable String id) {
+    public Mono<IngredientDto> getIngredient(@PathVariable String id) {
         return service.getIngredient(id);
     }
 
     @PutMapping("/{id}")
-    public Mono<Ingredient> updateIngredientGroup(@PathVariable String id,
+    public Mono<IngredientDto> updateIngredientGroup(@PathVariable String id,
                                                   @Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
         return service.updateIngredient(id, ingredientDtoMono);
     }
 
     @PostMapping("/")
-    public Mono<Ingredient> createIngredientGroup(@Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<IngredientDto> createIngredientGroup(@Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
         return service.createIngredient(ingredientDtoMono);
     }
 

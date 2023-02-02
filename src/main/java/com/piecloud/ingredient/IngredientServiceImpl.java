@@ -1,6 +1,7 @@
 package com.piecloud.ingredient;
 
-import com.piecloud.ingredient.group.IngredientGroupService;
+import com.piecloud.ingredient.group.IngredientGroup;
+import com.piecloud.ingredient.group.IngredientGroupRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -8,79 +9,86 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuples;
 
 @Service
 @Slf4j
 public class IngredientServiceImpl implements IngredientService{
 
     private final IngredientRepository repository;
-    private final IngredientGroupService groupService;
+    private final IngredientConverter converter;
+    private final IngredientGroupRepository groupRepository;
 
     @Autowired
-    public IngredientServiceImpl(IngredientRepository repository, IngredientGroupService groupRepository) {
+    public IngredientServiceImpl(IngredientRepository repository, IngredientConverter converter, IngredientGroupRepository groupRepository) {
         this.repository = repository;
-        this.groupService = groupRepository;
+        this.converter = converter;
+        this.groupRepository = groupRepository;
     }
 
     @Override
-    public Flux<Ingredient> getAllIngredients() {
-        return repository.findAll();
+    public Flux<IngredientDto> getAllIngredients() {
+        return repository.findAll()
+                .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<Ingredient> getIngredient(String id) {
-        checkId(id);
+    public Mono<IngredientDto> getIngredient(String id) {
         return repository.findById(id)
+                .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such ingredient")));
     }
 
     @Override
-    public Mono<Ingredient> createIngredient(Mono<IngredientDto> ingredientDtoMono) {
+    public Mono<IngredientDto> createIngredient(Mono<IngredientDto> ingredientDtoMono) {
         return ingredientDtoMono
-                .zipWhen(ingredientDto -> groupService.getIngredientGroup(ingredientDto.getGroupId()))
-                .onErrorStop()
-                .map(ingredientDtoIngredientGroupTuple2 ->
-                        Ingredient.builder()
-                                .name(ingredientDtoIngredientGroupTuple2.getT1().getName())
-                                .price(ingredientDtoIngredientGroupTuple2.getT1().getPrice())
-//                                .group(ingredientDtoIngredientGroupTuple2.getT2())
-                                .build()).flatMap(repository::save)
-                .doFinally(newIngredient -> log.debug("created new ingredient: " + newIngredient));
+                .map(converter::convertDtoToDocument)
+                .zipWhen(ingredient -> findIngredientGroupOrStatusException(ingredient.getGroup().getId()))
+                .map(ingredientDtoIngredientGroupTuple2 -> {
+                    IngredientGroup group = ingredientDtoIngredientGroupTuple2.getT2();
+                    Ingredient newIngredient = ingredientDtoIngredientGroupTuple2.getT1();
+                    newIngredient.setGroup(group);
+                    return newIngredient;
+                })
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("created new ingredient successfully"));
     }
 
     @Override
-    public Mono<Ingredient> updateIngredient(String id, Mono<IngredientDto> ingredientDtoMono) {
-        checkId(id);
-        return getIngredient(id)
-                .onErrorStop()
-                .zipWith(ingredientDtoMono)
-                .zipWhen(ingredientIngredientDtoTuple2 ->
-                        groupService.getIngredientGroup(ingredientIngredientDtoTuple2.getT2().getGroupId()),
-                        (ingredientIngredientDtoTuple2, ingredientGroup) -> Tuples.of(
-                                ingredientIngredientDtoTuple2.getT1(),
-                                ingredientIngredientDtoTuple2.getT2(),
-                                ingredientGroup))
-                .map(objects -> {
-                    objects.getT1().setName(objects.getT2().getName());
-                    objects.getT1().setPrice(objects.getT2().getPrice());
-//                    objects.getT1().setGroup(objects.getT3());
-                    return objects.getT1();
+    public Mono<IngredientDto> updateIngredient(String id, Mono<IngredientDto> ingredientDtoMono) {
+        return repository.existsById(id)
+                .flatMap(isExist -> {
+                    if (!isExist)
+                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "not found ingredient with such id: " + id));
+                    return ingredientDtoMono;
                 })
-                .flatMap(repository::save);
+                .map(converter::convertDtoToDocument)
+                .zipWhen(ingredient -> findIngredientGroupOrStatusException(ingredient.getGroup().getId()))
+                .map(ingredientDtoIngredientGroupTuple2 -> {
+                    IngredientGroup group = ingredientDtoIngredientGroupTuple2.getT2();
+                    Ingredient updatedIngredient = ingredientDtoIngredientGroupTuple2.getT1();
+                    updatedIngredient.setId(id);
+                    updatedIngredient.setGroup(group);
+                    return updatedIngredient;
+                })
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("updated ingredient successfully"));
     }
 
     @Override
     public Mono<Void> deleteIngredient(String id) {
-        checkId(id);
         return repository.deleteById(id);
     }
 
-    private void checkId(String id) {
-        if (id == null || id.equals(""))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id must not be empty");
+    private Mono<IngredientGroup> findIngredientGroupOrStatusException(String id) {
+        return groupRepository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "not find ingredient group with id = " + id
+                )));
     }
-
 
 }
