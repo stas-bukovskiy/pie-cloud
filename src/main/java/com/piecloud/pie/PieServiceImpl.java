@@ -1,5 +1,6 @@
 package com.piecloud.pie;
 
+import com.piecloud.ingredient.IngredientDto;
 import com.piecloud.ingredient.IngredientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,8 @@ public class PieServiceImpl implements PieService{
     @Override
     public Mono<Pie> createPie(Mono<PieDto> pieDtoMono) {
         return pieDtoMono
-                .zipWhen(pieDto -> Flux.fromIterable(pieDto.getIngredientIds())
+                .zipWhen(pieDto -> Flux.fromIterable(pieDto.getIngredient())
+                        .map(IngredientDto::getId)
                                 .flatMap(ingredientService::getIngredient)
                                 .onErrorStop()
                                 .collectList())
@@ -60,7 +62,8 @@ public class PieServiceImpl implements PieService{
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such pie")))
                 .zipWith(pieDtoMono)
-                .zipWhen(pieAndPieDto -> Flux.fromIterable(pieAndPieDto.getT2().getIngredientIds())
+                .zipWhen(pieAndPieDto -> Flux.fromIterable(pieAndPieDto.getT2().getIngredient())
+                                .map(IngredientDto::getId)
                                 .flatMap(ingredientService::getIngredient)
                                 .onErrorStop()
                                 .collectList(),

@@ -76,11 +76,7 @@ public class PieServiceTest {
     @Test
     public void testCreatePie_shouldReturnPie() {
         createIngredients().subscribe(ingredients -> {
-            PieDto pieDto = PieDto.builder()
-                    .ingredientIds(ingredients
-                            .stream()
-                            .map(Ingredient::getId).collect(Collectors.toSet()))
-                    .build();
+            PieDto pieDto = new PieDto();
 
             StepVerifier
                     .create(pieService.createPie(Mono.just(pieDto)))

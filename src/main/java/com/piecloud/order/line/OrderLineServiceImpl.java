@@ -121,7 +121,7 @@ public class OrderLineServiceImpl implements OrderLineService {
                 .onErrorStop()
                 .map(orderLineDtoAndAddition -> OrderLine.builder()
                         .amount(orderLineDtoAndAddition.getT1().getAmount())
-                        .addition(orderLineDtoAndAddition.getT2())
+//                        .addition(orderLineDtoAndAddition.getT2())
                         .build());
     }
 }

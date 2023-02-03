@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
 
 @Data
-@Builder
 @Document
 public class Addition {
 
