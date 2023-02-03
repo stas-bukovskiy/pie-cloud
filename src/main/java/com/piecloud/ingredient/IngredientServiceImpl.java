@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 @Service
 @Slf4j
@@ -57,19 +58,20 @@ public class IngredientServiceImpl implements IngredientService{
 
     @Override
     public Mono<IngredientDto> updateIngredient(String id, Mono<IngredientDto> ingredientDtoMono) {
-        return repository.existsById(id)
-                .flatMap(isExist -> {
-                    if (!isExist)
-                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                "not found ingredient with such id: " + id));
-                    return ingredientDtoMono;
-                })
-                .map(converter::convertDtoToDocument)
-                .zipWhen(ingredient -> findIngredientGroupOrStatusException(ingredient.getGroup().getId()))
-                .map(ingredientDtoIngredientGroupTuple2 -> {
-                    IngredientGroup group = ingredientDtoIngredientGroupTuple2.getT2();
-                    Ingredient updatedIngredient = ingredientDtoIngredientGroupTuple2.getT1();
-                    updatedIngredient.setId(id);
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found such ingredient")))
+                .zipWith(ingredientDtoMono)
+                .zipWhen(ingredientAndIngredientDto ->
+                        findIngredientGroupOrStatusException(ingredientAndIngredientDto.getT1().getGroup().getId()),
+                        (ingredientAndIngredientDto, group) -> Tuples.of(
+                                ingredientAndIngredientDto.getT1(),
+                                ingredientAndIngredientDto.getT2(),
+                                group))
+                .map(ingredientIngredientDtoIngredientGroupTuple3 -> {
+                    IngredientGroup group = ingredientIngredientDtoIngredientGroupTuple3.getT3();
+                    Ingredient updatedIngredient = ingredientIngredientDtoIngredientGroupTuple3.getT1();
+                    updatedIngredient.setName(ingredientIngredientDtoIngredientGroupTuple3.getT2().getName());
                     updatedIngredient.setGroup(group);
                     return updatedIngredient;
                 })
