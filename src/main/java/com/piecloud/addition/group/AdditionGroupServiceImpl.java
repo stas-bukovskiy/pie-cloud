@@ -46,14 +46,14 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
 
     @Override
     public Mono<AdditionGroupDto> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono) {
-        return repository.existsById(id)
-                .flatMap(isExist -> {
-                    if (!isExist)
-                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                "not found addition group with such id: " + id));
-                    return groupDtoMono;
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found addition group with such id: " + id)))
+                .zipWith(groupDtoMono)
+                .map(groupAndGroupDto -> {
+                    groupAndGroupDto.getT1().setName(groupAndGroupDto.getT2().getName());
+                    return groupAndGroupDto.getT1();
                 })
-                .map(converter::convertDtoToDocument)
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
                 .doOnSuccess(onSuccess -> log.debug("updated addition group successfully"));
