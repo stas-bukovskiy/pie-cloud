@@ -4,9 +4,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface AdditionGroupService {
-    Flux<AdditionGroup> getAllAdditionGroups();
-    Mono<AdditionGroup> getAdditionGroup(String id);
-    Mono<AdditionGroup> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono);
-    Mono<AdditionGroup> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono);
+    Flux<AdditionGroupDto> getAllAdditionGroups();
+    Mono<AdditionGroupDto> getAdditionGroup(String id);
+    Mono<AdditionGroupDto> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono);
+    Mono<AdditionGroupDto> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono);
     Mono<Void> deleteAdditionGroup(String id);
 }

@@ -13,57 +13,55 @@ import reactor.core.publisher.Mono;
 public class AdditionGroupServiceImpl implements AdditionGroupService{
 
     private final AdditionGroupRepository repository;
+    private final AdditionGroupConverter converter;
 
     @Autowired
-    public AdditionGroupServiceImpl(AdditionGroupRepository ingredientGroupRepository) {
+    public AdditionGroupServiceImpl(AdditionGroupRepository ingredientGroupRepository, AdditionGroupConverter converter) {
         this.repository = ingredientGroupRepository;
+        this.converter = converter;
     }
 
     @Override
-    public Flux<AdditionGroup> getAllAdditionGroups() {
-        return repository.findAll();
+    public Flux<AdditionGroupDto> getAllAdditionGroups() {
+        return repository.findAll()
+                .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<AdditionGroup> getAdditionGroup(String id) {
-        checkId(id);
+    public Mono<AdditionGroupDto> getAdditionGroup(String id) {
         return repository.findById(id)
+                .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found such addition group")));
+                        "not found addition group with such id: " + id)));
     }
 
     @Override
-    public Mono<AdditionGroup> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono) {
+    public Mono<AdditionGroupDto> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono) {
         return groupDtoMono
-                .map(g -> AdditionGroup.builder()
-                        .name(g.getName())
-                        .build())
+                .map(converter::convertDtoToDocument)
                 .flatMap(repository::save)
-                .doFinally(newGroup -> log.debug("created new addition group: " + newGroup));
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("created new addition group successfully"));
     }
 
     @Override
-    public Mono<AdditionGroup> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono) {
-        checkId(id);
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found such addition group")))
-                .zipWith(groupDtoMono)
-                .map(groupAndGroupDto -> {
-                    groupAndGroupDto.getT1().setName(groupAndGroupDto.getT2().getName());
-                    return groupAndGroupDto.getT1();
+    public Mono<AdditionGroupDto> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono) {
+        return repository.existsById(id)
+                .flatMap(isExist -> {
+                    if (!isExist)
+                        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "not found addition group with such id: " + id));
+                    return groupDtoMono;
                 })
-                .flatMap(repository::save);
+                .map(converter::convertDtoToDocument)
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("updated addition group successfully"));
     }
 
     @Override
     public Mono<Void> deleteAdditionGroup(String id) {
-        checkId(id);
         return repository.deleteById(id);
     }
 
-    private void checkId(String id) {
-        if (id == null || id.equals(""))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id must not be empty");
-    }
 }
