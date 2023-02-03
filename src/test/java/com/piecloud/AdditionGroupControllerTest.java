@@ -3,61 +3,78 @@ package com.piecloud;
 import com.piecloud.addition.group.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @ExtendWith(SpringExtension.class)
 @WebFluxTest(AdditionGroupController.class)
+@Import({AdditionGroupConverter.class, AdditionGroupServiceImpl.class})
 public class AdditionGroupControllerTest {
+
+    private static final String GROUP_NAME = "addition_group";
+    private static final String GROUP_ID = "addition_group_id";
 
     @Autowired
     private WebTestClient webTestClient;
 
     @MockBean
-    private AdditionGroupService service;
+    private AdditionGroupRepository repository;
+    @MockBean
+    private AdditionGroupConverter converter;
 
     @Test
     public void testPost_shouldReturnAdditionGroup() {
+        AdditionGroupDto groupDto = createGroupDto();
+        AdditionGroup group = createGroup();
+
+        Mockito.when(repository.save(group)).thenReturn(Mono.just(group));
+        Mockito.when(converter.convertDocumentToDto(group)).thenReturn(groupDto);
+        Mockito.when(converter.convertDtoToDocument(groupDto)).thenReturn(group);
+
         webTestClient
                 .post()
                 .uri("/api/addition/group/")
-                .bodyValue(AdditionGroupDto.builder().name("addition_group").build())
+                .bodyValue(groupDto)
                 .exchange()
                 .expectStatus()
-                .isOk()
-                .expectBody(AdditionGroup.class);
+                .isCreated()
+                .expectBody(AdditionGroupDto.class);
     }
 
     @Test
     public void testGet_shouldReturnCreatedGroups() {
-        postAndReturn3AdditionGroups().subscribe(additionGroup -> webTestClient
-                .get()
-                .uri("/api/addition/group/{id}", additionGroup.getId())
+        AdditionGroupDto groupDto = createGroupDto();
+        AdditionGroup group = createGroup();
+
+        Mockito.when(repository.findById(GROUP_ID)).thenReturn(Mono.just(group));
+        Mockito.when(converter.convertDocumentToDto(group)).thenReturn(groupDto);
+
+        webTestClient.get()
+                .uri("/api/addition/group/{id}", GROUP_ID)
                 .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(AdditionGroup.class)
-                .value(System.out::println));
+                .expectStatus().isOk()
+                .expectBody(AdditionGroupDto.class);
     }
 
-    private Flux<AdditionGroup> postAndReturn3AdditionGroups() {
-        WebClient webClient = WebClient.create("/api/addition/group/");
 
-        return Flux.just(
-                AdditionGroupDto.builder().name("addition_group_1").build(),
-                AdditionGroupDto.builder().name("addition_group_2").build(),
-                AdditionGroupDto.builder().name("addition_group_3").build()
-        ).flatMap(additionGroupDto -> webClient
-                .post()
-                .bodyValue(additionGroupDto)
-                .retrieve()
-                .bodyToMono(AdditionGroup.class)
-        );
+    private AdditionGroup createGroup() {
+        AdditionGroup group = new AdditionGroup();
+        group.setId(GROUP_ID);
+        group.setName(GROUP_NAME);
+        return group;
+    }
+
+    private AdditionGroupDto createGroupDto() {
+        AdditionGroupDto groupDto = new AdditionGroupDto();
+        groupDto.setId(GROUP_ID);
+        groupDto.setName(GROUP_NAME);
+        return groupDto;
     }
 
 }

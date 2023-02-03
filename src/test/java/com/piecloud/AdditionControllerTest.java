@@ -54,7 +54,7 @@ public class AdditionControllerTest {
     }
 
     private Mono<AdditionGroup> postAndReturnAdditionGroup() {
-        return Mono.just(AdditionGroupDto.builder().name("addition_group").build())
+        return Mono.just(new AdditionGroupDto())
                 .flatMap(additionGroupDto -> WebClient.create()
                         .post()
                         .uri("/api/addition/group/")
