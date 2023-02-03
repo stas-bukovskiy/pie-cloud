@@ -43,7 +43,7 @@ public class AdditionServiceImpl implements AdditionService {
                 .map(additionDtoAndGroup -> Addition.builder()
                         .name(additionDtoAndGroup.getT1().getName())
                         .price(additionDtoAndGroup.getT1().getPrice())
-                        .group(additionDtoAndGroup.getT2())
+//                        .group(additionDtoAndGroup.getT2())
                         .build())
                 .flatMap(repository::save)
                 .doFinally(addition -> log.debug("created new addition: " + addition));
@@ -64,7 +64,7 @@ public class AdditionServiceImpl implements AdditionService {
                 .map(additionAndAdditionDtoAndGroup -> {
                     additionAndAdditionDtoAndGroup.getT1().setName(additionAndAdditionDtoAndGroup.getT2().getName());
                     additionAndAdditionDtoAndGroup.getT1().setPrice(additionAndAdditionDtoAndGroup.getT2().getPrice());
-                    additionAndAdditionDtoAndGroup.getT1().setGroup(additionAndAdditionDtoAndGroup.getT3());
+//                    additionAndAdditionDtoAndGroup.getT1().setGroup(additionAndAdditionDtoAndGroup.getT3());
                     return additionAndAdditionDtoAndGroup.getT1();
                 })
                 .flatMap(repository::save)
