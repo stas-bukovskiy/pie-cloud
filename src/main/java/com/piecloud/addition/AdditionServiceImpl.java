@@ -1,6 +1,7 @@
 package com.piecloud.addition;
 
-import com.piecloud.addition.group.AdditionGroupService;
+import com.piecloud.addition.group.AdditionGroup;
+import com.piecloud.addition.group.AdditionGroupRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,64 +16,85 @@ import reactor.util.function.Tuples;
 public class AdditionServiceImpl implements AdditionService {
 
     private final AdditionRepository repository;
-    private final AdditionGroupService groupService;
+    private final AdditionConverter converter;
+    private final AdditionGroupRepository groupRepository;
 
     @Autowired
-    public AdditionServiceImpl(AdditionRepository repository, AdditionGroupService groupService) {
+    public AdditionServiceImpl(AdditionRepository repository,
+                               AdditionConverter converter,
+                               AdditionGroupRepository groupRepository) {
         this.repository = repository;
-        this.groupService = groupService;
+        this.converter = converter;
+        this.groupRepository = groupRepository;
     }
 
     @Override
-    public Flux<Addition> getAllAdditions() {
-        return repository.findAll();
+    public Flux<AdditionDto> getAllAdditions() {
+        return repository.findAll()
+                .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<Addition> getAddition(String id) {
+    public Mono<AdditionDto> getAddition(String id) {
         return repository.findById(id)
+                .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                                 "not found addition with such id = " + id)));
     }
 
     @Override
-    public Mono<Addition> createAddition(Mono<AdditionDto> additionDtoMono) {
+    public Mono<AdditionDto> createAddition(Mono<AdditionDto> additionDtoMono) {
         return additionDtoMono
-                .zipWhen(additionDto -> groupService.getAdditionGroup(additionDto.getGroupId()))
-                .onErrorStop()
-                .map(additionDtoAndGroup -> Addition.builder()
-                        .name(additionDtoAndGroup.getT1().getName())
-                        .price(additionDtoAndGroup.getT1().getPrice())
-//                        .group(additionDtoAndGroup.getT2())
-                        .build())
+                .zipWhen(additionDto -> findAdditionGroupOrStatusException(additionDto.getGroup().getId()))
+                .map(additionDtoAndGroup -> {
+                    AdditionDto additionDto = additionDtoAndGroup.getT1();
+                    AdditionGroup group = additionDtoAndGroup.getT2();
+                    Addition newAddition = new Addition();
+                    newAddition.setName(additionDto.getName());
+                    newAddition.setPrice(additionDto.getPrice());
+                    newAddition.setGroup(group);
+                    return newAddition;
+                })
                 .flatMap(repository::save)
-                .doFinally(addition -> log.debug("created new addition: " + addition));
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("created new addition successfully"));
     }
 
     @Override
-    public Mono<Addition> updateAddition(String id, Mono<AdditionDto> additionDtoMono) {
-        return getAddition(id)
+    public Mono<AdditionDto> updateAddition(String id, Mono<AdditionDto> additionDtoMono) {
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found addition with such id = " + id)))
                 .zipWith(additionDtoMono)
                 .zipWhen(additionAndAdditionDto ->
-                        groupService.getAdditionGroup(additionAndAdditionDto.getT2().getGroupId()),
+                        findAdditionGroupOrStatusException(additionAndAdditionDto.getT2().getGroup().getId()),
                         (additionAndAdditionDto, additionGroup) -> Tuples.of(
                                 additionAndAdditionDto.getT1(),
                                 additionAndAdditionDto.getT2(),
                                 additionGroup
                         ))
-                .onErrorStop()
                 .map(additionAndAdditionDtoAndGroup -> {
-                    additionAndAdditionDtoAndGroup.getT1().setName(additionAndAdditionDtoAndGroup.getT2().getName());
-                    additionAndAdditionDtoAndGroup.getT1().setPrice(additionAndAdditionDtoAndGroup.getT2().getPrice());
-//                    additionAndAdditionDtoAndGroup.getT1().setGroup(additionAndAdditionDtoAndGroup.getT3());
-                    return additionAndAdditionDtoAndGroup.getT1();
+                    AdditionDto additionDto = additionAndAdditionDtoAndGroup.getT2();
+                    AdditionGroup group = additionAndAdditionDtoAndGroup.getT3();
+                    Addition updatedAddition = additionAndAdditionDtoAndGroup.getT1();
+                    updatedAddition.setName(additionDto.getName());
+                    updatedAddition.setPrice(additionDto.getPrice());
+                    updatedAddition.setGroup(group);
+                    return updatedAddition;
                 })
                 .flatMap(repository::save)
-                .doFinally(addition -> log.debug("updated addition: " + addition));
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("updated addition successfully"));
     }
 
     @Override
     public Mono<Void> deleteAddition(String id) {
         return repository.deleteById(id);
+    }
+
+    private Mono<AdditionGroup> findAdditionGroupOrStatusException(String groupId) {
+        return groupRepository.findById(groupId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found group with such id:" + groupId)));
     }
 }

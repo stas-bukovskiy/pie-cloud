@@ -37,11 +37,7 @@ public class AdditionControllerTest {
         postAndReturnAdditionGroup().subscribe(additionGroup -> webTestClient
                 .post()
                 .uri("/api/addition/")
-                .bodyValue(AdditionDto.builder()
-                        .name("addition")
-                        .price(BigDecimal.valueOf(12.2))
-                        .groupId(additionGroup.getId())
-                        .build())
+                .bodyValue(new AdditionGroupDto())
                 .exchange()
                 .expectStatus()
                 .isOk()

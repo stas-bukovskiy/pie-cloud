@@ -1,16 +1,14 @@
 package com.piecloud.addition;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.piecloud.addition.group.AdditionGroup;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
-@Builder
 public class AdditionDto {
     private String id;
 
@@ -22,6 +20,5 @@ public class AdditionDto {
             "and 2 fractional digits")
     private BigDecimal price;
 
-    @JsonProperty("group_id")
-    private String groupId;
+    private AdditionGroup group;
 }
