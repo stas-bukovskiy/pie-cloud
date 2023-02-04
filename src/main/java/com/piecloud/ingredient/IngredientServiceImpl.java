@@ -63,7 +63,7 @@ public class IngredientServiceImpl implements IngredientService{
                         "not found such ingredient")))
                 .zipWith(ingredientDtoMono)
                 .zipWhen(ingredientAndIngredientDto ->
-                        findIngredientGroupOrStatusException(ingredientAndIngredientDto.getT1().getGroup().getId()),
+                        findIngredientGroupOrStatusException(ingredientAndIngredientDto.getT2().getGroup().getId()),
                         (ingredientAndIngredientDto, group) -> Tuples.of(
                                 ingredientAndIngredientDto.getT1(),
                                 ingredientAndIngredientDto.getT2(),
