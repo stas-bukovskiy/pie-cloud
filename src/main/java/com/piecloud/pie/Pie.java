@@ -13,12 +13,13 @@ import java.util.Set;
 import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
 
 @Data
-@Builder
 @Document
 public class Pie {
 
     @Id
     private String id;
+
+    private String name;
 
     @Field(targetType = DECIMAL128)
     private BigDecimal price;

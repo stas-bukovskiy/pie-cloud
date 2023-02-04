@@ -2,6 +2,7 @@ package com.piecloud.pie;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,23 +19,24 @@ public class PieController {
     }
 
     @GetMapping("/")
-    public Flux<Pie> getPies() {
+    public Flux<PieDto> getPies() {
         return service.getAllPies();
     }
 
     @GetMapping("/{id}")
-    public Mono<Pie> getPie(@PathVariable String id) {
+    public Mono<PieDto> getPie(@PathVariable String id) {
         return service.getPie(id);
     }
 
     @PutMapping("/{id}")
-    public Mono<Pie> updatePieGroup(@PathVariable String id,
+    public Mono<PieDto> updatePieGroup(@PathVariable String id,
                                     @Valid @RequestBody Mono<PieDto> pieDtoMono) {
         return service.updatePie(id, pieDtoMono);
     }
 
     @PostMapping("/")
-    public Mono<Pie> createPieGroup(@Valid @RequestBody Mono<PieDto> pieDtoMono) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<PieDto> createPieGroup(@Valid @RequestBody Mono<PieDto> pieDtoMono) {
         return service.createPie(pieDtoMono);
     }
 

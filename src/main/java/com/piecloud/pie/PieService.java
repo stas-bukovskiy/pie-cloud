@@ -4,9 +4,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface PieService {
-    Flux<Pie> getAllPies();
-    Mono<Pie> getPie(String id);
-    Mono<Pie> createPie(Mono<PieDto> pieDtoMono);
-    Mono<Pie> updatePie(String id, Mono<PieDto> pieDtoMono);
+    Flux<PieDto> getAllPies();
+    Mono<PieDto> getPie(String id);
+    Mono<PieDto> createPie(Mono<PieDto> pieDtoMono);
+    Mono<PieDto> updatePie(String id, Mono<PieDto> pieDtoMono);
     Mono<Void> deletePie(String id);
 }

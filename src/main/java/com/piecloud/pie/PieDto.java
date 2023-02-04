@@ -1,20 +1,23 @@
 package com.piecloud.pie;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.piecloud.ingredient.IngredientDto;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
 import lombok.Data;
 
-import java.util.Set;
+import java.math.BigDecimal;
+import java.util.List;
 
 @Data
-@Builder
 public class PieDto {
 
     private String id;
 
+    @Size(min = 3, message = "name must have more than 3 characters")
+    private String name;
+
+    private BigDecimal price;
+
     @Size(min = 1, message = "pie must contain at least 1 ingredient")
-    @JsonProperty("ingredient_ids")
-    private Set<String> ingredientIds;
+    private List<IngredientDto> ingredients;
 
 }

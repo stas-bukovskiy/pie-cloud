@@ -1,7 +1,8 @@
 package com.piecloud.pie;
 
+import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientDto;
-import com.piecloud.ingredient.IngredientService;
+import com.piecloud.ingredient.IngredientRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,60 +13,66 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
 import java.util.HashSet;
+import java.util.List;
 
 @Service
 @Slf4j
-public class PieServiceImpl implements PieService{
+public class PieServiceImpl implements PieService {
 
     private final PieRepository repository;
-    private final IngredientService ingredientService;
+    private final PieConverter converter;
+    private final IngredientRepository ingredientRepository;
 
     @Autowired
-    public PieServiceImpl(PieRepository repository, IngredientService ingredientService) {
+    public PieServiceImpl(PieRepository repository, PieConverter converter, IngredientRepository ingredientRepository) {
         this.repository = repository;
-        this.ingredientService = ingredientService;
+        this.converter = converter;
+        this.ingredientRepository = ingredientRepository;
     }
 
 
     @Override
-    public Flux<Pie> getAllPies() {
-        return repository.findAll();
+    public Flux<PieDto> getAllPies() {
+        return repository.findAll()
+                .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<Pie> getPie(String id) {
-        checkId(id);
+    public Mono<PieDto> getPie(String id) {
         return repository.findById(id)
+                .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found such pie")));
+                        "not found pie with such id: " + id)));
     }
 
     @Override
-    public Mono<Pie> createPie(Mono<PieDto> pieDtoMono) {
+    public Mono<PieDto> createPie(Mono<PieDto> pieDtoMono) {
         return pieDtoMono
-                .zipWhen(pieDto -> Flux.fromIterable(pieDto.getIngredient())
+                .zipWhen(pie -> Flux.fromIterable(pie.getIngredients())
                         .map(IngredientDto::getId)
-                                .flatMap(ingredientService::getIngredient)
-                                .onErrorStop()
-                                .collectList())
-                .map(pieDtoListTuple2 -> Pie.builder()
-                        .ingredients(new HashSet<>())
-                        .build())
+                        .flatMap(this::findIngredientOrSwitchToStatusException)
+                        .collectList()
+                )
+                .map(pieDtoListTuple2 -> {
+                    List<Ingredient> ingredients = pieDtoListTuple2.getT2();
+                    Pie pie = converter.convertDtoToDocument(pieDtoListTuple2.getT1());
+                    pie.setIngredients(new HashSet<>(ingredients));
+                    return pie;
+                })
                 .flatMap(repository::save)
-                .doFinally(newIngredient -> log.debug("created new pie: " + newIngredient));
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("created new pie successfully"));
     }
 
     @Override
-    public Mono<Pie> updatePie(String id, Mono<PieDto> pieDtoMono) {
-        checkId(id);
+    public Mono<PieDto> updatePie(String id, Mono<PieDto> pieDtoMono) {
         return repository.findById(id)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found such pie")))
+                        "not found pie with such id: " + id)))
                 .zipWith(pieDtoMono)
-                .zipWhen(pieAndPieDto -> Flux.fromIterable(pieAndPieDto.getT2().getIngredient())
+                .zipWhen(pieAndPieDto -> Flux.fromIterable(pieAndPieDto.getT2().getIngredients())
                                 .map(IngredientDto::getId)
-                                .flatMap(ingredientService::getIngredient)
-                                .onErrorStop()
+                                .flatMap(this::findIngredientOrSwitchToStatusException)
                                 .collectList(),
                         (pieAndPieDto, ingredients) -> Tuples.of(
                                 pieAndPieDto.getT1(),
@@ -73,22 +80,27 @@ public class PieServiceImpl implements PieService{
                                 ingredients
                         ))
                 .map(piePieDtoListTuple3 -> {
-                    piePieDtoListTuple3.getT1()
-                            .setIngredients(new HashSet<>());
-                    return piePieDtoListTuple3.getT1();
+                    Pie updatedPie = piePieDtoListTuple3.getT1();
+                    PieDto pieDto = piePieDtoListTuple3.getT2();
+                    List<Ingredient> ingredients = piePieDtoListTuple3.getT3();
+                    updatedPie.setName(pieDto.getName());
+                    updatedPie.setIngredients(new HashSet<>(ingredients));
+                    return updatedPie;
                 })
-                .flatMap(repository::save);
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(pieDto -> log.debug("updated pie successfully: " + pieDto));
     }
 
     @Override
     public Mono<Void> deletePie(String id) {
-        checkId(id);
         return repository.deleteById(id);
     }
 
-    private void checkId(String id) {
-        if (id == null || id.equals(""))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id must not be empty");
+    private Mono<Ingredient> findIngredientOrSwitchToStatusException(String id) {
+        return ingredientRepository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found ingredient with such id = " + id)));
     }
 
 

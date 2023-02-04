@@ -18,22 +18,22 @@ public class AdditionController {
     }
 
     @GetMapping("/")
-    public Flux<Addition> getAll() {
+    public Flux<AdditionDto> getAll() {
         return service.getAllAdditions();
     }
 
     @GetMapping("/{id}")
-    public Mono<Addition> getOne(@PathVariable String id) {
+    public Mono<AdditionDto> getOne(@PathVariable String id) {
         return service.getAddition(id);
     }
 
     @PostMapping("/")
-    public Mono<Addition> create(@RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
+    public Mono<AdditionDto> create(@RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
         return service.createAddition(additionDtoMono);
     }
 
     @PutMapping("/{id}")
-    public Mono<Addition> update(@PathVariable String id,
+    public Mono<AdditionDto> update(@PathVariable String id,
                                  @RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
         return service.updateAddition(id, additionDtoMono);
     }

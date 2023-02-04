@@ -101,7 +101,7 @@ public class OrderLineServiceImpl implements OrderLineService {
                 .onErrorStop()
                 .map(orderLineDtoAndPie -> OrderLine.builder()
                         .amount(orderLineDtoAndPie.getT1().getAmount())
-                        .pie(orderLineDtoAndPie.getT2())
+//                        .pie(orderLineDtoAndPie.getT2())
                         .build());
     }
 
@@ -111,7 +111,7 @@ public class OrderLineServiceImpl implements OrderLineService {
                 .onErrorStop()
                 .map(orderLineDtoAndPie -> OrderLine.builder()
                         .amount(orderLineDtoAndPie.getT1().getAmount())
-                        .pie(orderLineDtoAndPie.getT2())
+//                        .pie(orderLineDtoAndPie.getT2())
                         .build());
     }
 
