@@ -1,7 +1,7 @@
 package com.piecloud.addition;
 
 import com.piecloud.addition.group.AdditionGroup;
-import com.piecloud.addition.group.AdditionGroupRepository;
+import com.piecloud.addition.group.AdditionGroupService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,35 +17,44 @@ public class AdditionServiceImpl implements AdditionService {
 
     private final AdditionRepository repository;
     private final AdditionConverter converter;
-    private final AdditionGroupRepository groupRepository;
+    private final AdditionGroupService groupService;
 
     @Autowired
     public AdditionServiceImpl(AdditionRepository repository,
                                AdditionConverter converter,
-                               AdditionGroupRepository groupRepository) {
+                               AdditionGroupService groupService) {
         this.repository = repository;
         this.converter = converter;
-        this.groupRepository = groupRepository;
+        this.groupService = groupService;
     }
 
     @Override
-    public Flux<AdditionDto> getAllAdditions() {
+    public Flux<AdditionDto> getAllAdditionsDto() {
         return repository.findAll()
                 .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<AdditionDto> getAddition(String id) {
+    public Mono<AdditionDto> getAdditionDto(String id) {
+        checkAdditionId(id);
         return repository.findById(id)
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                "not found addition with such id = " + id)));
+                        "not found addition with such id = " + id)));
+    }
+
+    @Override
+    public Mono<Addition> getAddition(String id) {
+        checkAdditionId(id);
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found addition with such id = " + id)));
     }
 
     @Override
     public Mono<AdditionDto> createAddition(Mono<AdditionDto> additionDtoMono) {
         return additionDtoMono
-                .zipWhen(additionDto -> findAdditionGroupOrStatusException(additionDto.getGroup().getId()))
+                .zipWhen(additionDto -> groupService.getAdditionGroup(additionDto.getGroup().getId()))
                 .map(additionDtoAndGroup -> {
                     AdditionDto additionDto = additionDtoAndGroup.getT1();
                     AdditionGroup group = additionDtoAndGroup.getT2();
@@ -62,12 +71,10 @@ public class AdditionServiceImpl implements AdditionService {
 
     @Override
     public Mono<AdditionDto> updateAddition(String id, Mono<AdditionDto> additionDtoMono) {
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found addition with such id = " + id)))
+        return getAddition(id)
                 .zipWith(additionDtoMono)
                 .zipWhen(additionAndAdditionDto ->
-                        findAdditionGroupOrStatusException(additionAndAdditionDto.getT2().getGroup().getId()),
+                                groupService.getAdditionGroup(additionAndAdditionDto.getT2().getGroup().getId()),
                         (additionAndAdditionDto, additionGroup) -> Tuples.of(
                                 additionAndAdditionDto.getT1(),
                                 additionAndAdditionDto.getT2(),
@@ -89,12 +96,13 @@ public class AdditionServiceImpl implements AdditionService {
 
     @Override
     public Mono<Void> deleteAddition(String id) {
+        checkAdditionId(id);
         return repository.deleteById(id);
     }
 
-    private Mono<AdditionGroup> findAdditionGroupOrStatusException(String groupId) {
-        return groupRepository.findById(groupId)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found group with such id:" + groupId)));
+    private void checkAdditionId(String additionId) {
+        if (additionId == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "addition id must not be null");
     }
 }

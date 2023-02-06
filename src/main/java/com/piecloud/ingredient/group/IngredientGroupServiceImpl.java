@@ -23,15 +23,24 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
     }
 
     @Override
-    public Flux<IngredientGroupDto> getAllIngredientGroups() {
+    public Flux<IngredientGroupDto> getAllIngredientGroupsDto() {
         return repository.findAll()
                 .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<IngredientGroupDto> getIngredientGroup(String id) {
+    public Mono<IngredientGroupDto> getIngredientGroupDto(String id) {
+        checkIngredientGroupId(id);
         return repository.findById(id)
                 .map(converter::convertDocumentToDto)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found such ingredient group")));
+    }
+
+    @Override
+    public Mono<IngredientGroup> getIngredientGroup(String id) {
+        checkIngredientGroupId(id);
+        return repository.findById(id)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such ingredient group")));
     }
@@ -47,7 +56,7 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
 
     @Override
     public Mono<IngredientGroupDto> updateIngredientGroup(String id, Mono<IngredientGroupDto> ingredientGroupDtoMono) {
-        return findByIdOrIfEmptySwitchToError(id)
+        return getIngredientGroup(id)
                 .zipWith(ingredientGroupDtoMono)
                 .map(ingredientGroupAndIngredientGroupDto -> {
                     ingredientGroupAndIngredientGroupDto.getT1()
@@ -60,13 +69,14 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
 
     @Override
     public Mono<Void> deleteIngredientGroup(String id) {
+        checkIngredientGroupId(id);
         return repository.deleteById(id);
     }
 
-    private Mono<IngredientGroup> findByIdOrIfEmptySwitchToError(String id) {
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found ingredient group with such id = "  + id)));
+    private void checkIngredientGroupId(String id) {
+        if (id == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "ingredient group id must not be null");
     }
 
 }

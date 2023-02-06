@@ -22,15 +22,24 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     }
 
     @Override
-    public Flux<AdditionGroupDto> getAllAdditionGroups() {
+    public Flux<AdditionGroupDto> getAllAdditionGroupsDto() {
         return repository.findAll()
                 .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<AdditionGroupDto> getAdditionGroup(String id) {
+    public Mono<AdditionGroupDto> getAdditionGroupDto(String id) {
+        checkGroupId(id);
         return repository.findById(id)
                 .map(converter::convertDocumentToDto)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found addition group with such id: " + id)));
+    }
+
+    @Override
+    public Mono<AdditionGroup> getAdditionGroup(String id) {
+        checkGroupId(id);
+        return repository.findById(id)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found addition group with such id: " + id)));
     }
@@ -46,9 +55,7 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
 
     @Override
     public Mono<AdditionGroupDto> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono) {
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found addition group with such id: " + id)))
+        return getAdditionGroup(id)
                 .zipWith(groupDtoMono)
                 .map(groupAndGroupDto -> {
                     groupAndGroupDto.getT1().setName(groupAndGroupDto.getT2().getName());
@@ -61,7 +68,15 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
 
     @Override
     public Mono<Void> deleteAdditionGroup(String id) {
+        checkGroupId(id);
         return repository.deleteById(id);
+    }
+
+
+    private void checkGroupId(String id) {
+        if (id == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "addition group id must not be null");
     }
 
 }

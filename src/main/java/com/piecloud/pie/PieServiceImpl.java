@@ -2,7 +2,7 @@ package com.piecloud.pie;
 
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientDto;
-import com.piecloud.ingredient.IngredientRepository;
+import com.piecloud.ingredient.IngredientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,26 +21,37 @@ public class PieServiceImpl implements PieService {
 
     private final PieRepository repository;
     private final PieConverter converter;
-    private final IngredientRepository ingredientRepository;
+    private final IngredientService ingredientService;
 
     @Autowired
-    public PieServiceImpl(PieRepository repository, PieConverter converter, IngredientRepository ingredientRepository) {
+    public PieServiceImpl(PieRepository repository,
+                          PieConverter converter,
+                          IngredientService ingredientService) {
         this.repository = repository;
         this.converter = converter;
-        this.ingredientRepository = ingredientRepository;
+        this.ingredientService = ingredientService;
     }
 
 
     @Override
-    public Flux<PieDto> getAllPies() {
+    public Flux<PieDto> getAllPiesDto() {
         return repository.findAll()
                 .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<PieDto> getPie(String id) {
+    public Mono<PieDto> getPieDto(String id) {
+        checkPieId(id);
         return repository.findById(id)
                 .map(converter::convertDocumentToDto)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found pie with such id: " + id)));
+    }
+
+    @Override
+    public Mono<Pie> getPie(String id) {
+        checkPieId(id);
+        return repository.findById(id)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found pie with such id: " + id)));
     }
@@ -50,7 +61,7 @@ public class PieServiceImpl implements PieService {
         return pieDtoMono
                 .zipWhen(pie -> Flux.fromIterable(pie.getIngredients())
                         .map(IngredientDto::getId)
-                        .flatMap(this::findIngredientOrSwitchToStatusException)
+                        .flatMap(ingredientService::getIngredient)
                         .collectList()
                 )
                 .map(pieDtoListTuple2 -> {
@@ -66,13 +77,11 @@ public class PieServiceImpl implements PieService {
 
     @Override
     public Mono<PieDto> updatePie(String id, Mono<PieDto> pieDtoMono) {
-        return repository.findById(id)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found pie with such id: " + id)))
+        return getPie(id)
                 .zipWith(pieDtoMono)
                 .zipWhen(pieAndPieDto -> Flux.fromIterable(pieAndPieDto.getT2().getIngredients())
                                 .map(IngredientDto::getId)
-                                .flatMap(this::findIngredientOrSwitchToStatusException)
+                                .flatMap(ingredientService::getIngredient)
                                 .collectList(),
                         (pieAndPieDto, ingredients) -> Tuples.of(
                                 pieAndPieDto.getT1(),
@@ -94,14 +103,14 @@ public class PieServiceImpl implements PieService {
 
     @Override
     public Mono<Void> deletePie(String id) {
+        checkPieId(id);
         return repository.deleteById(id);
     }
 
-    private Mono<Ingredient> findIngredientOrSwitchToStatusException(String id) {
-        return ingredientRepository.findById(id)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found ingredient with such id = " + id)));
+    private void checkPieId(String id) {
+        if (id == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "pie id must not be null");
     }
-
 
 }
