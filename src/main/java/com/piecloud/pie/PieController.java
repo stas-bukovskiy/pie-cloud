@@ -20,12 +20,12 @@ public class PieController {
 
     @GetMapping("/")
     public Flux<PieDto> getPies() {
-        return service.getAllPies();
+        return service.getAllPiesDto();
     }
 
     @GetMapping("/{id}")
     public Mono<PieDto> getPie(@PathVariable String id) {
-        return service.getPie(id);
+        return service.getPieDto(id);
     }
 
     @PutMapping("/{id}")

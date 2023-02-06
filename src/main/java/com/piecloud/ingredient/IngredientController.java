@@ -20,12 +20,12 @@ public class IngredientController {
 
     @GetMapping("/")
     public Flux<IngredientDto> getIngredients() {
-        return service.getAllIngredients();
+        return service.getAllIngredientsDto();
     }
 
     @GetMapping("/{id}")
     public Mono<IngredientDto> getIngredient(@PathVariable String id) {
-        return service.getIngredient(id);
+        return service.getIngredientDto(id);
     }
 
     @PutMapping("/{id}")

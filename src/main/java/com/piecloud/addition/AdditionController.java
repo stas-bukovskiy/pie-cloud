@@ -19,12 +19,12 @@ public class AdditionController {
 
     @GetMapping("/")
     public Flux<AdditionDto> getAll() {
-        return service.getAllAdditions();
+        return service.getAllAdditionsDto();
     }
 
     @GetMapping("/{id}")
     public Mono<AdditionDto> getOne(@PathVariable String id) {
-        return service.getAddition(id);
+        return service.getAdditionDto(id);
     }
 
     @PostMapping("/")

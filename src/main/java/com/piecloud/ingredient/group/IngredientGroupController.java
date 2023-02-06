@@ -22,12 +22,12 @@ public class IngredientGroupController {
 
     @GetMapping("/")
     public Flux<IngredientGroupDto> getIngredientGroups() {
-        return service.getAllIngredientGroups();
+        return service.getAllIngredientGroupsDto();
     }
 
     @GetMapping("/{id}")
     public Mono<IngredientGroupDto> getIngredientGroup(@PathVariable String id) {
-        return service.getIngredientGroup(id);
+        return service.getIngredientGroupDto(id);
     }
 
     @PutMapping("/{id}")

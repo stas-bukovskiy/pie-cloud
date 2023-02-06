@@ -22,12 +22,12 @@ public class AdditionGroupController {
 
     @GetMapping("/")
     public Flux<AdditionGroupDto> getIngredientGroups() {
-        return service.getAllAdditionGroups();
+        return service.getAllAdditionGroupsDto();
     }
 
     @GetMapping("/{id}")
     public Mono<AdditionGroupDto> getIngredientGroup(@PathVariable String id) {
-        return service.getAdditionGroup(id);
+        return service.getAdditionGroupDto(id);
     }
 
     @PutMapping("/{id}")
