@@ -1,22 +1,16 @@
 package com.piecloud.order.line;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.piecloud.addition.AdditionDto;
 import com.piecloud.pie.PieDto;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 
 @Data
-@NoArgsConstructor
 public class OrderLineDto {
-
+    private String id;
     private int amount;
-
+    private BigDecimal price;
     private PieDto pie;
-
-    @JsonProperty("pie_id")
-    private String pieId;
-
-    @JsonProperty("addition_id")
-    private String additionId;
+    private AdditionDto addition;
 }

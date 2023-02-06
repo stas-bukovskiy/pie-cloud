@@ -11,16 +11,19 @@ import java.math.BigDecimal;
 
 @Data
 public class IngredientDto {
+
     private String id;
 
-    @Size(min = 3, message = "name must have more than 3 characters")
+    @NotNull(message = "ingredient name must not be null")
+    @Size(min = 3, message = "ingredient name must have more than 3 characters")
     private String name;
 
-    @DecimalMin(value = "0.0", inclusive = false, message = "price must be larger than 0")
-    @Digits(integer = 3, fraction = 2, message = "price must have maximum 3 integral digits " +
+    @NotNull(message = "ingredient name must not be null")
+    @DecimalMin(value = "0.0", inclusive = false, message = "ingredient price must be larger than 0")
+    @Digits(integer = 3, fraction = 2, message = "ingredient price must have maximum 3 integral digits " +
             "and 2 fractional digits")
     private BigDecimal price;
 
-    @NotNull(message = "group_id must not be null")
+    @NotNull(message = "ingredient group must not be null")
     private IngredientGroupDto group;
 }
