@@ -2,7 +2,6 @@ package com.piecloud.order.line;
 
 import com.piecloud.addition.Addition;
 import com.piecloud.pie.Pie;
-import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -13,7 +12,6 @@ import java.math.BigDecimal;
 import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
 
 @Data
-@Builder
 @Document
 public class OrderLine {
     @Id

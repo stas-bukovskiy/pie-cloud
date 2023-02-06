@@ -16,49 +16,60 @@ import java.util.HashSet;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository repository;
+    private final OrderConverter converter;
     private final OrderLineService orderLineService;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository repository, OrderLineService orderLineService) {
+    public OrderServiceImpl(OrderRepository repository,
+                            OrderConverter converter,
+                            OrderLineService orderLineService) {
         this.repository = repository;
+        this.converter = converter;
         this.orderLineService = orderLineService;
     }
 
     @Override
-    public Flux<Order> getOrders() {
-        return repository.findAll();
+    public Flux<OrderDto> getOrders() {
+        return repository.findAll()
+                .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Mono<Order> getOrder(String id) {
+    public Mono<OrderDto> getOrder(String id) {
         return repository.findById(id)
+                .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found order with id = " + id)));
     }
 
     @Override
-    public Mono<Order> createOrder(Mono<OrderDto> orderDtoMono) {
+    public Mono<OrderDto> createOrder(Mono<OrderDto> orderDtoMono) {
         return orderDtoMono
                 .map(OrderDto::getOrderLines)
                 .flatMapMany(Flux::fromIterable)
                 .flatMap(orderLineDto -> orderLineService.createOrderLine(Mono.just(orderLineDto)))
                 .onErrorStop()
                 .collectList()
-                .map(orderLines -> Order.builder()
-                        .orderLines(new HashSet<>(orderLines))
-                        .build())
+                .map(orderLines -> {
+                    Order order = new Order();
+                    order.setOrderLines(new HashSet<>(orderLines));
+                    return order;
+                })
                 .flatMap(repository::save)
-                .doFinally(newOrder -> log.debug("created new order: " + newOrder));
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(newOrder -> log.debug("created new order: " + newOrder));
     }
 
     @Override
-    public Mono<Order> changeStatus(String id, OrderStatus newStatus) {
-        return getOrder(id)
-                .onErrorStop()
+    public Mono<OrderDto> changeStatus(String id, OrderStatus newStatus) {
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "not found order with id = " + id)))
                 .map(order -> {
                     order.setStatus(newStatus);
                     return order;
                 })
-                .flatMap(repository::save);
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto);
     }
 }

@@ -14,7 +14,6 @@ import java.util.Set;
 import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
 
 @Data
-@Builder
 @Document
 public class Order {
 

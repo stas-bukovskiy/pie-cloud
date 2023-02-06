@@ -14,6 +14,7 @@ import reactor.util.function.Tuples;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -59,6 +60,7 @@ public class PieServiceImpl implements PieService {
     @Override
     public Mono<PieDto> createPie(Mono<PieDto> pieDtoMono) {
         return pieDtoMono
+                .map(this::checkIngredients)
                 .zipWhen(pie -> Flux.fromIterable(pie.getIngredients())
                         .map(IngredientDto::getId)
                         .flatMap(ingredientService::getIngredient)
@@ -73,6 +75,16 @@ public class PieServiceImpl implements PieService {
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
                 .doOnSuccess(onSuccess -> log.debug("created new pie successfully"));
+    }
+
+    private PieDto checkIngredients(PieDto pieDto) {
+        List<IngredientDto> ingredients = pieDto.getIngredients();
+        Optional<IngredientDto> ingredientDtoWithNullId = ingredients.stream()
+                .filter(ingredient -> ingredient.getId() == null).findAny();
+        if (ingredientDtoWithNullId.isPresent())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "ingredient id must not be null");
+        return pieDto;
     }
 
     @Override

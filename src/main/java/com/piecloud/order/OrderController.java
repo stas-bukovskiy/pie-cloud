@@ -2,6 +2,7 @@ package com.piecloud.order;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,12 +19,13 @@ public class OrderController {
     }
 
     @GetMapping("/")
-    public Flux<Order> getAllOrders() {
+    public Flux<OrderDto> getAllOrders() {
         return service.getOrders();
     }
 
     @PostMapping("/")
-    public Mono<Order> postOrder(@RequestBody @Valid Mono<OrderDto> orderDtoMono ) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<OrderDto> postOrder(@RequestBody @Valid Mono<OrderDto> orderDtoMono ) {
         return service.createOrder(orderDtoMono);
     }
 
