@@ -1,13 +1,17 @@
 package com.piecloud.addition;
 
+import com.piecloud.validation.image.ValidImage;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("api/addition")
+@RequestMapping(value = "api/addition")
 public class AdditionController {
 
     private final AdditionService service;
@@ -34,12 +38,24 @@ public class AdditionController {
 
     @PutMapping("/{id}")
     public Mono<AdditionDto> update(@PathVariable String id,
-                                 @RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
+                                    @RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
         return service.updateAddition(id, additionDtoMono);
     }
 
     @DeleteMapping("/{id}")
     public Mono<Void> delete(@PathVariable String id) {
         return service.deleteAddition(id);
+    }
+
+
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<AdditionDto> postImageToAddition(@PathVariable String id,
+                                                 @RequestPart @Validated @ValidImage Mono<FilePart> image) {
+        return service.addImageToAddition(id, image);
+    }
+
+    @DeleteMapping("/{id}/image")
+    public Mono<AdditionDto> deleteImageFromAddition(@PathVariable String id) {
+        return service.removeImageFromAddition(id);
     }
 }

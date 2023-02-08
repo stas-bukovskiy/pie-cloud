@@ -21,6 +21,8 @@ public class Addition {
     @Indexed(unique = true)
     private String name;
 
+    private String imageName;
+
     @Field(targetType = DECIMAL128)
     private BigDecimal price;
 

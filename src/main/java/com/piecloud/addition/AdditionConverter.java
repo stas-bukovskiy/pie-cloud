@@ -1,9 +1,9 @@
 package com.piecloud.addition;
 
 
+import com.piecloud.image.ImageNameToURLConverterGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.modelmapper.config.Configuration;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.stereotype.Component;
@@ -14,28 +14,25 @@ public class AdditionConverter {
 
     private final ModelMapper mapper;
 
-
     public AdditionConverter() {
-        mapper = createModelMapperWithSkippingIdInOneWay();
+        mapper = createModelMapper();
     }
 
-    private ModelMapper createModelMapperWithSkippingIdInOneWay() {
-        ModelMapper mapper = new ModelMapper();
-        mapper.getConfiguration()
+    private ModelMapper createModelMapper() {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration()
                 .setAmbiguityIgnored(true)
                 .setFieldMatchingEnabled(true)
                 .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE)
                 .setMatchingStrategy(MatchingStrategies.STANDARD);
-
-        PropertyMap<AdditionDto, Addition> propertyMapWithSkippedIdInDtoToDocWay =
-                new PropertyMap<>() {
-                    @Override
-                    protected void configure() {
-                        skip(destination.getId());
-                    }
-                };
-        mapper.addMappings(propertyMapWithSkippedIdInDtoToDocWay);
-        return mapper;
+        modelMapper.createTypeMap(AdditionDto.class, Addition.class);
+        modelMapper.createTypeMap(Addition.class, AdditionDto.class);
+        modelMapper.getTypeMap(AdditionDto.class, Addition.class)
+                .addMappings(mapper -> mapper.skip(Addition::setId));
+        modelMapper.getTypeMap(Addition.class, AdditionDto.class)
+                .addMappings(mapping -> mapping.using(ImageNameToURLConverterGenerator.generate())
+                        .map(Addition::getImageName, AdditionDto::setImageUrl));
+        return modelMapper;
     }
 
     public AdditionDto convertDocumentToDto(Addition addition){

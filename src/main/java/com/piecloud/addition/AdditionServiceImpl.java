@@ -2,9 +2,11 @@ package com.piecloud.addition;
 
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupService;
+import com.piecloud.image.ImageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
@@ -18,14 +20,16 @@ public class AdditionServiceImpl implements AdditionService {
     private final AdditionRepository repository;
     private final AdditionConverter converter;
     private final AdditionGroupService groupService;
+    private final ImageService imageService;
 
     @Autowired
     public AdditionServiceImpl(AdditionRepository repository,
                                AdditionConverter converter,
-                               AdditionGroupService groupService) {
+                               AdditionGroupService groupService, ImageService imageService) {
         this.repository = repository;
         this.converter = converter;
         this.groupService = groupService;
+        this.imageService = imageService;
     }
 
     @Override
@@ -41,6 +45,12 @@ public class AdditionServiceImpl implements AdditionService {
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found addition with such id = " + id)));
+    }
+
+    private void checkAdditionId(String additionId) {
+        if (additionId == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "addition id must not be null");
     }
 
     @Override
@@ -60,6 +70,7 @@ public class AdditionServiceImpl implements AdditionService {
                     AdditionGroup group = additionDtoAndGroup.getT2();
                     Addition newAddition = new Addition();
                     newAddition.setName(additionDto.getName());
+                    newAddition.setImageName(imageService.getDefaultImageName());
                     newAddition.setPrice(additionDto.getPrice());
                     newAddition.setGroup(group);
                     return newAddition;
@@ -100,9 +111,40 @@ public class AdditionServiceImpl implements AdditionService {
         return repository.deleteById(id);
     }
 
-    private void checkAdditionId(String additionId) {
-        if (additionId == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "addition id must not be null");
+    @Override
+    public Mono<AdditionDto> addImageToAddition(String id, Mono<FilePart> image) {
+        return getAddition(id)
+                .zipWith(imageService.saveImage(generateSuffixImageName(id), (image)))
+                .map(additionAndImageName -> {
+                    Addition addition = additionAndImageName.getT1();
+                    String imageName = additionAndImageName.getT2();
+                    addition.setImageName(imageName);
+                    return addition;
+                })
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto);
+    }
+
+    private Mono<String> generateSuffixImageName(String id) {
+        return Mono.just("addition-" + id);
+    }
+
+    @Override
+    public Mono<AdditionDto> removeImageFromAddition(String id) {
+        return getAddition(id)
+                .map(this::removeImage)
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto);
+    }
+
+    private Addition removeImage(Addition addition) {
+        if (isAdditionNotHaveDefaultImage(addition))
+            imageService.removeImage(addition.getImageName());
+        addition.setImageName(imageService.getDefaultImageName());
+        return addition;
+    }
+
+    private boolean isAdditionNotHaveDefaultImage(Addition addition) {
+        return !addition.getImageName().equals(imageService.getDefaultImageName());
     }
 }

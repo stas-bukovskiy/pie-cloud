@@ -1,5 +1,6 @@
 package com.piecloud.addition;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.piecloud.addition.group.AdditionGroup;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -17,6 +18,9 @@ public class AdditionDto {
     @NotNull(message = "addition name must not be null")
     @Size(min = 3, message = "addition name must have more than 3 characters")
     private String name;
+
+    @JsonProperty("image_url")
+    private String imageUrl;
 
     @NotNull(message = "addition price must not be null")
     @DecimalMin(value = "0.0", inclusive = false, message = "addition price must be larger than 0")
