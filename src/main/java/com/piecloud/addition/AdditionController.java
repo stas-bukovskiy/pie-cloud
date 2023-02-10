@@ -1,11 +1,8 @@
 package com.piecloud.addition;
 
-import com.piecloud.validation.image.ValidImage;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -48,9 +45,8 @@ public class AdditionController {
     }
 
 
-    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Mono<AdditionDto> postImageToAddition(@PathVariable String id,
-                                                 @RequestPart @Validated @ValidImage Mono<FilePart> image) {
+    @PostMapping(value = "/{id}/image")
+    public Mono<AdditionDto> postImageToAddition(@PathVariable String id, Mono<FilePart> image) {
         return service.addImageToAddition(id, image);
     }
 

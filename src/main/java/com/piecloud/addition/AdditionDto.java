@@ -19,8 +19,8 @@ public class AdditionDto {
     @Size(min = 3, message = "addition name must have more than 3 characters")
     private String name;
 
-    @JsonProperty("image_url")
-    private String imageUrl;
+    @JsonProperty("image_name")
+    private String imageName;
 
     @NotNull(message = "addition price must not be null")
     @DecimalMin(value = "0.0", inclusive = false, message = "addition price must be larger than 0")

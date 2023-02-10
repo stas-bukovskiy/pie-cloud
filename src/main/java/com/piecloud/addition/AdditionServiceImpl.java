@@ -2,7 +2,7 @@ package com.piecloud.addition;
 
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupService;
-import com.piecloud.image.ImageService;
+import com.piecloud.image.ImageUploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,16 +20,16 @@ public class AdditionServiceImpl implements AdditionService {
     private final AdditionRepository repository;
     private final AdditionConverter converter;
     private final AdditionGroupService groupService;
-    private final ImageService imageService;
+    private final ImageUploadService imageUploadService;
 
     @Autowired
     public AdditionServiceImpl(AdditionRepository repository,
                                AdditionConverter converter,
-                               AdditionGroupService groupService, ImageService imageService) {
+                               AdditionGroupService groupService, ImageUploadService imageUploadService) {
         this.repository = repository;
         this.converter = converter;
         this.groupService = groupService;
-        this.imageService = imageService;
+        this.imageUploadService = imageUploadService;
     }
 
     @Override
@@ -70,7 +70,7 @@ public class AdditionServiceImpl implements AdditionService {
                     AdditionGroup group = additionDtoAndGroup.getT2();
                     Addition newAddition = new Addition();
                     newAddition.setName(additionDto.getName());
-                    newAddition.setImageName(imageService.getDefaultImageName());
+                    newAddition.setImageName(imageUploadService.getDefaultImageName());
                     newAddition.setPrice(additionDto.getPrice());
                     newAddition.setGroup(group);
                     return newAddition;
@@ -114,7 +114,7 @@ public class AdditionServiceImpl implements AdditionService {
     @Override
     public Mono<AdditionDto> addImageToAddition(String id, Mono<FilePart> image) {
         return getAddition(id)
-                .zipWith(imageService.saveImage(generateSuffixImageName(id), (image)))
+                .zipWith(imageUploadService.saveImage(generateSuffixImageName(id), (image)))
                 .map(additionAndImageName -> {
                     Addition addition = additionAndImageName.getT1();
                     String imageName = additionAndImageName.getT2();
@@ -139,12 +139,12 @@ public class AdditionServiceImpl implements AdditionService {
 
     private Addition removeImage(Addition addition) {
         if (isAdditionNotHaveDefaultImage(addition))
-            imageService.removeImage(addition.getImageName());
-        addition.setImageName(imageService.getDefaultImageName());
+            imageUploadService.removeImage(addition.getImageName());
+        addition.setImageName(imageUploadService.getDefaultImageName());
         return addition;
     }
 
     private boolean isAdditionNotHaveDefaultImage(Addition addition) {
-        return !addition.getImageName().equals(imageService.getDefaultImageName());
+        return !addition.getImageName().equals(imageUploadService.getDefaultImageName());
     }
 }

@@ -1,7 +1,6 @@
 package com.piecloud.addition;
 
 
-import com.piecloud.image.ImageNameToURLConverterGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
@@ -29,9 +28,6 @@ public class AdditionConverter {
         modelMapper.createTypeMap(Addition.class, AdditionDto.class);
         modelMapper.getTypeMap(AdditionDto.class, Addition.class)
                 .addMappings(mapper -> mapper.skip(Addition::setId));
-        modelMapper.getTypeMap(Addition.class, AdditionDto.class)
-                .addMappings(mapping -> mapping.using(ImageNameToURLConverterGenerator.generate())
-                        .map(Addition::getImageName, AdditionDto::setImageUrl));
         return modelMapper;
     }
 

@@ -14,21 +14,20 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import static org.apache.commons.compress.utils.FileNameUtils.getExtension;
 
 @Slf4j
 @Service
-public class ImageUploadUploadServiceImpl implements ImageUploadService {
-
-    private final String UPLOAD_DIRECTORY = "public/uploads";
+public class ImageUploadServiceImpl implements ImageUploadService {
 
     private final ImageUploadServiceProperties properties;
     private final ImageFileValidator validator;
     private final Path uploadDirectoryPath;
 
     @Autowired
-    public ImageUploadUploadServiceImpl(ImageUploadServiceProperties properties, ImageFileValidator validator) {
+    public ImageUploadServiceImpl(ImageUploadServiceProperties properties, ImageFileValidator validator) {
         this.properties = properties;
         this.validator = validator;
         uploadDirectoryPath = tryToCreateUploadDirectoryPath();
@@ -36,7 +35,8 @@ public class ImageUploadUploadServiceImpl implements ImageUploadService {
 
     private Path tryToCreateUploadDirectoryPath() {
         try {
-            URL uploadFolderURL = getClass().getClassLoader().getResource(UPLOAD_DIRECTORY);
+            Path uploadDirectoryPath = Path.of("public", properties.getUploadDirectory());
+            URL uploadFolderURL = getClass().getClassLoader().getResource(uploadDirectoryPath.toString());
             assert uploadFolderURL != null;
             return Path.of(uploadFolderURL.toURI());
         } catch (URISyntaxException e) {
@@ -50,28 +50,42 @@ public class ImageUploadUploadServiceImpl implements ImageUploadService {
     }
 
     @Override
-    public Mono<String> saveImage(Mono<String> suffix, Mono<FilePart> image) {
-        return image
+    public Mono<String> saveImage(Mono<String> prefixMono, Mono<FilePart> imageMono) {
+        return imageMono
                 .map(validator::checkValidImageFilePart)
-                .zipWith(suffix)
-                .map(imageAndSuffix -> {
-                    Path imageFilePath = createImageFilePath(imageAndSuffix.getT2(), imageAndSuffix.getT1());
+                .zipWith(prefixMono)
+                .map(imageAndPrefix -> {
+                    String prefix = imageAndPrefix.getT2();
+                    FilePart imageFilePart = imageAndPrefix.getT1();
+
+                    removePreviousImages(prefix);
+                    Path imageFilePath = createImageFilePath(prefix, imageFilePart);
                     File imageFile = tryToCreateImageFile(imageFilePath);
-                    transferFilePartToFile(imageAndSuffix.getT1(), imageFile);
+                    transferFilePartToFile(imageFilePart, imageFile);
                     return imageFile.getName();
                 });
     }
 
-    private Path createImageFilePath(String suffix, FilePart image) {
+    private void removePreviousImages(String prefix) {
+        File[] imagesToBeRemoved = uploadDirectoryPath.toFile()
+                .listFiles((dir,name) -> name.matches(prefix + ".*"));
+        if (imagesToBeRemoved != null) {
+            Arrays.stream(imagesToBeRemoved).forEach(file -> {
+                if (file.delete())
+                    log.debug(String.format("%s was removed successfully", file.getName()));
+            });
+        }
+    }
+
+    private Path createImageFilePath(String prefix, FilePart image) {
         String extension = getExtension(image.filename());
-        String fileName = suffix + "." + extension;
+        String fileName = prefix + "." + extension;
         return uploadDirectoryPath.resolve(fileName).toAbsolutePath();
     }
 
     private File tryToCreateImageFile(Path imageFilePath) {
         File imageFile;
         try {
-            Files.deleteIfExists(imageFilePath);
             imageFile = Files.createFile(imageFilePath).toFile();
         } catch (IOException e) {
             log.error("Error while image file was creating:", e);

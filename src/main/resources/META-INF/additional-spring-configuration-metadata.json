@@ -1,0 +1,15 @@
+{
+  "properties": [
+    {
+      "name": "com.pie-cloud.image-upload-service.default-image",
+      "type": "java.lang.String",
+      "description": "Name of image that will be used as default for Addition, Ingredient and Pie documents. This image must be in upload-directory directory."
+    },
+    {
+      "name": "com.pie-cloud.image-upload-service.upload-directory",
+      "type": "java.lang.String",
+      "defaultValue": "uploads",
+      "description": "Directory for uploading images. Must be in resources/public directory."
+    }
+  ]
+}
