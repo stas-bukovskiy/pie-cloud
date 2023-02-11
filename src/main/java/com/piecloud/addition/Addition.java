@@ -1,7 +1,9 @@
 package com.piecloud.addition;
 
 import com.piecloud.addition.group.AdditionGroup;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -12,6 +14,8 @@ import java.math.BigDecimal;
 import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Document
 public class Addition {
 
