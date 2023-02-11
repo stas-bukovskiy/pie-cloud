@@ -29,8 +29,8 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
 
     @Override
     public Mono<AdditionGroupDto> getAdditionGroupDto(String id) {
-        checkGroupId(id);
-        return repository.findById(id)
+        return checkGroupId(id)
+                .flatMap(repository::findById)
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found addition group with such id: " + id)));
@@ -38,8 +38,8 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
 
     @Override
     public Mono<AdditionGroup> getAdditionGroup(String id) {
-        checkGroupId(id);
-        return repository.findById(id)
+        return checkGroupId(id)
+                .flatMap(repository::findById)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found addition group with such id: " + id)));
     }
@@ -68,15 +68,16 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
 
     @Override
     public Mono<Void> deleteAdditionGroup(String id) {
-        checkGroupId(id);
-        return repository.deleteById(id);
+        return checkGroupId(id)
+                .flatMap(repository::deleteById);
     }
 
 
-    private void checkGroupId(String id) {
+    private Mono<String> checkGroupId(String id) {
         if (id == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "addition group id must not be null");
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "addition group id must not be null"));
+        return Mono.just(id);
     }
 
 }
