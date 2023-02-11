@@ -1,41 +1,32 @@
 package com.piecloud.addition.group;
 
-import com.piecloud.addition.group.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(SpringExtension.class)
-@WebFluxTest(AdditionGroupController.class)
-@Import({AdditionGroupConverter.class, AdditionGroupServiceImpl.class})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class AdditionGroupControllerTest {
-
-    private static final String GROUP_NAME = "addition_group";
-    private static final String GROUP_ID = "addition_group_id";
 
     @Autowired
     private WebTestClient webTestClient;
-
-    @MockBean
+    @Autowired
     private AdditionGroupRepository repository;
-    @MockBean
-    private AdditionGroupConverter converter;
+
 
     @Test
     public void testPost_shouldReturnAdditionGroup() {
-        AdditionGroupDto groupDto = createGroupDto();
-        AdditionGroup group = createGroup();
-
-        Mockito.when(repository.save(group)).thenReturn(Mono.just(group));
-        Mockito.when(converter.convertDocumentToDto(group)).thenReturn(groupDto);
-        Mockito.when(converter.convertDtoToDocument(groupDto)).thenReturn(group);
+        AdditionGroupDto groupDto = new AdditionGroupDto("id", "name");
 
         webTestClient
                 .post()
@@ -44,37 +35,85 @@ public class AdditionGroupControllerTest {
                 .exchange()
                 .expectStatus()
                 .isCreated()
-                .expectBody(AdditionGroupDto.class);
+                .expectBody(AdditionGroupDto.class)
+                .value(saved -> assertEquals(groupDto.getName(), saved.getName()));
     }
 
     @Test
-    public void testGet_shouldReturnCreatedGroups() {
-        AdditionGroupDto groupDto = createGroupDto();
-        AdditionGroup group = createGroup();
-
-        Mockito.when(repository.findById(GROUP_ID)).thenReturn(Mono.just(group));
-        Mockito.when(converter.convertDocumentToDto(group)).thenReturn(groupDto);
+    public void testGet_shouldReturnGroups() {
+        List<AdditionGroup> additionGroups = new ArrayList<>();
+        repository.deleteAll().thenMany(repository.saveAll(Flux.fromIterable(List.of(
+                new AdditionGroup(null, "group1"),
+                new AdditionGroup(null, "group2"),
+                new AdditionGroup(null, "group3"),
+                new AdditionGroup(null, "group4")
+        )))).subscribe(additionGroups::add);
 
         webTestClient.get()
-                .uri("/api/addition/group/{id}", GROUP_ID)
+                .uri("/api/addition/group/")
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(AdditionGroupDto.class);
+                .expectBodyList(AdditionGroupDto.class)
+                .hasSize(additionGroups.size());
     }
 
+    @Test
+    public void testGetWithId_shouldReturnGroup() {
+        AdditionGroup group = repository.deleteAll().then(repository.save(
+                new AdditionGroup(null, "group")
+        )).block();
 
-    private AdditionGroup createGroup() {
-        AdditionGroup group = new AdditionGroup();
-        group.setId(GROUP_ID);
-        group.setName(GROUP_NAME);
-        return group;
+        assert group != null;
+        webTestClient.get()
+                .uri("/api/addition/group/{id}", group.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(AdditionGroupDto.class)
+                .value(result -> assertEquals(group.getName(), result.getName()));
     }
 
-    private AdditionGroupDto createGroupDto() {
-        AdditionGroupDto groupDto = new AdditionGroupDto();
-        groupDto.setId(GROUP_ID);
-        groupDto.setName(GROUP_NAME);
-        return groupDto;
+    @Test
+    public void testGetWithWrongId_shouldReturnGroup() {
+        String wrongId = "id";
+        repository.deleteById(wrongId).subscribe();
+
+        webTestClient.get()
+                .uri("/api/addition/group/{id}", wrongId)
+                .exchange()
+                .expectStatus().isEqualTo(404);
+    }
+
+    @Test
+    public void testPut_shouldReturnChangedGroup() {
+        AdditionGroup group = new AdditionGroup("id", "group");
+        repository.deleteAll().then(repository.save(group)).subscribe();
+        AdditionGroupDto changedGroup = new AdditionGroupDto(null, "changed name");
+
+        webTestClient.put()
+                .uri("/api/addition/group/{id}", group.getId())
+                .bodyValue(changedGroup)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(AdditionGroupDto.class)
+                .value(result -> assertEquals(changedGroup.getName(), result.getName()));
+    }
+
+    @Test
+    public void testDelete_shouldDeleteFromBD() {
+        AdditionGroup group = repository.deleteAll().then(repository.save(
+                new AdditionGroup("id", "group")
+        )).block();
+
+        assert group != null;
+        webTestClient.delete()
+                .uri("/api/addition/group/{id}", group.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Void.class);
+
+        StepVerifier.create(repository.findAll())
+                .expectNextCount(0)
+                .verifyComplete();
     }
 
 }
