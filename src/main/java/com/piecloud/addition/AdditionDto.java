@@ -2,15 +2,20 @@ package com.piecloud.addition;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.piecloud.addition.group.AdditionGroup;
+import com.piecloud.addition.group.AdditionGroupDto;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdditionDto {
 
     private String id;
@@ -29,6 +34,6 @@ public class AdditionDto {
     private BigDecimal price;
 
     @NotNull(message = "addition group must not be null")
-    private AdditionGroup group;
+    private AdditionGroupDto group;
 
 }
