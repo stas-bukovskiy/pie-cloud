@@ -40,23 +40,24 @@ public class AdditionServiceImpl implements AdditionService {
 
     @Override
     public Mono<AdditionDto> getAdditionDto(String id) {
-        checkAdditionId(id);
-        return repository.findById(id)
+        return checkAdditionId(id)
+                .flatMap(repository::findById)
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found addition with such id = " + id)));
     }
 
-    private void checkAdditionId(String additionId) {
-        if (additionId == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "addition id must not be null");
+    private Mono<String> checkAdditionId(String id) {
+        if (id == null)
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "addition id must not be null"));
+        return Mono.just(id);
     }
 
     @Override
     public Mono<Addition> getAddition(String id) {
-        checkAdditionId(id);
-        return repository.findById(id)
+        return checkAdditionId(id)
+                .flatMap(repository::findById)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found addition with such id = " + id)));
     }
@@ -107,8 +108,8 @@ public class AdditionServiceImpl implements AdditionService {
 
     @Override
     public Mono<Void> deleteAddition(String id) {
-        checkAdditionId(id);
-        return repository.deleteById(id);
+        return checkAdditionId(id)
+                .flatMap(repository::deleteById);
     }
 
     @Override
