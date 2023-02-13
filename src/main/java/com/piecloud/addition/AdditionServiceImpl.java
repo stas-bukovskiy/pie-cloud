@@ -69,12 +69,11 @@ public class AdditionServiceImpl implements AdditionService {
                 .map(additionDtoAndGroup -> {
                     AdditionDto additionDto = additionDtoAndGroup.getT1();
                     AdditionGroup group = additionDtoAndGroup.getT2();
-                    Addition newAddition = new Addition();
-                    newAddition.setName(additionDto.getName());
-                    newAddition.setImageName(imageUploadService.getDefaultImageName());
-                    newAddition.setPrice(additionDto.getPrice());
-                    newAddition.setGroup(group);
-                    return newAddition;
+                    return new Addition(null,
+                            additionDto.getName(),
+                            imageUploadService.getDefaultImageName(),
+                            additionDto.getPrice(),
+                            group);
                 })
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
