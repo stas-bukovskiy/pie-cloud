@@ -73,7 +73,7 @@ public class AdditionGroupControllerTest {
     }
 
     @Test
-    public void testGetWithWrongId_shouldReturnGroup() {
+    public void testGetWithWrongId_should404() {
         String wrongId = "id";
         repository.deleteById(wrongId).subscribe();
 
