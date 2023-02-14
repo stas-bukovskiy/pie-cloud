@@ -30,13 +30,15 @@ public class IngredientGroupConverter {
     }
 
     public IngredientGroupDto convertDocumentToDto(IngredientGroup ingredientGroup){
-        log.debug("converting " + ingredientGroup + " to dto");
-        return modelMapper.map(ingredientGroup, IngredientGroupDto.class);
+        IngredientGroupDto dto = modelMapper.map(ingredientGroup, IngredientGroupDto.class);
+        log.debug("converting " + ingredientGroup + " to dto: " + dto);
+        return dto;
     }
 
     public IngredientGroup convertDtoToDocument(IngredientGroupDto ingredientGroupDto) {
-        log.debug("converting " + ingredientGroupDto + " to document");
-        return modelMapper.map(ingredientGroupDto, IngredientGroup.class);
+        IngredientGroup group = modelMapper.map(ingredientGroupDto, IngredientGroup.class);
+        log.debug("converting " + ingredientGroupDto + " to document: " + group);
+        return group;
     }
 
 }

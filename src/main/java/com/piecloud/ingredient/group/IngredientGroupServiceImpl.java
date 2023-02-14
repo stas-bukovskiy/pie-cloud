@@ -30,8 +30,8 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
 
     @Override
     public Mono<IngredientGroupDto> getIngredientGroupDto(String id) {
-        checkIngredientGroupId(id);
-        return repository.findById(id)
+        return checkIngredientGroupId(id)
+                .flatMap(repository::findById)
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such ingredient group")));
@@ -39,8 +39,8 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
 
     @Override
     public Mono<IngredientGroup> getIngredientGroup(String id) {
-        checkIngredientGroupId(id);
-        return repository.findById(id)
+        return checkIngredientGroupId(id)
+                .flatMap(repository::findById)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such ingredient group")));
     }
@@ -69,14 +69,15 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
 
     @Override
     public Mono<Void> deleteIngredientGroup(String id) {
-        checkIngredientGroupId(id);
-        return repository.deleteById(id);
+        return checkIngredientGroupId(id)
+                .flatMap(repository::deleteById);
     }
 
-    private void checkIngredientGroupId(String id) {
+    private Mono<String> checkIngredientGroupId(String id) {
         if (id == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "ingredient group id must not be null");
+            return Mono.error( new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "ingredient group id must not be null"));
+        return Mono.just(id);
     }
 
 }
