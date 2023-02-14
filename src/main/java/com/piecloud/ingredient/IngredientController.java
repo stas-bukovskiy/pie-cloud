@@ -3,6 +3,7 @@ package com.piecloud.ingredient;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,4 +45,15 @@ public class IngredientController {
     public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
         return service.deleteIngredient(id);
     }
+
+    @PostMapping(value = "/{id}/image")
+    public Mono<IngredientDto> postImageToAddition(@PathVariable String id, Mono<FilePart> image) {
+        return service.addImageToIngredient(id, image);
+    }
+
+    @DeleteMapping("/{id}/image")
+    public Mono<IngredientDto> deleteImageFromAddition(@PathVariable String id) {
+        return service.removeImageFromIngredient(id);
+    }
+
 }

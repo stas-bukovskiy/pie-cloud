@@ -114,7 +114,7 @@ public class AdditionServiceImpl implements AdditionService {
     @Override
     public Mono<AdditionDto> addImageToAddition(String id, Mono<FilePart> image) {
         return getAddition(id)
-                .zipWith(imageUploadService.saveImage(generateSuffixImageName(id), (image)))
+                .zipWith(imageUploadService.saveImage(generatePrefixImageName(id), (image)))
                 .map(additionAndImageName -> {
                     Addition addition = additionAndImageName.getT1();
                     String imageName = additionAndImageName.getT2();
@@ -125,7 +125,7 @@ public class AdditionServiceImpl implements AdditionService {
                 .map(converter::convertDocumentToDto);
     }
 
-    private Mono<String> generateSuffixImageName(String id) {
+    private Mono<String> generatePrefixImageName(String id) {
         return Mono.just("addition-" + id);
     }
 
