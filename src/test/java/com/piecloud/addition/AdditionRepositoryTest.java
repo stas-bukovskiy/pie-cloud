@@ -15,9 +15,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataMongoTest
 @ExtendWith(SpringExtension.class)
@@ -33,7 +32,8 @@ class AdditionRepositoryTest {
 
     @BeforeEach
     public void setup() {
-        group = groupRepository.save(new AdditionGroup(null, "group")).block();
+        group = groupRepository.deleteAll()
+                .then(groupRepository.save(new AdditionGroup(null, "group"))).block();
     }
 
     @Test
@@ -53,8 +53,8 @@ class AdditionRepositoryTest {
         Addition additionToSave1 = new Addition("id1", notUniqueNme, "image.png", BigDecimal.TEN, group);
         Addition additionToSave2 = new Addition("id2", notUniqueNme, "image.png", BigDecimal.TEN, group);
 
-        Publisher<Addition> setup = repository.deleteAll()
-                .thenMany(repository.saveAll(List.of(additionToSave1, additionToSave2)));
+        Publisher<Addition> setup = repository.deleteAll().then(repository.save(additionToSave1))
+                .then(repository.save(additionToSave2));
 
         StepVerifier.create(setup)
                 .expectError(DuplicateKeyException.class)

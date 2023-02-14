@@ -13,9 +13,8 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
-public class TestImageFilePPart implements FilePart {
+public class TestImageFilePart implements FilePart {
 
     private static final DataBufferFactory factory = new DefaultDataBufferFactory();
 

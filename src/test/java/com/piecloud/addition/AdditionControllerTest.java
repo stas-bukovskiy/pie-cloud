@@ -1,6 +1,6 @@
 package com.piecloud.addition;
 
-import com.piecloud.TestImageFilePPart;
+import com.piecloud.TestImageFilePart;
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupDto;
 import com.piecloud.addition.group.AdditionGroupRepository;
@@ -76,10 +76,10 @@ public class AdditionControllerTest {
     public void testGet_shouldReturnAdditions() {
         List<Addition> additions = new ArrayList<>();
         repository.deleteAll().thenMany(repository.saveAll(Flux.fromIterable(List.of(
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
+                new Addition(null, "addition 1", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
+                new Addition(null, "addition 2", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
+                new Addition(null, "addition 3", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
+                new Addition(null, "addition 4", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
         )))).subscribe(additions::add);
 
         webTestClient.get()
@@ -162,7 +162,7 @@ public class AdditionControllerTest {
         )).block();
 
         assert addition != null;
-        FilePart imageFilePart = new TestImageFilePPart();
+        FilePart imageFilePart = new TestImageFilePart();
         webTestClient
                 .post()
                 .uri("/api/addition/{id}/image", addition.getId())
@@ -182,7 +182,7 @@ public class AdditionControllerTest {
                 new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
         )).block();
         assertNotNull(addition);
-        FilePart imageFilePart = new TestImageFilePPart();
+        FilePart imageFilePart = new TestImageFilePart();
         AdditionDto additionDto = service.addImageToAddition(addition.getId(), Mono.just(imageFilePart)).block();
         assertNotNull(additionDto);
         assertNotEquals(imageUploadService.getDefaultImageName(), additionDto.getImageName());
@@ -198,6 +198,5 @@ public class AdditionControllerTest {
                         assertEquals(imageUploadService.getDefaultImageName(),
                                 postedAddition.getImageName()));
     }
-
 
 }

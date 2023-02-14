@@ -71,6 +71,7 @@ public class IngredientServiceImpl implements IngredientService{
                 .map(ingredientDtoIngredientGroupTuple2 -> {
                     IngredientGroup group = ingredientDtoIngredientGroupTuple2.getT2();
                     Ingredient newIngredient = ingredientDtoIngredientGroupTuple2.getT1();
+                    newIngredient.setImageName(imageUploadService.getDefaultImageName());
                     newIngredient.setGroup(group);
                     return newIngredient;
                 })
@@ -92,7 +93,9 @@ public class IngredientServiceImpl implements IngredientService{
                 .map(ingredientIngredientDtoIngredientGroupTuple3 -> {
                     IngredientGroup group = ingredientIngredientDtoIngredientGroupTuple3.getT3();
                     Ingredient updatedIngredient = ingredientIngredientDtoIngredientGroupTuple3.getT1();
-                    updatedIngredient.setName(ingredientIngredientDtoIngredientGroupTuple3.getT2().getName());
+                    IngredientDto ingredientDto = ingredientIngredientDtoIngredientGroupTuple3.getT2();
+                    updatedIngredient.setName(ingredientDto.getName());
+                    updatedIngredient.setPrice(ingredientDto.getPrice());
                     updatedIngredient.setGroup(group);
                     return updatedIngredient;
                 })

@@ -1,5 +1,6 @@
 package com.piecloud.addition.group;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -23,6 +25,10 @@ public class AdditionGroupControllerTest {
     @Autowired
     private AdditionGroupRepository repository;
 
+    @BeforeEach
+    public void setup() {
+        repository.deleteAll().subscribe();
+    }
 
     @Test
     public void testPost_shouldReturnAdditionGroup() {
@@ -59,9 +65,9 @@ public class AdditionGroupControllerTest {
 
     @Test
     public void testGetWithId_shouldReturnGroup() {
-        AdditionGroup group = repository.deleteAll().then(repository.save(
+        AdditionGroup group = repository.save(
                 new AdditionGroup(null, "group")
-        )).block();
+        ).block();
 
         assert group != null;
         webTestClient.get()
@@ -85,10 +91,10 @@ public class AdditionGroupControllerTest {
 
     @Test
     public void testPut_shouldReturnChangedGroup() {
-        AdditionGroup group = new AdditionGroup("id", "group");
-        repository.deleteAll().then(repository.save(group)).subscribe();
+        AdditionGroup group = repository.save(new AdditionGroup(null, "group")).block();
         AdditionGroupDto changedGroup = new AdditionGroupDto(null, "changed name");
 
+        assertNotNull(group);
         webTestClient.put()
                 .uri("/api/addition/group/{id}", group.getId())
                 .bodyValue(changedGroup)

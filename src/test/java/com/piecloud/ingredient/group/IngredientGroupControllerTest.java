@@ -85,8 +85,9 @@ public class IngredientGroupControllerTest {
 
     @Test
     public void testPut_shouldReturnChangedGroup() {
-        IngredientGroup group = new IngredientGroup("id", "group");
-        repository.deleteAll().then(repository.save(group)).subscribe();
+        IngredientGroup group = repository.deleteAll().then(
+                repository.save(new IngredientGroup("id", "group"))
+        ).block();
         IngredientGroupDto changedGroup = new IngredientGroupDto(null, "changed name");
 
         webTestClient.put()

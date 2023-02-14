@@ -1,5 +1,6 @@
 package com.piecloud.addition;
 
+import com.piecloud.TestImageFilePart;
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupDto;
 import com.piecloud.addition.group.AdditionGroupRepository;
@@ -10,8 +11,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
@@ -19,7 +18,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
-import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -141,41 +139,12 @@ public class AdditionServiceTest {
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
         addition.setImageName(imageName);
         Mockito.when(repository.save(addition)).thenReturn(Mono.just(addition));
-        FilePart filePart = createFilePart();
+        FilePart filePart = new TestImageFilePart();
 
         Mono<AdditionDto> result = service.addImageToAddition(ID, Mono.just(filePart));
 
         StepVerifier.create(result)
                 .consumeNextWith(updated -> assertEquals(imageName, updated.getImageName()))
                 .verifyComplete();
-    }
-
-    private FilePart createFilePart() {
-        return new FilePart() {
-            @Override
-            public String filename() {
-                return "some_image.png";
-            }
-
-            @Override
-            public Mono<Void> transferTo(Path dest) {
-                return Mono.empty();
-            }
-
-            @Override
-            public String name() {
-                return "name";
-            }
-
-            @Override
-            public HttpHeaders headers() {
-                return new HttpHeaders();
-            }
-
-            @Override
-            public Flux<DataBuffer> content() {
-                return null;
-            }
-        };
     }
 }
