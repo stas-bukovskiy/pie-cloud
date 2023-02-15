@@ -1,11 +1,13 @@
 package com.piecloud.pie;
 
+import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientDto;
 import com.piecloud.ingredient.IngredientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
@@ -23,14 +25,16 @@ public class PieServiceImpl implements PieService {
     private final PieRepository repository;
     private final PieConverter converter;
     private final IngredientService ingredientService;
+    private final ImageUploadService imageUploadService;
 
     @Autowired
     public PieServiceImpl(PieRepository repository,
                           PieConverter converter,
-                          IngredientService ingredientService) {
+                          IngredientService ingredientService, ImageUploadService imageUploadService) {
         this.repository = repository;
         this.converter = converter;
         this.ingredientService = ingredientService;
+        this.imageUploadService = imageUploadService;
     }
 
 
@@ -42,17 +46,24 @@ public class PieServiceImpl implements PieService {
 
     @Override
     public Mono<PieDto> getPieDto(String id) {
-        checkPieId(id);
-        return repository.findById(id)
+        return checkPieId(id)
+                .flatMap(repository::findById)
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found pie with such id: " + id)));
     }
 
+    private Mono<String> checkPieId(String id) {
+        if (id == null)
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "pie id must not be null"));
+        return Mono.just(id);
+    }
+
     @Override
     public Mono<Pie> getPie(String id) {
-        checkPieId(id);
-        return repository.findById(id)
+        return checkPieId(id)
+                .flatMap(repository::findById)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found pie with such id: " + id)));
     }
@@ -115,14 +126,45 @@ public class PieServiceImpl implements PieService {
 
     @Override
     public Mono<Void> deletePie(String id) {
-        checkPieId(id);
-        return repository.deleteById(id);
+        return checkPieId(id)
+                .flatMap(repository::deleteById);
     }
 
-    private void checkPieId(String id) {
-        if (id == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "pie id must not be null");
+    @Override
+    public Mono<PieDto> addImageToPie(String id, Mono<FilePart> image) {
+        return getPie(id)
+                .zipWith(imageUploadService.saveImage(generatePrefixImageName(id), (image)))
+                .map(additionAndImageName -> {
+                    Pie pie = additionAndImageName.getT1();
+                    String imageName = additionAndImageName.getT2();
+                    pie.setImageName(imageName);
+                    return pie;
+                })
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto);
+    }
+
+    @Override
+    public Mono<PieDto> removeImageFromPie(String id) {
+        return getPie(id)
+                .map(this::removeImage)
+                .flatMap(repository::save)
+                .map(converter::convertDocumentToDto);
+    }
+
+    private Mono<String> generatePrefixImageName(String id) {
+        return Mono.just("pie-" + id);
+    }
+
+    private Pie removeImage(Pie pie) {
+        if (isAdditionNotHaveDefaultImage(pie))
+            imageUploadService.removeImage(pie.getImageName());
+        pie.setImageName(imageUploadService.getDefaultImageName());
+        return pie;
+    }
+
+    private boolean isAdditionNotHaveDefaultImage(Pie pie) {
+        return !pie.getImageName().equals(imageUploadService.getDefaultImageName());
     }
 
 }

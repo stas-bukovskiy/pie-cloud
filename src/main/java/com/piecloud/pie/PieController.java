@@ -3,6 +3,7 @@ package com.piecloud.pie;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -45,4 +46,13 @@ public class PieController {
         return service.deletePie(id);
     }
 
+    @PostMapping(value = "/{id}/image")
+    public Mono<PieDto> postImageToAddition(@PathVariable String id, Mono<FilePart> image) {
+        return service.addImageToPie(id, image);
+    }
+
+    @DeleteMapping("/{id}/image")
+    public Mono<PieDto> deleteImageFromAddition(@PathVariable String id) {
+        return service.removeImageFromPie(id);
+    }
 }
