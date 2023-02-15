@@ -1,8 +1,9 @@
 package com.piecloud.pie;
 
 import com.piecloud.ingredient.Ingredient;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -13,6 +14,8 @@ import java.util.Set;
 import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Document
 public class Pie {
 
@@ -20,6 +23,8 @@ public class Pie {
     private String id;
 
     private String name;
+
+    private String imageName;
 
     @Field(targetType = DECIMAL128)
     private BigDecimal price;
