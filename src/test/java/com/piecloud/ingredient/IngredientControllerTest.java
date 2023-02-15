@@ -46,12 +46,12 @@ public class IngredientControllerTest {
     void setup() {
         group = groupRepository.deleteAll()
                 .then(groupRepository.save(new IngredientGroup("id", "name"))).block();
-        repository.deleteAll().subscribe();
     }
 
 
     @Test
     public void testPost_shouldReturnIngredientGroup() {
+        repository.deleteAll().subscribe();
         IngredientGroupDto groupDto = new IngredientGroupDto(group.getId(), "");
         IngredientDto ingredientDto = new IngredientDto("", "ingredient", "", BigDecimal.TEN, groupDto);
 
@@ -98,7 +98,7 @@ public class IngredientControllerTest {
                 new Ingredient(null, "ingredient", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
         )).block();
 
-        assert ingredient != null;
+        assertNotNull(ingredient);
         webTestClient.get()
                 .uri("/api/ingredient/{id}", ingredient.getId())
                 .exchange()
@@ -175,14 +175,14 @@ public class IngredientControllerTest {
                 .expectBody(IngredientDto.class)
                 .value(postedIngredient ->
                         assertNotEquals(imageUploadService.getDefaultImageName(),
-                        postedIngredient.getImageName()));
+                                postedIngredient.getImageName()));
     }
 
     @Test
     void testDeleteImageFromIngredient_shouldReturnWithNewImage() {
-        Ingredient ingredient = repository.save(
+        Ingredient ingredient = repository.deleteAll().then(repository.save(
                 new Ingredient(null, "ingredient", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        ).block();
+        )).block();
         assertNotNull(ingredient);
         FilePart imageFilePart = new TestImageFilePart();
         IngredientDto ingredientDto = service.addImageToIngredient(ingredient.getId(), Mono.just(imageFilePart)).block();

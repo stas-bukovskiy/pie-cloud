@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -90,6 +91,7 @@ public class IngredientGroupControllerTest {
         ).block();
         IngredientGroupDto changedGroup = new IngredientGroupDto(null, "changed name");
 
+        assertNotNull(group);
         webTestClient.put()
                 .uri("/api/ingredient/group/{id}", group.getId())
                 .bodyValue(changedGroup)

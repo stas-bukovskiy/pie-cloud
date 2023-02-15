@@ -86,16 +86,15 @@ class AdditionGroupRepositoryTest {
 
     @Test
     public void testSaveWithNotUniqueName_shouldThrowException() {
-        String sameName = "name";
-        AdditionGroup additionGroup1 = new AdditionGroup("id1", sameName);
-        AdditionGroup additionGroup2 = new AdditionGroup("id2", sameName);
+        String notUniqueName = "name";
+        AdditionGroup additionGroup1 = new AdditionGroup(null, notUniqueName);
+        AdditionGroup additionGroup2 = new AdditionGroup(null, notUniqueName);
 
         Publisher<AdditionGroup> setup = repository.deleteAll()
-                .thenMany(repository.save(additionGroup1));
-        Publisher<AdditionGroup> shouldBeError = Mono.from(setup)
-                .thenMany(repository.save(additionGroup2));
+                .then(repository.save(additionGroup1))
+                .then(repository.save(additionGroup2));
 
-        StepVerifier.create(shouldBeError)
+        StepVerifier.create(setup)
                 .expectError(DuplicateKeyException.class)
                 .verify();
     }
