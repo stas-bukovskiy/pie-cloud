@@ -80,6 +80,7 @@ public class PieServiceImpl implements PieService {
                 .map(pieDtoListTuple2 -> {
                     List<Ingredient> ingredients = pieDtoListTuple2.getT2();
                     Pie pie = converter.convertDtoToDocument(pieDtoListTuple2.getT1());
+                    pie.setImageName(imageUploadService.getDefaultImageName());
                     pie.setIngredients(new HashSet<>(ingredients));
                     return pie;
                 })
