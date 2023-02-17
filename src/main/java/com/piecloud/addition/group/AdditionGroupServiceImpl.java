@@ -47,6 +47,7 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     @Override
     public Mono<AdditionGroupDto> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono) {
         return groupDtoMono
+                .flatMap(this::checkAdditionGroupNameForUniqueness)
                 .map(converter::convertDtoToDocument)
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
@@ -56,7 +57,7 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     @Override
     public Mono<AdditionGroupDto> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono) {
         return getAdditionGroup(id)
-                .zipWith(groupDtoMono)
+                .zipWith(groupDtoMono.flatMap(this::checkAdditionGroupNameForUniqueness))
                 .map(groupAndGroupDto -> {
                     groupAndGroupDto.getT1().setName(groupAndGroupDto.getT2().getName());
                     return groupAndGroupDto.getT1();
@@ -78,6 +79,17 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
             return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "addition group id must not be null"));
         return Mono.just(id);
+    }
+
+    private Mono<AdditionGroupDto> checkAdditionGroupNameForUniqueness(AdditionGroupDto groupDto) {
+        return repository.existsByNameAndIdIsNot(groupDto.getName(),
+                        groupDto.getId() == null ? "" : groupDto.getId())
+                .map(isExist -> {
+                    if (isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "addition group mame is not unique");
+                    return groupDto;
+                });
     }
 
 }
