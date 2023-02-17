@@ -48,6 +48,7 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
     @Override
     public Mono<IngredientGroupDto> createIngredientGroup(Mono<IngredientGroupDto> ingredientGroupDtoMono) {
         return ingredientGroupDtoMono
+                .flatMap(this::checkIngredientGroupNameForUniqueness)
                 .map(converter::convertDtoToDocument)
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
@@ -57,7 +58,7 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
     @Override
     public Mono<IngredientGroupDto> updateIngredientGroup(String id, Mono<IngredientGroupDto> ingredientGroupDtoMono) {
         return getIngredientGroup(id)
-                .zipWith(ingredientGroupDtoMono)
+                .zipWith(ingredientGroupDtoMono.flatMap(this::checkIngredientGroupNameForUniqueness))
                 .map(ingredientGroupAndIngredientGroupDto -> {
                     ingredientGroupAndIngredientGroupDto.getT1()
                             .setName(ingredientGroupAndIngredientGroupDto.getT2().getName());
@@ -78,6 +79,17 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
             return Mono.error( new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "ingredient group id must not be null"));
         return Mono.just(id);
+    }
+
+    private Mono<IngredientGroupDto> checkIngredientGroupNameForUniqueness(IngredientGroupDto groupDto) {
+        return repository.existsByNameAndIdIsNot(groupDto.getName(),
+                        groupDto.getId() == null ? "" : groupDto.getId())
+                .map(isExist -> {
+                    if (isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "ingredient group mame is not unique");
+                    return groupDto;
+                });
     }
 
 }

@@ -14,6 +14,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class IngredientGroup {
     @Id
     private String id;
-    @Indexed(unique = true)
+
     private String name;
 }
