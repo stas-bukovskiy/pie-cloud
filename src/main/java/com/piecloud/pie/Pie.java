@@ -1,6 +1,5 @@
 package com.piecloud.pie;
 
-import com.mongodb.lang.NonNull;
 import com.piecloud.ingredient.Ingredient;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -24,7 +23,6 @@ public class Pie {
     @Id
     private String id;
 
-    @NonNull
     private String name;
 
     private String imageName;
