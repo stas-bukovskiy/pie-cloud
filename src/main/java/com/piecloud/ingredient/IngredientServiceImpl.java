@@ -66,6 +66,7 @@ public class IngredientServiceImpl implements IngredientService{
     @Override
     public Mono<IngredientDto> createIngredient(Mono<IngredientDto> ingredientDtoMono) {
         return ingredientDtoMono
+                .flatMap(this::checkIngredientNameForUniqueness)
                 .map(converter::convertDtoToDocument)
                 .zipWhen(ingredient -> groupService.getIngredientGroup(ingredient.getGroup().getId()))
                 .map(ingredientDtoIngredientGroupTuple2 -> {
@@ -83,7 +84,7 @@ public class IngredientServiceImpl implements IngredientService{
     @Override
     public Mono<IngredientDto> updateIngredient(String id, Mono<IngredientDto> ingredientDtoMono) {
         return getIngredient(id)
-                .zipWith(ingredientDtoMono)
+                .zipWith(ingredientDtoMono.flatMap(this::checkIngredientNameForUniqueness))
                 .zipWhen(ingredientAndIngredientDto ->
                         groupService.getIngredientGroup(ingredientAndIngredientDto.getT2().getGroup().getId()),
                         (ingredientAndIngredientDto, group) -> Tuples.of(
@@ -124,16 +125,27 @@ public class IngredientServiceImpl implements IngredientService{
                 .map(converter::convertDocumentToDto);
     }
 
-    private Mono<String> generatePrefixImageName(String id) {
-        return Mono.just("ingredient-" + id);
-    }
-
     @Override
     public Mono<IngredientDto> removeImageFromIngredient(String id) {
         return getIngredient(id)
                 .map(this::removeImage)
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto);
+    }
+
+    private Mono<String> generatePrefixImageName(String id) {
+        return Mono.just("ingredient-" + id);
+    }
+
+    private Mono<IngredientDto> checkIngredientNameForUniqueness(IngredientDto ingredientDto) {
+        return repository.existsByNameAndIdIsNot(ingredientDto.getName(),
+                        ingredientDto.getId() == null ? "" : ingredientDto.getId())
+                .map(isExist -> {
+                    if (isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "ingredient mame is not unique");
+                    return ingredientDto;
+                });
     }
 
     private Ingredient removeImage(Ingredient ingredient) {

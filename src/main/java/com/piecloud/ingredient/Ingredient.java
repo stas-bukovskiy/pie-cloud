@@ -21,7 +21,6 @@ public class Ingredient {
     @Id
     private String id;
 
-    @Indexed(unique = true)
     private String name;
 
     private String imageName;
