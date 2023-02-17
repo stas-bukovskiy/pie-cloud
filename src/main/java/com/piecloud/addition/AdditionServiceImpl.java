@@ -47,13 +47,6 @@ public class AdditionServiceImpl implements AdditionService {
                         "not found addition with such id = " + id)));
     }
 
-    private Mono<String> checkAdditionId(String id) {
-        if (id == null)
-            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "addition id must not be null"));
-        return Mono.just(id);
-    }
-
     @Override
     public Mono<Addition> getAddition(String id) {
         return checkAdditionId(id)
@@ -65,6 +58,7 @@ public class AdditionServiceImpl implements AdditionService {
     @Override
     public Mono<AdditionDto> createAddition(Mono<AdditionDto> additionDtoMono) {
         return additionDtoMono
+                .flatMap(this::checkAdditionNameForUniqueness)
                 .zipWhen(additionDto -> groupService.getAdditionGroup(additionDto.getGroup().getId()))
                 .map(additionDtoAndGroup -> {
                     AdditionDto additionDto = additionDtoAndGroup.getT1();
@@ -83,7 +77,7 @@ public class AdditionServiceImpl implements AdditionService {
     @Override
     public Mono<AdditionDto> updateAddition(String id, Mono<AdditionDto> additionDtoMono) {
         return getAddition(id)
-                .zipWith(additionDtoMono)
+                .zipWith(additionDtoMono.flatMap(this::checkAdditionNameForUniqueness))
                 .zipWhen(additionAndAdditionDto ->
                                 groupService.getAdditionGroup(additionAndAdditionDto.getT2().getGroup().getId()),
                         (additionAndAdditionDto, additionGroup) -> Tuples.of(
@@ -123,6 +117,24 @@ public class AdditionServiceImpl implements AdditionService {
                 })
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto);
+    }
+
+    private Mono<String> checkAdditionId(String id) {
+        if (id == null)
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "addition id must not be null"));
+        return Mono.just(id);
+    }
+
+    private Mono<AdditionDto> checkAdditionNameForUniqueness(AdditionDto additionDto) {
+        return repository.existsByNameAndIdIsNot(additionDto.getName(),
+                        additionDto.getId() == null ? "" : additionDto.getId())
+                .map(isExist -> {
+                    if (isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "addition mame is not unique");
+                    return additionDto;
+                });
     }
 
     private Mono<String> generatePrefixImageName(String id) {
