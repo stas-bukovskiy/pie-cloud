@@ -71,6 +71,7 @@ public class PieServiceImpl implements PieService {
     @Override
     public Mono<PieDto> createPie(Mono<PieDto> pieDtoMono) {
         return pieDtoMono
+                .flatMap(this::checkPieNameForUniqueness)
                 .map(this::checkIngredients)
                 .zipWhen(pie -> Flux.fromIterable(pie.getIngredients())
                         .map(IngredientDto::getId)
@@ -89,20 +90,10 @@ public class PieServiceImpl implements PieService {
                 .doOnSuccess(onSuccess -> log.debug("created new pie successfully"));
     }
 
-    private PieDto checkIngredients(PieDto pieDto) {
-        List<IngredientDto> ingredients = pieDto.getIngredients();
-        Optional<IngredientDto> ingredientDtoWithNullId = ingredients.stream()
-                .filter(ingredient -> ingredient.getId() == null).findAny();
-        if (ingredientDtoWithNullId.isPresent())
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "ingredient id must not be null");
-        return pieDto;
-    }
-
     @Override
     public Mono<PieDto> updatePie(String id, Mono<PieDto> pieDtoMono) {
         return getPie(id)
-                .zipWith(pieDtoMono)
+                .zipWith(pieDtoMono.flatMap(this::checkPieNameForUniqueness))
                 .zipWhen(pieAndPieDto -> Flux.fromIterable(pieAndPieDto.getT2().getIngredients())
                                 .map(IngredientDto::getId)
                                 .flatMap(ingredientService::getIngredient)
@@ -151,6 +142,28 @@ public class PieServiceImpl implements PieService {
                 .map(this::removeImage)
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto);
+    }
+
+    private PieDto checkIngredients(PieDto pieDto) {
+        List<IngredientDto> ingredients = pieDto.getIngredients();
+        Optional<IngredientDto> ingredientDtoWithNullId = ingredients.stream()
+                .filter(ingredient -> ingredient.getId() == null).findAny();
+        if (ingredientDtoWithNullId.isPresent())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "ingredient id must not be null");
+        return pieDto;
+    }
+
+    private Mono<PieDto> checkPieNameForUniqueness(PieDto pieDto) {
+        if (pieDto.getName() == null) return Mono.just(pieDto);
+        return repository.existsByNameAndIdIsNot(pieDto.getName(),
+                        pieDto.getId() == null ? "" : pieDto.getId())
+                .map(isExist -> {
+                    if (isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "pie mame is not unique");
+                    return pieDto;
+                });
     }
 
     private Mono<String> generatePrefixImageName(String id) {

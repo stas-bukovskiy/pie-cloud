@@ -26,7 +26,6 @@ public class Pie {
     private String id;
 
     @NonNull
-    @Indexed(unique = true)
     private String name;
 
     private String imageName;
