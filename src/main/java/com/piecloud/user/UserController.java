@@ -1,49 +1,43 @@
 package com.piecloud.user;
 
-import com.piecloud.security.jwt.JwtTokenProvider;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "api/user")
+@RequestMapping(value = "api/user",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 public class UserController {
 
-    private final JwtTokenProvider tokenProvider;
-    private final ReactiveAuthenticationManager authenticationManager;
-
-    @Autowired
-    public UserController(JwtTokenProvider tokenProvider, ReactiveAuthenticationManager authenticationManager) {
-        this.tokenProvider = tokenProvider;
-        this.authenticationManager = authenticationManager;
-    }
-
+    private final UserService service;
 
     @PostMapping("/login")
-    public Mono<ResponseEntity> login(
+    public Mono<ResponseEntity<Map<String, String>>> login(
             @Valid @RequestBody Mono<AuthenticationRequest> authRequest) {
+        return service.login(authRequest)
+                .map(this::createResponse);
+    }
 
-        return authRequest
-                .flatMap(login -> authenticationManager
-                        .authenticate(new UsernamePasswordAuthenticationToken(
-                                login.getUsername(), login.getPassword()))
-                        .map(tokenProvider::createToken))
-                .map(jwt -> {
-                    HttpHeaders httpHeaders = new HttpHeaders();
-                    httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
-                    var tokenBody = Map.of("access_token", jwt);
-                    return new ResponseEntity<>(tokenBody, httpHeaders, HttpStatus.OK);
-                });
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<Void> register(
+            @Valid @RequestBody Mono<UserDto> userDtoMono) {
+        return service.registerUser(userDtoMono);
+    }
+
+    private ResponseEntity<Map<String, String>> createResponse(String token) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+        Map<String, String> tokenBody = Map.of("access_token", token);
+        return new ResponseEntity<>(tokenBody, httpHeaders, HttpStatus.OK);
     }
 }
