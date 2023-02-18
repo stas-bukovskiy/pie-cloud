@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter @Setter
 public class JwtProperties {
 
-    private String secretKey = "flzxsqcysyhljt";
+    private String secretKey = "flzxsqcysyhljtJkPodKOlksPoadkPsl";
     private long validityInMs = 3600000;
 
 }

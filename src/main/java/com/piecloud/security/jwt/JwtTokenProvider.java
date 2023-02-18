@@ -63,7 +63,7 @@ public class JwtTokenProvider {
 
     public Authentication getAuthentication(String token) {
         JwtParser jwtParser = Jwts.parserBuilder().setSigningKey(secretKey).build();
-        Claims claims = jwtParser.parseClaimsJwt(token).getBody();
+        Claims claims = jwtParser.parseClaimsJws(token).getBody();
         List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(
                 claims.get(AUTHORITIES_KEY).toString()
         );
