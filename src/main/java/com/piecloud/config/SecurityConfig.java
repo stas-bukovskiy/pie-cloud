@@ -18,11 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.stream.Collectors;
-
 @Configuration
 public class SecurityConfig {
 
@@ -54,7 +49,7 @@ public class SecurityConfig {
 
     private String tryToGenerateUrlToPublicResources(ImageUploadServiceProperties imageUploadProperties) {
         String[] parts = imageUploadProperties.getUploadDirectory().replaceAll("\\\\","/").split("/");
-        return "/api/" + String.join("/", parts);
+        return "/" + String.join("/", parts);
     }
 
     @Bean
