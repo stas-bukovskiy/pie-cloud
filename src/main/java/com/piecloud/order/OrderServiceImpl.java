@@ -1,8 +1,11 @@
 package com.piecloud.order;
 
+import com.piecloud.order.line.OrderLine;
 import com.piecloud.order.line.OrderLineService;
+import com.piecloud.user.User;
+import com.piecloud.user.UserService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -10,33 +13,31 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository repository;
     private final OrderConverter converter;
     private final OrderLineService orderLineService;
-
-    @Autowired
-    public OrderServiceImpl(OrderRepository repository,
-                            OrderConverter converter,
-                            OrderLineService orderLineService) {
-        this.repository = repository;
-        this.converter = converter;
-        this.orderLineService = orderLineService;
-    }
+    private final UserService userService;
 
     @Override
     public Flux<OrderDto> getOrders() {
-        return repository.findAll()
+        return userService.getCurrentUser()
+                .map(User::getId)
+                .flatMapMany(repository::findAllByUserId)
                 .map(converter::convertDocumentToDto);
     }
 
     @Override
     public Mono<OrderDto> getOrder(String id) {
-        return repository.findById(id)
+        return userService.getCurrentUser()
+                .map(User::getId)
+                .flatMap(userId -> repository.findByIdAndUserId(id, userId))
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found order with id = " + id)));
@@ -48,11 +49,14 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderDto::getOrderLines)
                 .flatMapMany(Flux::fromIterable)
                 .flatMap(orderLineDto -> orderLineService.createOrderLine(Mono.just(orderLineDto)))
-                .onErrorStop()
                 .collectList()
-                .map(orderLines -> {
+                .zipWith(userService.getCurrentUser())
+                .map(orderLinesAndUser -> {
+                    Set<OrderLine> orderLines = new HashSet<>(orderLinesAndUser.getT1());
+                    String userId = orderLinesAndUser.getT2().getId();
                     Order order = new Order();
-                    order.setOrderLines(new HashSet<>(orderLines));
+                    order.setOrderLines(orderLines);
+                    order.setUserId(userId);
                     return order;
                 })
                 .flatMap(repository::save)
@@ -62,7 +66,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Mono<OrderDto> changeStatus(String id, OrderStatus newStatus) {
-        return repository.findById(id)
+        return userService.getCurrentUser()
+                .map(User::getId)
+                .flatMap(userId -> repository.findByIdAndUserId(id, userId))
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found order with id = " + id)))
                 .map(order -> {

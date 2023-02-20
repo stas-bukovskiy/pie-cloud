@@ -1,10 +1,11 @@
 package com.piecloud.order;
 
 import com.piecloud.order.line.OrderLine;
-import lombok.Builder;
+import com.piecloud.user.User;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
@@ -28,5 +29,8 @@ public class Order {
     private BigDecimal price;
 
     private Set<OrderLine> orderLines;
+
+    @Field("user_id")
+    private String userId;
 
 }
