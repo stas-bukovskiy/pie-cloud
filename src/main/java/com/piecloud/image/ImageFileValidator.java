@@ -6,14 +6,14 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
-import static org.apache.commons.compress.utils.FileNameUtils.getExtension;
+import static com.piecloud.utils.ExtensionUtils.getFileExtension;
 
 @Slf4j
 @Component
 public class ImageFileValidator  {
     public FilePart checkValidImageFilePart(FilePart fiePart) {
         String filename = fiePart.filename();
-        String extension = getExtension(filename);
+        String extension = getFileExtension(filename);
         boolean isSupportedExtension = isSupportedExtension(extension);
 
         log.debug(String.format("Checking result for %s: %s", filename, isSupportedExtension));
