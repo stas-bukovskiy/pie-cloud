@@ -16,7 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-import static org.apache.commons.compress.utils.FileNameUtils.getExtension;
+import static com.piecloud.utils.ExtensionUtils.getFileExtension;
 
 @Slf4j
 @Service
@@ -78,7 +78,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     }
 
     private Path createImageFilePath(String prefix, FilePart image) {
-        String extension = getExtension(image.filename());
+        String extension = getFileExtension(image.filename());
         String fileName = prefix + "." + extension;
         return uploadDirectoryPath.resolve(fileName).toAbsolutePath();
     }
