@@ -6,6 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,6 +27,17 @@ public class UserServiceImpl implements UserService {
     private final UserConverter converter;
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
+
+
+    @Override
+    public Mono<User> getCurrentUser() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getPrincipal)
+                .cast(UserDetails.class)
+                .map(UserDetails::getUsername)
+                .flatMap(repository::findByUsername);
+    }
 
     @Override
     public Mono<String> login(Mono<AuthenticationRequest> authRequestMono) {
