@@ -30,12 +30,12 @@ public class SecurityConfig {
                 .httpBasic().disable()
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .authorizeExchange()
-                .pathMatchers(HttpMethod.POST, "/api/user/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/addition/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/ingredient/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/pie/**").permitAll()
                 .pathMatchers(HttpMethod.GET, tryToGenerateUrlToPublicResources(imageUploadProperties)).permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/order/**").authenticated()
+                .pathMatchers(HttpMethod.POST, "/api/user/**").permitAll()
                 .pathMatchers(HttpMethod.POST, "/api/order/**").authenticated()
                 .pathMatchers(HttpMethod.POST, "/api/addition/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.POST, "/api/ingredient/**").hasRole("ADMIN")
@@ -48,8 +48,7 @@ public class SecurityConfig {
     }
 
     private String tryToGenerateUrlToPublicResources(ImageUploadServiceProperties imageUploadProperties) {
-        String[] parts = imageUploadProperties.getUploadDirectory().replaceAll("\\\\","/").split("/");
-        return "/" + String.join("/", parts);
+        return "/uploads/**";
     }
 
     @Bean
