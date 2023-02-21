@@ -25,7 +25,6 @@ public class DataInitializer {
     @EventListener(value = ApplicationReadyEvent.class)
     public void init() {
         log.info("start data initialization...");
-
         Flux<User> initUsers = this.userRepository.deleteAll()
                 .thenMany(
                         Flux.just("user", "admin")

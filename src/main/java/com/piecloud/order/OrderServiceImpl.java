@@ -1,5 +1,6 @@
 package com.piecloud.order;
 
+import com.piecloud.ReactiveProducerService;
 import com.piecloud.order.line.OrderLine;
 import com.piecloud.order.line.OrderLineService;
 import com.piecloud.user.User;
@@ -24,6 +25,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderConverter converter;
     private final OrderLineService orderLineService;
     private final UserService userService;
+    private final ReactiveProducerService producerService;
 
     @Override
     public Flux<OrderDto> getOrders() {
@@ -61,6 +63,10 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
+                .map(orderDto -> {
+                    producerService.send(orderDto);
+                    return orderDto;
+                })
                 .doOnSuccess(newOrder -> log.debug("created new order: " + newOrder));
     }
 
