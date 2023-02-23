@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -13,9 +15,12 @@ import reactor.test.StepVerifier;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
+import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroupDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class AdditionGroupControllerTest {
@@ -31,8 +36,9 @@ public class AdditionGroupControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
     public void testPost_shouldReturnAdditionGroup() {
-        AdditionGroupDto groupDto = new AdditionGroupDto("id", "name");
+        AdditionGroupDto groupDto = randomAdditionGroupDto();
 
         webTestClient
                 .post()
@@ -49,10 +55,10 @@ public class AdditionGroupControllerTest {
     public void testGet_shouldReturnGroups() {
         List<AdditionGroup> additionGroups = new ArrayList<>();
         repository.deleteAll().thenMany(repository.saveAll(Flux.fromIterable(List.of(
-                new AdditionGroup(null, "group1"),
-                new AdditionGroup(null, "group2"),
-                new AdditionGroup(null, "group3"),
-                new AdditionGroup(null, "group4")
+                randomAdditionGroup(),
+                randomAdditionGroup(),
+                randomAdditionGroup(),
+                randomAdditionGroup()
         )))).subscribe(additionGroups::add);
 
         webTestClient.get()
@@ -65,9 +71,7 @@ public class AdditionGroupControllerTest {
 
     @Test
     public void testGetWithId_shouldReturnGroup() {
-        AdditionGroup group = repository.save(
-                new AdditionGroup(null, "group")
-        ).block();
+        AdditionGroup group = repository.save(randomAdditionGroup()).block();
 
         assert group != null;
         webTestClient.get()
@@ -90,9 +94,10 @@ public class AdditionGroupControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
     public void testPut_shouldReturnChangedGroup() {
-        AdditionGroup group = repository.save(new AdditionGroup(null, "group")).block();
-        AdditionGroupDto changedGroup = new AdditionGroupDto(null, "changed name");
+        AdditionGroup group = repository.save(randomAdditionGroup()).block();
+        AdditionGroupDto changedGroup = randomAdditionGroupDto();
 
         assertNotNull(group);
         webTestClient.put()
@@ -105,9 +110,10 @@ public class AdditionGroupControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
     public void testDelete_shouldDeleteFromBD() {
         AdditionGroup group = repository.deleteAll().then(repository.save(
-                new AdditionGroup("id", "group")
+                randomAdditionGroup()
         )).block();
 
         assert group != null;

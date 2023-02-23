@@ -51,7 +51,8 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
                 .map(converter::convertDtoToDocument)
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
-                .doOnSuccess(onSuccess -> log.debug("created new addition group successfully"));
+                .doOnSuccess(onSuccess -> log.debug("created new addition group successfully"))
+                .doOnError(onError -> log.debug("error occurred while creating addition group"));
     }
 
     @Override

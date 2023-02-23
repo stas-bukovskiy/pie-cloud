@@ -1,5 +1,6 @@
 package com.piecloud.addition.group;
 
+import com.piecloud.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import reactor.test.StepVerifier;
 
 import java.util.List;
 
+import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
@@ -28,9 +30,9 @@ class AdditionGroupServiceTest {
     @Test
     void testGetAllAdditionGroupsDto() {
         List<AdditionGroup> additionGroups = List.of(
-                new AdditionGroup("id1", "addition group 1"),
-                new AdditionGroup("id2", "addition group 2"),
-                new AdditionGroup("id3", "addition group 3")
+                randomAdditionGroup(),
+                randomAdditionGroup(),
+                randomAdditionGroup()
         );
         Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(additionGroups));
 
@@ -44,7 +46,7 @@ class AdditionGroupServiceTest {
     @Test
     void testGetAdditionGroupDto() {
         String ID = "id";
-        AdditionGroup additionGroup = new AdditionGroup(ID, "name");
+        AdditionGroup additionGroup = randomAdditionGroup();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(additionGroup));
 
         Mono<AdditionGroupDto> result = service.getAdditionGroupDto(ID);
@@ -72,7 +74,7 @@ class AdditionGroupServiceTest {
     @Test
     void testGetAdditionGroup() {
         String ID = "id";
-        AdditionGroup additionGroup = new AdditionGroup(ID, "name");
+        AdditionGroup additionGroup = randomAdditionGroup();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(additionGroup));
 
         Mono<AdditionGroup> result = service.getAdditionGroup(ID);
@@ -94,24 +96,32 @@ class AdditionGroupServiceTest {
 
     @Test
     void testCreateAdditionGroup() {
-        AdditionGroupDto additionGroupDto = new AdditionGroupDto(null, "name");
-        AdditionGroup additionGroup = new AdditionGroup(null, "name");
-        Mockito.when(repository.save(additionGroup)).thenReturn(Mono.just(additionGroup));
+        AdditionGroup additionGroup = randomAdditionGroup();
+        AdditionGroupDto additionGroupDto = converter.convertDocumentToDto(additionGroup);
+        Mockito.when(repository.save(converter.convertDtoToDocument(additionGroupDto)))
+                .thenReturn(Mono.just(additionGroup));
+        Mockito.when(repository.existsByNameAndIdIsNot(additionGroupDto.getName(), additionGroupDto.getId()))
+                .thenReturn(Mono.just(Boolean.FALSE));
 
         Mono<AdditionGroupDto> result = service.createAdditionGroup(Mono.just(additionGroupDto));
 
         StepVerifier.create(result)
-                .consumeNextWith(saved -> assertEquals(additionGroupDto.getName(), saved.getName()))
+                .consumeNextWith(saved -> {
+                    assertEquals(additionGroup.getName(), saved.getName());
+                    System.out.println(saved);
+                })
                 .verifyComplete();
     }
 
     @Test
     void updateAdditionGroup() {
-        String ID = "id";
-        AdditionGroupDto additionGroupDto = new AdditionGroupDto(ID, "changed name");
-        AdditionGroup additionGroup = new AdditionGroup(ID, "changed name");
-        Mockito.when(repository.findById(ID)).thenReturn(Mono.just(new AdditionGroup(ID, "name")));
+        AdditionGroup additionGroup = randomAdditionGroup();
+        String ID = additionGroup.getId();
+        AdditionGroupDto additionGroupDto = converter.convertDocumentToDto(additionGroup);
+        Mockito.when(repository.findById(ID)).thenReturn(Mono.just(new AdditionGroup(ID, RandomStringUtils.random())));
         Mockito.when(repository.save(additionGroup)).thenReturn(Mono.just(additionGroup));
+        Mockito.when(repository.existsByNameAndIdIsNot(additionGroupDto.getName(), ID))
+                .thenReturn(Mono.just(Boolean.FALSE));
 
         Mono<AdditionGroupDto> result = service.updateAdditionGroup(ID, Mono.just(additionGroupDto));
         StepVerifier.create(result)
