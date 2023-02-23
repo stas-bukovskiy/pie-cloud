@@ -2,9 +2,7 @@ package com.piecloud.addition;
 
 import com.piecloud.TestImageFilePart;
 import com.piecloud.addition.group.AdditionGroup;
-import com.piecloud.addition.group.AdditionGroupDto;
 import com.piecloud.addition.group.AdditionGroupRepository;
-import com.piecloud.image.ImageUploadService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,43 +15,36 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.math.BigDecimal;
 import java.util.List;
 
+import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
+import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 public class AdditionServiceTest {
-
-    private static final BigDecimal PRICE = BigDecimal.TEN;
     @MockBean
     private AdditionRepository repository;
     @Autowired
     private AdditionService service;
-    @Autowired
-    private ImageUploadService imageUploadService;
     @MockBean
     private AdditionGroupRepository groupRepository;
     @Autowired
     private AdditionConverter converter;
     private AdditionGroup group;
 
-    private String IMAGE_NAME;
-
-
     @BeforeEach
     public void setup() {
-        group = new AdditionGroup("id", "name");
-        IMAGE_NAME = imageUploadService.getDefaultImageName();
+        group = randomAdditionGroup();
     }
 
 
     @Test
     void testGetAllAdditionsDto() {
         List<Addition> additionsToSave = List.of(
-                new Addition("id1", "addition group 1",IMAGE_NAME, PRICE, group),
-                new Addition("id2", "addition group 2",IMAGE_NAME, PRICE, group),
-                new Addition("id3", "addition group 3",IMAGE_NAME, PRICE, group)
+                randomAddition(group),
+                randomAddition(group),
+                randomAddition(group)
         );
         Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(additionsToSave));
 
@@ -66,8 +57,8 @@ public class AdditionServiceTest {
 
     @Test
     void testGetAdditionsDto() {
-        String ID = "id";
-        Addition addition = new Addition(ID, "addition group", IMAGE_NAME, PRICE, group);
+        Addition addition = randomAddition(group);
+        String ID = addition.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
 
         Mono<AdditionDto> result = service.getAdditionDto(ID);
@@ -83,7 +74,6 @@ public class AdditionServiceTest {
         String WRONG_ID = "id";
         Mockito.when(repository.findById(WRONG_ID)).thenReturn(Mono.empty());
 
-
         Mono<AdditionDto> result = service.getAdditionDto(WRONG_ID);
 
         StepVerifier.create(result)
@@ -94,8 +84,8 @@ public class AdditionServiceTest {
 
     @Test
     void testGetAdditions() {
-        String ID = "id";
-        Addition addition = new Addition(ID, "addition group", IMAGE_NAME, PRICE, group);
+        Addition addition = randomAddition(group);
+        String ID = addition.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
 
         Mono<Addition> result = service.getAddition(ID);
@@ -117,11 +107,12 @@ public class AdditionServiceTest {
 
     @Test
     void testCreateAddition() {
-        String ID = "id";
-        Addition addition = new Addition(ID, "addition group", IMAGE_NAME, PRICE, group);
-        AdditionDto additionDtoToSave = new AdditionDto(ID, "addition group", IMAGE_NAME, PRICE,
-                new AdditionGroupDto(group.getId(), group.getName()));
-        Mockito.when(repository.save(converter.convertDtoToDocument(additionDtoToSave))).thenReturn(Mono.just(addition));
+        Addition addition = randomAddition(group);
+        AdditionDto additionDtoToSave = converter.convertDocumentToDto(addition);
+        Mockito.when(repository.save(converter.convertDtoToDocument(additionDtoToSave)))
+                .thenReturn(Mono.just(addition));
+        Mockito.when(repository.existsByNameAndIdIsNot(addition.getName(), addition.getId()))
+                .thenReturn(Mono.just(Boolean.FALSE));
         Mockito.when(groupRepository.findById(group.getId())).thenReturn(Mono.just(group));
 
         Mono<AdditionDto> result = service.createAddition(Mono.just(additionDtoToSave));
@@ -135,7 +126,7 @@ public class AdditionServiceTest {
     void testAddImageToAddition() {
         String ID = "id";
         String imageName = "addition-" + ID + ".png";
-        Addition addition = new Addition(ID, "addition", IMAGE_NAME, BigDecimal.ONE, group);
+        Addition addition = randomAddition(group);
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
         addition.setImageName(imageName);
         Mockito.when(repository.save(addition)).thenReturn(Mono.just(addition));

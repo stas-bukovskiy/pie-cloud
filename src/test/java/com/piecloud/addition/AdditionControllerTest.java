@@ -2,7 +2,6 @@ package com.piecloud.addition;
 
 import com.piecloud.TestImageFilePart;
 import com.piecloud.addition.group.AdditionGroup;
-import com.piecloud.addition.group.AdditionGroupDto;
 import com.piecloud.addition.group.AdditionGroupRepository;
 import com.piecloud.image.ImageUploadService;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -21,8 +22,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
+import static com.piecloud.addition.RandomAdditionUtil.randomAdditionDto;
+import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class AdditionControllerTest {
@@ -44,14 +49,14 @@ public class AdditionControllerTest {
 
     @BeforeEach
     void setup() {
-        group = groupRepository.save(new AdditionGroup("id", "name")).block();
+        group = groupRepository.save(randomAdditionGroup()).block();
     }
 
 
     @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
     public void testPost_shouldReturnAdditionGroup() {
-        AdditionGroupDto groupDto = new AdditionGroupDto(group.getId(), "");
-        AdditionDto additionDto = new AdditionDto("", "addition", "", BigDecimal.TEN, groupDto);
+        AdditionDto additionDto = randomAdditionDto(group.getId());
 
         webTestClient
                 .post()
@@ -76,10 +81,9 @@ public class AdditionControllerTest {
     public void testGet_shouldReturnAdditions() {
         List<Addition> additions = new ArrayList<>();
         repository.deleteAll().thenMany(repository.saveAll(Flux.fromIterable(List.of(
-                new Addition(null, "addition 1", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Addition(null, "addition 2", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Addition(null, "addition 3", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Addition(null, "addition 4", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
+                randomAddition(group),
+                randomAddition(group),
+                randomAddition(group)
         )))).subscribe(additions::add);
 
         webTestClient.get()
@@ -92,11 +96,10 @@ public class AdditionControllerTest {
 
     @Test
     public void testGetWithId_shouldReturnGroup() {
-        Addition addition = repository.deleteAll().then(repository.save(
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
+        Addition addition = repository.deleteAll()
+                .then(repository.save(randomAddition(group))).block();
 
-        assert addition != null;
+        assertNotNull(addition);
         webTestClient.get()
                 .uri("/api/addition/{id}", addition.getId())
                 .exchange()
@@ -117,13 +120,13 @@ public class AdditionControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
     public void testPut_shouldReturnChangedAddition() {
-        Addition addition = repository.deleteAll().then(repository.save(
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
-        assert addition != null;
+        Addition addition = repository.deleteAll()
+                .then(repository.save(randomAddition(group))).block();
+        assertNotNull(addition);
         addition.setName("new name");
-        addition.setPrice(BigDecimal.TEN);
+        addition.setPrice(BigDecimal.ONE);
 
         webTestClient.put()
                 .uri("/api/addition/{id}", addition.getId())
@@ -138,12 +141,12 @@ public class AdditionControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
     public void testDelete_shouldDeleteFromBD() {
-        Addition addition = repository.deleteAll().then(repository.save(
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
-
-        assert addition != null;
+        Addition addition = repository.deleteAll()
+                .then(repository.save(randomAddition(group))).block();
+        assertNotNull(addition);
+        
         webTestClient.delete()
                 .uri("/api/addition/{id}", addition.getId())
                 .exchange()
@@ -156,12 +159,12 @@ public class AdditionControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
     void testAddImageToAddition_shouldReturnWithNewImage() {
-        Addition addition = repository.deleteAll().then(repository.save(
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
+        Addition addition = repository.deleteAll()
+                .then(repository.save(randomAddition(group))).block();
 
-        assert addition != null;
+        assertNotNull(addition);
         FilePart imageFilePart = new TestImageFilePart();
         webTestClient
                 .post()
@@ -177,10 +180,11 @@ public class AdditionControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = { "ADMIN" })
     void testDeleteImageFromAddition_shouldReturnWithNewImage() {
-        Addition addition = repository.deleteAll().then(repository.save(
-                new Addition(null, "addition", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
+        Addition addition = repository.deleteAll()
+                .then(repository.save(randomAddition(group))).block();
+        
         assertNotNull(addition);
         FilePart imageFilePart = new TestImageFilePart();
         AdditionDto additionDto = service.addImageToAddition(addition.getId(), Mono.just(imageFilePart)).block();

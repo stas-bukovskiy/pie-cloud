@@ -4,27 +4,24 @@ import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.annotation.DirtiesContext;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.math.BigDecimal;
-
+import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
+import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@DirtiesContext
 @DataMongoTest
-@ExtendWith(SpringExtension.class)
 class AdditionRepositoryTest {
 
     @Autowired
     private AdditionRepository repository;
-
     @Autowired
     private AdditionGroupRepository groupRepository;
 
@@ -33,12 +30,12 @@ class AdditionRepositoryTest {
     @BeforeEach
     public void setup() {
         group = groupRepository.deleteAll()
-                .then(groupRepository.save(new AdditionGroup(null, "group"))).block();
+                .then(groupRepository.save(randomAdditionGroup())).block();
     }
 
     @Test
     public void testSaveAddition() {
-        Addition additionToSave = new Addition("id", "name", "image.png", BigDecimal.TEN, group);
+        Addition additionToSave = randomAddition(group);
 
         Publisher<Addition> setup = repository.deleteAll().then(repository.save(additionToSave));
 
@@ -48,26 +45,12 @@ class AdditionRepositoryTest {
     }
 
     @Test
-    public void testSaveAdditionWithNotUniqueName_shouldThrowException() {
-        String notUniqueNme = "name";
-        Addition additionToSave1 = new Addition("id1", notUniqueNme, "image.png", BigDecimal.TEN, group);
-        Addition additionToSave2 = new Addition("id2", notUniqueNme, "image.png", BigDecimal.TEN, group);
-
-        Publisher<Addition> setup = repository.deleteAll().then(repository.save(additionToSave1))
-                .then(repository.save(additionToSave2));
-
-        StepVerifier.create(setup)
-                .expectError(DuplicateKeyException.class)
-                .verify();
-    }
-
-    @Test
     public void testFindAdditionById() {
-        String ID = "id";
-        Addition addition = new Addition(ID, "name", "image.png", BigDecimal.TEN, group);
+        Addition addition = randomAddition(group);
+        String id = addition.getId();
 
         Publisher<Addition> setup = repository.deleteAll()
-                .then(repository.save(addition)).then(repository.findById(ID));
+                .then(repository.save(addition)).then(repository.findById(id));
 
         StepVerifier.create(setup)
                 .consumeNextWith(foundAddition -> assertEquals(addition, foundAddition))
@@ -76,8 +59,7 @@ class AdditionRepositoryTest {
 
     @Test
     public void testDeleteAdditionById() {
-        Addition addition = new Addition("id", "name", "image.png",
-                BigDecimal.TEN, group);
+        Addition addition = randomAddition(group);
 
         Publisher<Addition> setup = repository.deleteAll()
                 .thenMany(repository.save(addition));
