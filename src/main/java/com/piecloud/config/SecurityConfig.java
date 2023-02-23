@@ -33,14 +33,14 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.GET, "/api/addition/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/ingredient/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/pie/**").permitAll()
-                .pathMatchers(HttpMethod.GET, tryToGenerateUrlToPublicResources(imageUploadProperties)).permitAll()
+                .pathMatchers(HttpMethod.GET, generateUrlToPublicResources(imageUploadProperties)).permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/order/**").authenticated()
                 .pathMatchers(HttpMethod.POST, "/api/order/**").authenticated()
                 .pathMatchers(HttpMethod.POST, "/api/register/**").permitAll()
                 .pathMatchers(HttpMethod.POST, "/api/login/**").permitAll()
                 .pathMatchers(HttpMethod.POST, "/api/cook/register/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.POST, "/api/admin/register/**").hasRole("ADMIN")
-                .pathMatchers(HttpMethod.GET, "/api/kitchen/**").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/kitchen/**").hasAnyRole("ADMIN", "COOK")
                 .pathMatchers(HttpMethod.POST, "/api/addition/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.POST, "/api/ingredient/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.POST, "/api/pie/**").hasRole("ADMIN")
@@ -51,8 +51,8 @@ public class SecurityConfig {
                 .build();
     }
 
-    private String tryToGenerateUrlToPublicResources(ImageUploadServiceProperties imageUploadProperties) {
-        return "/uploads/**";
+    private String generateUrlToPublicResources(ImageUploadServiceProperties imageUploadProperties) {
+        return "/" + imageUploadProperties.getUploadDirectory() + "/**";
     }
 
     @Bean

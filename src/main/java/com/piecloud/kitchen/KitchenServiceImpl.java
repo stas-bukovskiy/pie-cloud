@@ -1,6 +1,6 @@
 package com.piecloud.kitchen;
 
-import com.piecloud.OrderConsumerService;
+import com.piecloud.order.OrderConsumerService;
 import com.piecloud.order.OrderDto;
 import com.piecloud.order.OrderService;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,5 @@
 package com.piecloud.order;
 
-import com.piecloud.OrderProducerService;
 import com.piecloud.order.line.OrderLine;
 import com.piecloud.order.line.OrderLineService;
 import com.piecloud.user.User;

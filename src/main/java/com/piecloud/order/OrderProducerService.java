@@ -1,4 +1,4 @@
-package com.piecloud;
+package com.piecloud.order;
 
 import com.piecloud.order.OrderDto;
 import lombok.RequiredArgsConstructor;
