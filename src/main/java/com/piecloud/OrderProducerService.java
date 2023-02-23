@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReactiveProducerService {
+public class OrderProducerService {
 
     private final ReactiveKafkaProducerTemplate<String, OrderDto> reactiveKafkaProducerTemplate;
 
