@@ -57,6 +57,24 @@ public class UserServiceImpl implements UserService {
                 .flatMap(user -> Mono.empty());
     }
 
+    @Override
+    public Mono<Void> registerAdmin(Mono<UserDto> adminDtoMono) {
+        return adminDtoMono
+                .flatMap(this::checkUsernameForUniqueness)
+                .map(this::createAdmin)
+                .flatMap(repository::save)
+                .flatMap(user -> Mono.empty());
+    }
+
+    @Override
+    public Mono<Void> registerCook(Mono<UserDto> cookDtoMono) {
+        return cookDtoMono
+                .flatMap(this::checkUsernameForUniqueness)
+                .map(this::createCook)
+                .flatMap(repository::save)
+                .flatMap(user -> Mono.empty());
+    }
+
     private Mono<UserDto> checkUsernameForUniqueness(UserDto userDto) {
         return repository.existsByUsername(userDto.getUsername())
                 .map(isExist -> {
@@ -76,5 +94,26 @@ public class UserServiceImpl implements UserService {
         log.debug("registered new user: " + user);
         return user;
     }
+
+    private User createAdmin(UserDto adminDto) {
+        User admin = converter.convertDtoToDocument(adminDto);
+        String password = adminDto.getPassword();
+        admin.setPassword(passwordEncoder.encode(password));
+        admin.setRoles(List.of("ROLE_ADMIN", "ROLE_COOK"));
+
+        log.debug("registered new admin: " + admin);
+        return admin;
+    }
+
+    private User createCook(UserDto cookDto) {
+        User cook = converter.convertDtoToDocument(cookDto);
+        String password = cookDto.getPassword();
+        cook.setPassword(passwordEncoder.encode(password));
+        cook.setRoles(List.of("ROLE_COOK"));
+
+        log.debug("registered new cook: " + cook);
+        return cook;
+    }
+
 
 }
