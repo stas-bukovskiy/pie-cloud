@@ -1,6 +1,6 @@
 package com.piecloud.order;
 
-import com.piecloud.ReactiveProducerService;
+import com.piecloud.OrderProducerService;
 import com.piecloud.order.line.OrderLine;
 import com.piecloud.order.line.OrderLineService;
 import com.piecloud.user.User;
@@ -25,7 +25,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderConverter converter;
     private final OrderLineService orderLineService;
     private final UserService userService;
-    private final ReactiveProducerService producerService;
+    private final OrderProducerService producerService;
 
     @Override
     public Flux<OrderDto> getOrders() {
@@ -82,6 +82,12 @@ public class OrderServiceImpl implements OrderService {
                     return order;
                 })
                 .flatMap(repository::save)
+                .map(converter::convertDocumentToDto);
+    }
+
+    @Override
+    public Flux<OrderDto> getUncompletedOrders() {
+        return repository.findAllByStatusNotOrderByStatusAscCreatedDateAsc(OrderStatus.COMPLETED)
                 .map(converter::convertDocumentToDto);
     }
 }

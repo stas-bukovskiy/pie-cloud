@@ -8,4 +8,6 @@ import reactor.core.publisher.Mono;
 public interface OrderRepository extends ReactiveMongoRepository<Order, String> {
     Flux<Order> findAllByUserId(String id);
     Mono<Order> findByIdAndUserId(String id, String userId);
+    Flux<Order> findAllByStatusNotOrderByStatusAscCreatedDateAsc(OrderStatus status);
+
 }
