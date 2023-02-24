@@ -1,9 +1,7 @@
 package com.piecloud.ingredient;
 
 import com.piecloud.TestImageFilePart;
-import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.group.IngredientGroup;
-import com.piecloud.ingredient.group.IngredientGroupDto;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,43 +15,38 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
+import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 public class IngredientServiceTest {
-
-    private static final BigDecimal PRICE = BigDecimal.TEN;
     @MockBean
     private IngredientRepository repository;
     @Autowired
     private IngredientService service;
-    @Autowired
-    private ImageUploadService imageUploadService;
     @MockBean
     private IngredientGroupRepository groupRepository;
     @Autowired
     private IngredientConverter converter;
     private IngredientGroup group;
 
-    private String IMAGE_NAME;
-
 
     @BeforeEach
     public void setup() {
-        group = new IngredientGroup("id", "name");
-        IMAGE_NAME = imageUploadService.getDefaultImageName();
+        group = randomIngredientGroup();
     }
 
 
     @Test
     void testGetAllIngredientsDto() {
         List<Ingredient> ingredientsToSave = List.of(
-                new Ingredient("id1", "ingredient group 1", IMAGE_NAME, PRICE, group),
-                new Ingredient("id2", "ingredient group 2", IMAGE_NAME, PRICE, group),
-                new Ingredient("id3", "ingredient group 3", IMAGE_NAME, PRICE, group)
+                randomIngredient(group),
+                randomIngredient(group),
+                randomIngredient(group)
         );
         Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(ingredientsToSave));
 
@@ -66,8 +59,8 @@ public class IngredientServiceTest {
 
     @Test
     void testGetIngredientsDto() {
-        String ID = "id";
-        Ingredient ingredient = new Ingredient(ID, "ingredient group", IMAGE_NAME, PRICE, group);
+        Ingredient ingredient = randomIngredient(group);
+        String ID = ingredient.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(ingredient));
 
         Mono<IngredientDto> result = service.getIngredientDto(ID);
@@ -94,8 +87,8 @@ public class IngredientServiceTest {
 
     @Test
     void testGetIngredients() {
-        String ID = "id";
-        Ingredient ingredient = new Ingredient(ID, "ingredient group", IMAGE_NAME, PRICE, group);
+        Ingredient ingredient = randomIngredient(group);
+        String ID = ingredient.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(ingredient));
 
         Mono<Ingredient> result = service.getIngredient(ID);
@@ -117,12 +110,14 @@ public class IngredientServiceTest {
 
     @Test
     void testCreateIngredient() {
-        String ID = "id";
-        Ingredient ingredient = new Ingredient(ID, "ingredient group", IMAGE_NAME, PRICE, group);
-        IngredientDto ingredientDtoToSave = new IngredientDto(ID, "ingredient group", IMAGE_NAME, PRICE,
-                new IngredientGroupDto(group.getId(), group.getName()));
-        Mockito.when(repository.save(converter.convertDtoToDocument(ingredientDtoToSave))).thenReturn(Mono.just(ingredient));
+        Ingredient ingredient = randomIngredient(group);
+        IngredientDto ingredientDtoToSave = converter.convertDocumentToDto(ingredient);
+
+        Mockito.when(repository.save(converter.convertDtoToDocument(ingredientDtoToSave)))
+                .thenReturn(Mono.just(ingredient));
         Mockito.when(groupRepository.findById(group.getId())).thenReturn(Mono.just(group));
+        Mockito.when(repository.existsByNameAndIdIsNot(ingredientDtoToSave.getName(), ingredientDtoToSave.getId()))
+                .thenReturn(Mono.just(Boolean.FALSE));
 
         Mono<IngredientDto> result = service.createIngredient(Mono.just(ingredientDtoToSave));
 
@@ -133,9 +128,9 @@ public class IngredientServiceTest {
 
     @Test
     void testAddImageToIngredient() {
-        String ID = "id";
+        String ID = UUID.randomUUID().toString();
         String imageName = "ingredient-" + ID + ".png";
-        Ingredient ingredient = new Ingredient(ID, "ingredient", IMAGE_NAME, BigDecimal.ONE, group);
+        Ingredient ingredient = randomIngredient(group);
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(ingredient));
         ingredient.setImageName(imageName);
         Mockito.when(repository.save(ingredient)).thenReturn(Mono.just(ingredient));

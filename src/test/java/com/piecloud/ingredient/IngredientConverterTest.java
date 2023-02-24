@@ -5,8 +5,9 @@ import com.piecloud.ingredient.group.IngredientGroupDto;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
-
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredientDto;
+import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -19,13 +20,13 @@ public class IngredientConverterTest {
     @BeforeAll
     public static void setup() {
         converter = new IngredientConverter();
-        group = new IngredientGroup("id", "name");
-        groupDto = new IngredientGroupDto("id", "name");
+        group = randomIngredientGroup();
+        groupDto = new IngredientGroupDto(group.getId(), group.getName());
     }
 
     @Test
     public void testConvertingDocumentToDto() {
-        Ingredient documentToConvert = new Ingredient("id", "name", "image.png", BigDecimal.TEN, group);
+        Ingredient documentToConvert = randomIngredient(group);
         IngredientDto convertedDto = converter.convertDocumentToDto(documentToConvert);
 
         assertEquals(documentToConvert.getId(), convertedDto.getId());
@@ -37,14 +38,14 @@ public class IngredientConverterTest {
 
     @Test
     public void testConvertingDtoToDocument() {
-        IngredientDto dtoToConvert = new IngredientDto("id", "name", "image.png", BigDecimal.TEN, groupDto);
+        IngredientDto dtoToConvert = randomIngredientDto(group.getId());
         Ingredient convertedDocument = converter.convertDtoToDocument(dtoToConvert);
 
         assertNull(convertedDocument.getId());
         assertEquals(dtoToConvert.getName(), convertedDocument.getName());
         assertEquals(dtoToConvert.getImageName(), convertedDocument.getImageName());
         assertEquals(dtoToConvert.getPrice(), convertedDocument.getPrice());
-        assertEquals(group, convertedDocument.getGroup());
+        assertEquals(group.getId(), convertedDocument.getGroup().getId());
     }
     
 }

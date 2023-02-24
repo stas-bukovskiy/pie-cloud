@@ -3,7 +3,6 @@ package com.piecloud.ingredient;
 import com.piecloud.TestImageFilePart;
 import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.group.IngredientGroup;
-import com.piecloud.ingredient.group.IngredientGroupDto;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -18,11 +19,14 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredientDto;
+import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
 import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class IngredientControllerTest {
@@ -45,16 +49,15 @@ public class IngredientControllerTest {
     @BeforeEach
     void setup() {
         group = groupRepository.deleteAll()
-                .then(groupRepository.save(new IngredientGroup("id", "name"))).block();
+                .then(groupRepository.save(randomIngredientGroup()))
+                .block();
+        repository.deleteAll().block();
     }
 
-
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPost_shouldReturnIngredientGroup() {
-        repository.deleteAll().subscribe();
-        IngredientGroupDto groupDto = new IngredientGroupDto(group.getId(), "");
-        IngredientDto ingredientDto = new IngredientDto("", "ingredient", "", BigDecimal.TEN, groupDto);
-
+        IngredientDto ingredientDto = randomIngredientDto(group.getId());
         webTestClient
                 .post()
                 .uri("/api/ingredient/")
@@ -76,13 +79,12 @@ public class IngredientControllerTest {
 
     @Test
     public void testGet_shouldReturnIngredients() {
-        List<Ingredient> ingredients = new ArrayList<>();
-        repository.deleteAll().thenMany(repository.saveAll(Flux.fromIterable(List.of(
-                new Ingredient(null, "ingredient 1", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Ingredient(null, "ingredient 2", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Ingredient(null, "ingredient 3", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group),
-                new Ingredient(null, "ingredient 4", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )))).subscribe(ingredients::add);
+        List<Ingredient> ingredients = repository.saveAll(Flux.fromIterable(List.of(
+                randomIngredient(group),
+                randomIngredient(group),
+                randomIngredient(group)
+        ))).collectList().block();
+        assertNotNull(ingredients);
 
         webTestClient.get()
                 .uri("/api/ingredient/")
@@ -94,9 +96,7 @@ public class IngredientControllerTest {
 
     @Test
     public void testGetWithId_shouldReturnGroup() {
-        Ingredient ingredient = repository.deleteAll().then(repository.save(
-                new Ingredient(null, "ingredient", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
+        Ingredient ingredient = repository.save(randomIngredient(group)).block();
 
         assertNotNull(ingredient);
         webTestClient.get()
@@ -110,7 +110,7 @@ public class IngredientControllerTest {
     @Test
     public void testGetWithWrongId_should404() {
         String wrongId = "id";
-        repository.deleteById(wrongId).subscribe();
+        repository.deleteById(wrongId).block();
 
         webTestClient.get()
                 .uri("/api/ingredient/{id}", wrongId)
@@ -119,13 +119,12 @@ public class IngredientControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPut_shouldReturnChangedIngredient() {
-        Ingredient ingredient = repository.deleteAll().then(repository.save(
-                new Ingredient(null, "ingredient", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
+        Ingredient ingredient = repository.save(randomIngredient(group)).block();
         assertNotNull(ingredient);
         ingredient.setName("new name");
-        ingredient.setPrice(BigDecimal.TEN);
+        ingredient.setPrice(BigDecimal.ONE);
 
         webTestClient.put()
                 .uri("/api/ingredient/{id}", ingredient.getId())
@@ -140,12 +139,11 @@ public class IngredientControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testDelete_shouldDeleteFromDb() {
-        Ingredient ingredient = repository.deleteAll().then(repository.save(
-                new Ingredient(null, "ingredient", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
+        Ingredient ingredient = repository.save(randomIngredient(group)).block();
+        assertNotNull(ingredient);
 
-        assert ingredient != null;
         webTestClient.delete()
                 .uri("/api/ingredient/{id}", ingredient.getId())
                 .exchange()
@@ -158,12 +156,11 @@ public class IngredientControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testAddImageToIngredient_shouldReturnWithNewImage() {
-        Ingredient ingredient = repository.save(
-                new Ingredient(null, "ingredient", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        ).block();
+        Ingredient ingredient = repository.save(randomIngredient(group)).block();
+        assertNotNull(ingredient);
 
-        assert ingredient != null;
         FilePart imageFilePart = new TestImageFilePart();
         webTestClient
                 .post()
@@ -179,11 +176,11 @@ public class IngredientControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testDeleteImageFromIngredient_shouldReturnWithNewImage() {
-        Ingredient ingredient = repository.deleteAll().then(repository.save(
-                new Ingredient(null, "ingredient", imageUploadService.getDefaultImageName(), BigDecimal.ONE, group)
-        )).block();
+        Ingredient ingredient = repository.save(randomIngredient(group)).block();
         assertNotNull(ingredient);
+
         FilePart imageFilePart = new TestImageFilePart();
         IngredientDto ingredientDto = service.addImageToIngredient(ingredient.getId(), Mono.just(imageFilePart)).block();
         assertNotNull(ingredientDto);

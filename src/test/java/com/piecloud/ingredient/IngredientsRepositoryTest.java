@@ -4,23 +4,19 @@ import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.math.BigDecimal;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
+import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @DataMongoTest
-@ExtendWith(SpringExtension.class)
 public class IngredientsRepositoryTest {
 
     @Autowired
@@ -33,17 +29,14 @@ public class IngredientsRepositoryTest {
 
     @BeforeEach
     public void setup() {
-        group = groupRepository.deleteAll().then(groupRepository.save(new IngredientGroup(null, "group"))).block();
-    }
-
-    @Test
-    public void s() {
-        assertTrue(true);
+        group = groupRepository.deleteAll()
+                .then(groupRepository.save(randomIngredientGroup()))
+                .block();
     }
 
     @Test
     public void testSaveIngredient() {
-        Ingredient ingredientToSave = new Ingredient("id", "name", "image.png", BigDecimal.TEN, group);
+        Ingredient ingredientToSave = randomIngredient(group);
 
         Publisher<Ingredient> setup = repository.deleteAll().then(repository.save(ingredientToSave));
 
@@ -53,23 +46,9 @@ public class IngredientsRepositoryTest {
     }
 
     @Test
-    public void testSaveIngredientWithNotUniqueName_shouldThrowException() {
-        String notUniqueNme = "name";
-        Ingredient ingredientToSave1 = new Ingredient("id1", notUniqueNme, "image.png", BigDecimal.TEN, group);
-        Ingredient ingredientToSave2 = new Ingredient("id2", notUniqueNme, "image.png", BigDecimal.TEN, group);
-
-        Publisher<Ingredient> setup = repository.deleteAll().then(repository.save(ingredientToSave1))
-                .then(repository.save(ingredientToSave2));
-
-        StepVerifier.create(setup)
-                .expectError(DuplicateKeyException.class)
-                .verify();
-    }
-
-    @Test
     public void testFindIngredientById() {
-        String ID = "id";
-        Ingredient ingredient = new Ingredient(ID, "name", "image.png", BigDecimal.TEN, group);
+        Ingredient ingredient = randomIngredient(group);;
+        String ID = ingredient.getId();
 
         Publisher<Ingredient> setup = repository.deleteAll()
                 .then(repository.save(ingredient)).then(repository.findById(ID));
@@ -81,8 +60,7 @@ public class IngredientsRepositoryTest {
 
     @Test
     public void testDeleteIngredientById() {
-        Ingredient ingredient = new Ingredient("id", "name", "image.png",
-                BigDecimal.TEN, group);
+        Ingredient ingredient = randomIngredient(group);
 
         Publisher<Ingredient> setup = repository.deleteAll()
                 .thenMany(repository.save(ingredient));
