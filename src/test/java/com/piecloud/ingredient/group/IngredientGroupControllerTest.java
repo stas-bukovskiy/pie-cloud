@@ -4,17 +4,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
+import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroupDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class IngredientGroupControllerTest {
@@ -26,8 +30,9 @@ public class IngredientGroupControllerTest {
 
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPost_shouldReturnIngredientGroup() {
-        IngredientGroupDto groupDto = new IngredientGroupDto("id", "name");
+        IngredientGroupDto groupDto = randomIngredientGroupDto();
 
         webTestClient
                 .post()
@@ -42,13 +47,14 @@ public class IngredientGroupControllerTest {
 
     @Test
     public void testGet_shouldReturnGroups() {
-        List<IngredientGroup> ingredientGroups = new ArrayList<>();
-        repository.deleteAll().thenMany(repository.saveAll(Flux.fromIterable(List.of(
-                new IngredientGroup(null, "group1"),
-                new IngredientGroup(null, "group2"),
-                new IngredientGroup(null, "group3"),
-                new IngredientGroup(null, "group4")
-        )))).subscribe(ingredientGroups::add);
+        List<IngredientGroup> ingredientGroups = repository.deleteAll()
+                .thenMany(repository.saveAll(Flux.fromIterable(List.of(
+                        randomIngredientGroup(),
+                        randomIngredientGroup(),
+                        randomIngredientGroup(),
+                        randomIngredientGroup()
+                )))).collectList().block();
+        assertNotNull(ingredientGroups);
 
         webTestClient.get()
                 .uri("/api/ingredient/group/")
@@ -61,10 +67,10 @@ public class IngredientGroupControllerTest {
     @Test
     public void testGetWithId_shouldReturnGroup() {
         IngredientGroup group = repository.deleteAll().then(repository.save(
-                new IngredientGroup(null, "group")
+                randomIngredientGroup()
         )).block();
 
-        assert group != null;
+        assertNotNull(group);
         webTestClient.get()
                 .uri("/api/ingredient/group/{id}", group.getId())
                 .exchange()
@@ -76,7 +82,7 @@ public class IngredientGroupControllerTest {
     @Test
     public void testGetWithWrongId_should404() {
         String wrongId = "id";
-        repository.deleteById(wrongId).subscribe();
+        repository.deleteById(wrongId).block();
 
         webTestClient.get()
                 .uri("/api/ingredient/group/{id}", wrongId)
@@ -85,11 +91,12 @@ public class IngredientGroupControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPut_shouldReturnChangedGroup() {
         IngredientGroup group = repository.deleteAll().then(
-                repository.save(new IngredientGroup("id", "group"))
+                repository.save(randomIngredientGroup())
         ).block();
-        IngredientGroupDto changedGroup = new IngredientGroupDto(null, "changed name");
+        IngredientGroupDto changedGroup = randomIngredientGroupDto();
 
         assertNotNull(group);
         webTestClient.put()
@@ -102,12 +109,13 @@ public class IngredientGroupControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testDelete_shouldDeleteFromDB() {
         IngredientGroup group = repository.deleteAll().then(repository.save(
-                new IngredientGroup("id", "group")
+                randomIngredientGroup()
         )).block();
 
-        assert group != null;
+        assertNotNull(group);
         webTestClient.delete()
                 .uri("/api/ingredient/group/{id}", group.getId())
                 .exchange()
