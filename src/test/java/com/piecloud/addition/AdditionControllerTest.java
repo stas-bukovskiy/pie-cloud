@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
@@ -54,7 +53,7 @@ public class AdditionControllerTest {
 
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPost_shouldReturnAdditionGroup() {
         AdditionDto additionDto = randomAdditionDto(group.getId());
 
@@ -79,12 +78,13 @@ public class AdditionControllerTest {
 
     @Test
     public void testGet_shouldReturnAdditions() {
-        List<Addition> additions = new ArrayList<>();
-        repository.deleteAll().thenMany(repository.saveAll(Flux.fromIterable(List.of(
-                randomAddition(group),
-                randomAddition(group),
-                randomAddition(group)
-        )))).subscribe(additions::add);
+        List<Addition> additions = repository.deleteAll()
+                .thenMany(repository.saveAll(Flux.fromIterable(List.of(
+                        randomAddition(group),
+                        randomAddition(group),
+                        randomAddition(group)
+                )))).collectList().block();
+        assertNotNull(additions);
 
         webTestClient.get()
                 .uri("/api/addition/")
@@ -111,7 +111,7 @@ public class AdditionControllerTest {
     @Test
     public void testGetWithWrongId_should404() {
         String wrongId = "id";
-        repository.deleteById(wrongId).subscribe();
+        repository.deleteById(wrongId).block();
 
         webTestClient.get()
                 .uri("/api/addition/{id}", wrongId)
@@ -120,7 +120,7 @@ public class AdditionControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPut_shouldReturnChangedAddition() {
         Addition addition = repository.deleteAll()
                 .then(repository.save(randomAddition(group))).block();
@@ -141,12 +141,12 @@ public class AdditionControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testDelete_shouldDeleteFromBD() {
         Addition addition = repository.deleteAll()
                 .then(repository.save(randomAddition(group))).block();
         assertNotNull(addition);
-        
+
         webTestClient.delete()
                 .uri("/api/addition/{id}", addition.getId())
                 .exchange()
@@ -159,7 +159,7 @@ public class AdditionControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testAddImageToAddition_shouldReturnWithNewImage() {
         Addition addition = repository.deleteAll()
                 .then(repository.save(randomAddition(group))).block();
@@ -176,15 +176,15 @@ public class AdditionControllerTest {
                 .expectBody(AdditionDto.class)
                 .value(postedAddition ->
                         assertNotEquals(imageUploadService.getDefaultImageName(),
-                        postedAddition.getImageName()));
+                                postedAddition.getImageName()));
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testDeleteImageFromAddition_shouldReturnWithNewImage() {
         Addition addition = repository.deleteAll()
                 .then(repository.save(randomAddition(group))).block();
-        
+
         assertNotNull(addition);
         FilePart imageFilePart = new TestImageFilePart();
         AdditionDto additionDto = service.addImageToAddition(addition.getId(), Mono.just(imageFilePart)).block();

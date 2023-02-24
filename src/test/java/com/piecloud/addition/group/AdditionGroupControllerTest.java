@@ -12,7 +12,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
@@ -31,12 +30,12 @@ public class AdditionGroupControllerTest {
     private AdditionGroupRepository repository;
 
     @BeforeEach
-    public void setup() {
-        repository.deleteAll().subscribe();
+    void setup() {
+        repository.deleteAll().block();
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPost_shouldReturnAdditionGroup() {
         AdditionGroupDto groupDto = randomAdditionGroupDto();
 
@@ -53,13 +52,13 @@ public class AdditionGroupControllerTest {
 
     @Test
     public void testGet_shouldReturnGroups() {
-        List<AdditionGroup> additionGroups = new ArrayList<>();
-        repository.deleteAll().thenMany(repository.saveAll(Flux.fromIterable(List.of(
+        List<AdditionGroup> additionGroups = repository.saveAll(Flux.fromIterable(List.of(
                 randomAdditionGroup(),
                 randomAdditionGroup(),
                 randomAdditionGroup(),
                 randomAdditionGroup()
-        )))).subscribe(additionGroups::add);
+        ))).collectList().block();
+        assertNotNull(additionGroups);
 
         webTestClient.get()
                 .uri("/api/addition/group/")
@@ -72,8 +71,9 @@ public class AdditionGroupControllerTest {
     @Test
     public void testGetWithId_shouldReturnGroup() {
         AdditionGroup group = repository.save(randomAdditionGroup()).block();
+        assertNotNull(group);
+        assertEquals(Boolean.TRUE, repository.existsById(group.getId()).block());
 
-        assert group != null;
         webTestClient.get()
                 .uri("/api/addition/group/{id}", group.getId())
                 .exchange()
@@ -85,7 +85,7 @@ public class AdditionGroupControllerTest {
     @Test
     public void testGetWithWrongId_should404() {
         String wrongId = "id";
-        repository.deleteById(wrongId).subscribe();
+        repository.deleteById(wrongId).block();
 
         webTestClient.get()
                 .uri("/api/addition/group/{id}", wrongId)
@@ -94,7 +94,7 @@ public class AdditionGroupControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPut_shouldReturnChangedGroup() {
         AdditionGroup group = repository.save(randomAdditionGroup()).block();
         AdditionGroupDto changedGroup = randomAdditionGroupDto();
@@ -110,7 +110,7 @@ public class AdditionGroupControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = { "ADMIN" })
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testDelete_shouldDeleteFromBD() {
         AdditionGroup group = repository.deleteAll().then(repository.save(
                 randomAdditionGroup()
