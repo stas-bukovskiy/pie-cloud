@@ -1,10 +1,9 @@
 package com.piecloud.pie;
 
+import com.piecloud.RandomStringUtils;
+import com.piecloud.TestImageFilePart;
 import com.piecloud.image.ImageUploadService;
-import com.piecloud.ingredient.Ingredient;
-import com.piecloud.ingredient.IngredientConverter;
-import com.piecloud.ingredient.IngredientDto;
-import com.piecloud.ingredient.IngredientRepository;
+import com.piecloud.ingredient.*;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,23 +11,32 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
+import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
+import static com.piecloud.pie.PieUtil.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+@DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class PieControllerTest {
 
-    private static String IMAGE_NAME;
     @Autowired
     private WebTestClient webTestClient;
+    @Autowired
+    private PieService service;
     @Autowired
     private PieRepository repository;
     @Autowired
@@ -37,31 +45,38 @@ class PieControllerTest {
     private IngredientRepository ingredientRepository;
     @Autowired
     private ImageUploadService imageUploadService;
+    @Autowired
+    private PieConverter converter;
 
+    private List<Ingredient> ingredients;
     private List<IngredientDto> ingredientsDto;
+
 
     @BeforeEach
     void setup() {
-        IMAGE_NAME = imageUploadService.getDefaultImageName();
+        repository.deleteAll().block();
 
-        IngredientGroup group = (ingredientGroupRepository.deleteAll()
-                .then(ingredientGroupRepository.save(
-                        new IngredientGroup(null, "ingredient group")
-                ))).block();
+        IngredientGroup group = ingredientGroupRepository.deleteAll()
+                .then(ingredientGroupRepository.save(randomIngredientGroup()))
+                .block();
 
-        ingredientsDto = new ArrayList<>();
-        (ingredientRepository.deleteAll()
+        ingredients = ingredientRepository.deleteAll()
                 .thenMany(ingredientRepository.saveAll(List.of(
-                                new Ingredient(null, "ingredient 1", IMAGE_NAME, BigDecimal.TEN, group),
-                                new Ingredient(null, "ingredient 2", IMAGE_NAME, BigDecimal.ONE, group),
-                                new Ingredient(null, "ingredient 3", IMAGE_NAME, BigDecimal.TEN, group)
-                        )).map(new IngredientConverter()::convertDocumentToDto)
-                )).subscribe(ingredientsDto::add);
+                        randomIngredient(group),
+                        randomIngredient(group),
+                        randomIngredient(group)
+                ))).collectList().block();
+        assert ingredients != null;
+        ingredientsDto = ingredients.stream()
+                .map(new IngredientConverter()::convertDocumentToDto)
+                .collect(Collectors.toList());
     }
 
     @Test
-    public void testPost_shouldReturnIngredientGroup() {
-        PieDto pieDtoToPost = new PieDto(null, "pie name", null, null, ingredientsDto);
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPost_shouldReturnPie() {
+        PieDto pieDtoToPost = randomPieDto(ingredientsDto.stream().map(IngredientDto::getId).collect(Collectors.toList()));
+
         webTestClient
                 .post()
                 .uri("/api/pie/")
@@ -73,22 +88,55 @@ class PieControllerTest {
                 .value(postedPie -> {
                     assertNotNull(postedPie.getId());
                     assertEquals(postedPie.getName(), postedPie.getName());
-                    assertEquals(IMAGE_NAME, postedPie.getImageName());
-                    assertEquals(calculatePrice(), postedPie.getPrice());
-                    assertEquals(ingredientsDto, pieDtoToPost.getIngredients());
+                    assertNotNull(postedPie.getImageName());
+                    assertEquals(calculatePrice(postedPie.getIngredients()), postedPie.getPrice());
+                    assertEquals(ingredientsDto.size(), pieDtoToPost.getIngredients().size());
                 });
     }
 
-    private BigDecimal calculatePrice() {
-        return ingredientsDto.stream()
-                .map(IngredientDto::getPrice)
-                .reduce(BigDecimal.ZERO.setScale(2), (subtotal, element) -> subtotal = subtotal.add(element));
+    @Test
+    public void testGet_shouldReturnPieList() {
+        List<Pie> savedPies = repository.saveAll(List.of(
+                randomPie(ingredients),
+                randomPie(ingredients),
+                randomPie(ingredients)
+        )).collectList().block();
+        assertNotNull(savedPies);
+
+        webTestClient
+                .get()
+                .uri("/api/pie/")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(PieDto.class)
+                .value(pieDtoList -> assertEquals(savedPies.size(), pieDtoList.size()));
     }
+
+    @Test
+    public void testGetWithId_shouldReturnPie() {
+        Pie savedPie = repository.save(randomPie(ingredients)).block();
+        assertNotNull(savedPie);
+
+        webTestClient
+                .get()
+                .uri("/api/pie/{id}", savedPie.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(PieDto.class)
+                .value(pieDto -> {
+                    assertEquals(savedPie.getId(), pieDto.getId());
+                    assertEquals(savedPie.getName(), pieDto.getName());
+                    assertEquals(savedPie.getPrice(), pieDto.getPrice());
+                    assertEquals(savedPie.getImageName(), pieDto.getImageName());
+                    assertEquals(savedPie.getIngredients().size(), pieDto.getIngredients().size());
+                });
+    }
+
 
     @Test
     void testGetPieWithWrongId_ShouldReturn404() {
         String id = "id";
-        repository.deleteById(id).subscribe();
+        repository.deleteById(id).block();
 
         webTestClient
                 .get()
@@ -96,6 +144,86 @@ class PieControllerTest {
                 .exchange()
                 .expectStatus()
                 .isEqualTo(404);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPut_shouldReturnChangedPie() {
+        Pie savedPie = repository.save(randomPie(ingredients)).block();
+        assertNotNull(savedPie);
+        savedPie.setName(RandomStringUtils.random());
+        savedPie.setIngredients(savedPie.getIngredients().stream()
+                .limit(savedPie.getIngredients().size() - 1)
+                .collect(Collectors.toSet()));
+
+        webTestClient.put()
+                .uri("/api/pie/{id}", savedPie.getId())
+                .bodyValue(converter.convertDocumentToDto(savedPie))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(PieDto.class)
+                .value(updatedPie -> {
+                    assertEquals(savedPie.getName(), updatedPie.getName());
+                    assertEquals(calculatePrice(savedPie.getIngredients()), updatedPie.getPrice());
+                });
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testDelete_shouldDeleteFromDb() {
+        Pie savedPie = repository.save(randomPie(ingredients)).block();
+        assertNotNull(savedPie);
+
+        webTestClient.delete()
+                .uri("/api/pie/{id}", savedPie.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Void.class);
+
+        StepVerifier.create(repository.findAll())
+                .expectNextCount(0)
+                .verifyComplete();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testAddImageToPie_shouldReturnWithNewImage() {
+        Pie savedPie = repository.save(randomPie(ingredients)).block();
+        assertNotNull(savedPie);
+
+        FilePart imageFilePart = new TestImageFilePart();
+        webTestClient
+                .post()
+                .uri("/api/pie/{id}/image", savedPie.getId())
+                .bodyValue(imageFilePart)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(PieDto.class)
+                .value(pieWithImage ->
+                        assertNotEquals(imageUploadService.getDefaultImageName(),
+                                pieWithImage.getImageName()));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testDeleteImageFromIngredient_shouldReturnWithNewImage() {
+        Pie savedPie = repository.save(randomPie(ingredients)).block();
+        assertNotNull(savedPie);
+
+        FilePart imageFilePart = new TestImageFilePart();
+        PieDto pieDto = service.addImageToPie(savedPie.getId(), Mono.just(imageFilePart)).block();
+        assertNotNull(pieDto);
+        assertNotEquals(imageUploadService.getDefaultImageName(), pieDto.getImageName());
+
+        webTestClient
+                .delete()
+                .uri("/api/pie/{id}/image", savedPie.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(PieDto.class)
+                .value(pieWithoutImage ->
+                        assertEquals(imageUploadService.getDefaultImageName(),
+                                pieWithoutImage.getImageName()));
     }
 
 
