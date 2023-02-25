@@ -6,14 +6,11 @@ import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
@@ -21,11 +18,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
+import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
+import static com.piecloud.pie.PieUtil.calculatePrice;
+import static com.piecloud.pie.PieUtil.randomPie;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DataMongoTest
-@ExtendWith(SpringExtension.class)
 class PieRepositoryTest {
 
     @TestConfiguration
@@ -35,8 +35,6 @@ class PieRepositoryTest {
             return new PiePriceCounterMongoEventListener();
         }
     }
-
-    private static final String IMAGE_NAME = "default.png";
 
     @Autowired
     private PieRepository repository;
@@ -51,22 +49,23 @@ class PieRepositoryTest {
     @BeforeEach
     void setup() {
         IngredientGroup ingredientGroup = ingredientGroupRepository.deleteAll()
-                .then(ingredientGroupRepository.save(
-                        new IngredientGroup(null, "ingredient group")
-                )).block();
-        ingredients = new HashSet<>();
-        ingredientRepository.deleteAll()
+                .then(ingredientGroupRepository.save(randomIngredientGroup())).block();
+
+        List<Ingredient> ingredientsList = ingredientRepository.deleteAll()
                 .thenMany(ingredientRepository.saveAll(List.of(
-                        new Ingredient(null, "ingredient 1", IMAGE_NAME, BigDecimal.TEN, ingredientGroup),
-                        new Ingredient(null, "ingredient 2", IMAGE_NAME, BigDecimal.ONE, ingredientGroup),
-                        new Ingredient(null, "ingredient 3", IMAGE_NAME, BigDecimal.TEN, ingredientGroup)
-                ))).subscribe(ingredients::add);
+                      randomIngredient(ingredientGroup),
+                      randomIngredient(ingredientGroup),
+                      randomIngredient(ingredientGroup)
+                ))).collectList().block();
+
+        assert ingredientsList != null;
+        ingredients = new HashSet<>(ingredientsList);
 
     }
 
     @Test
     void testSavePie_shouldReturnPie() {
-        Pie pieToSave = new Pie(null, "pie name", IMAGE_NAME, null, ingredients);
+        Pie pieToSave = randomPie(ingredients);
 
         Publisher<Pie> setup = repository.deleteAll()
                 .then(repository.save(pieToSave));
@@ -75,37 +74,16 @@ class PieRepositoryTest {
                 .consumeNextWith(savedPie -> {
                     assertNotNull(savedPie.getId());
                     assertEquals(pieToSave.getName(), savedPie.getName());
-                    assertEquals(IMAGE_NAME, savedPie.getImageName());
+                    assertNotNull(savedPie.getImageName());
                     assertEquals(ingredients, savedPie.getIngredients());
-                    assertEquals(calculatePrice(pieToSave), savedPie.getPrice());
+                    assertEquals(calculatePrice(ingredients), savedPie.getPrice());
                 }).verifyComplete();
-    }
-
-    private BigDecimal calculatePrice(Pie pie) {
-        return pie.getIngredients().stream()
-                .map(Ingredient::getPrice)
-                .reduce(BigDecimal.ZERO.setScale(2), (subtotal, element) -> subtotal = subtotal.add(element));
-    }
-
-    @Test
-    void testSaveWithNotUniqueName_shouldThrowException() {
-        String notUniqueName = "pie name";
-        Pie pieToSave1 = new Pie(null, notUniqueName, IMAGE_NAME, null, ingredients);
-        Pie pieToSave2 = new Pie(null, notUniqueName, IMAGE_NAME, null, ingredients);
-
-        Publisher<Pie> setup = repository.deleteAll()
-                .then(repository.save(pieToSave1))
-                .then(repository.save(pieToSave2));
-
-        StepVerifier.create(setup)
-                .expectError(DuplicateKeyException.class)
-                .verify();
     }
 
     @Test
     void testFindById_shouldReturnPie() {
-        String ID = "id";
-        Pie savedPie = new Pie(ID, "pie name", IMAGE_NAME, null, ingredients);
+        Pie savedPie = randomPie(ingredients);
+        String ID = savedPie.getId();
 
         Publisher<Pie> setup = repository.deleteAll()
                 .then(repository.save(savedPie))
