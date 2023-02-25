@@ -36,6 +36,7 @@ public class AdditionConverter {
 
     public AdditionDto convertDocumentToDto(Addition addition){
         AdditionDto additionDto = mapper.map(addition, AdditionDto.class);
+        additionDto.getGroup().setId(addition.getGroupId());
         log.debug("converting " + addition + " to dto: " + additionDto);
         return additionDto;
     }

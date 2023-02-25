@@ -95,10 +95,11 @@ public class AdditionServiceImpl implements AdditionService {
                     Addition updatedAddition = additionAndAdditionDtoAndGroup.getT1();
                     updatedAddition.setName(additionDto.getName());
                     updatedAddition.setPrice(additionDto.getPrice());
-                    updatedAddition.setGroup(group);
+                    updatedAddition.setGroupId(group.getId());
                     return updatedAddition;
                 })
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .doOnSuccess(onSuccess -> log.debug("updated addition successfully"));
     }
