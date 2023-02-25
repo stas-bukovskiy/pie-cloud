@@ -21,7 +21,6 @@ public class OrderCreatorMongoEventListener extends AbstractMongoEventListener<O
         BigDecimal price = countPrice(orderSource);
         event.getSource().setPrice(price);
         event.getSource().setCreatedDate(new Date());
-        event.getSource().setStatus(OrderStatus.IN_LINE);
 
         super.onBeforeConvert(event);
     }

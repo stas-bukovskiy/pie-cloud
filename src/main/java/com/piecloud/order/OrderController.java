@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("api/order")
 public class OrderController {
@@ -27,6 +29,23 @@ public class OrderController {
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<OrderDto> postOrder(@RequestBody @Valid Mono<OrderDto> orderDtoMono ) {
         return service.createOrder(orderDtoMono);
+    }
+
+    @PatchMapping("/{id}/status")
+    public Mono<OrderDto> changeStatus(@RequestBody Mono<Map<String, String>> bodyMono,
+                                       @PathVariable String id) {
+        return service.changeStatus(id, getStatusFromBody(bodyMono));
+    }
+
+    private Mono<String> getStatusFromBody(Mono<Map<String, String>> bodyMono) {
+        return bodyMono.flatMap(body -> {
+            if (body == null)
+                return Mono.empty();
+            String status = body.get("status");
+            if (status == null)
+                return Mono.empty();
+            return Mono.just(status);
+        });
     }
 
 }

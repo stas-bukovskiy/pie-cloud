@@ -56,6 +56,7 @@ public class OrderServiceImpl implements OrderService {
                     Set<OrderLine> orderLines = new HashSet<>(orderLinesAndUser.getT1());
                     String userId = orderLinesAndUser.getT2().getId();
                     Order order = new Order();
+                    order.setStatus(OrderStatus.IN_LINE);
                     order.setOrderLines(orderLines);
                     order.setUserId(userId);
                     return order;
@@ -70,18 +71,39 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Mono<OrderDto> changeStatus(String id, OrderStatus newStatus) {
-        return userService.getCurrentUser()
-                .map(User::getId)
-                .flatMap(userId -> repository.findByIdAndUserId(id, userId))
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found order with id = " + id)))
-                .map(order -> {
-                    order.setStatus(newStatus);
+    public Mono<OrderDto> changeStatus(String id, Mono<String> statusMono) {
+        return checkAndConvertToStatus(statusMono)
+                .zipWith(userService.getCurrentUser()
+                        .map(User::getId)
+                        .flatMap(userId -> repository.findByIdAndUserId(id, userId))
+                        .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                "not found order with id = " + id))))
+                .map(statusOrderTuple2 -> {
+                    OrderStatus status = statusOrderTuple2.getT1();
+                    Order order = statusOrderTuple2.getT2();
+                    order.setStatus(status);
                     return order;
                 })
                 .flatMap(repository::save)
-                .map(converter::convertDocumentToDto);
+                .map(converter::convertDocumentToDto)
+                .map(orderDto -> {
+                    producerService.send(orderDto);
+                    return orderDto;
+                });
+    }
+
+    private Mono<OrderStatus> checkAndConvertToStatus(Mono<String> statusMono) {
+        return statusMono.flatMap(status -> {
+            if (status == null)
+                return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "status can not be null"));
+            try {
+                return Mono.just(OrderStatus.valueOf(status));
+            } catch (IllegalArgumentException ex) {
+                return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "order status must be one of:" + OrderStatus.IN_LINE + OrderStatus.COMPLETED + OrderStatus.IN_PROCESSING));
+            }
+        });
     }
 
     @Override

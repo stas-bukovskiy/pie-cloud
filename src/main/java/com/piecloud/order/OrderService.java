@@ -7,6 +7,6 @@ public interface OrderService {
     Flux<OrderDto> getOrders();
     Mono<OrderDto> getOrder(String id);
     Mono<OrderDto> createOrder(Mono<OrderDto> orderDtoMono);
-    Mono<OrderDto> changeStatus(String id, OrderStatus newStatus);
+    Mono<OrderDto> changeStatus(String id, Mono<String> statusMono);
     Flux<OrderDto> getUncompletedOrders();
 }
