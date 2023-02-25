@@ -23,7 +23,7 @@ public class IngredientConverter {
                 .setAmbiguityIgnored(true)
                 .setFieldMatchingEnabled(true)
                 .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE)
-                .setMatchingStrategy(MatchingStrategies.STANDARD);
+                .setMatchingStrategy(MatchingStrategies.STRICT);
 
         PropertyMap<IngredientDto, Ingredient> propertyMapWithSkippedIdInDtoToDocWay =
                 new PropertyMap<>() {
@@ -38,6 +38,7 @@ public class IngredientConverter {
 
     public IngredientDto convertDocumentToDto(Ingredient ingredient){
         IngredientDto ingredientDto = mapper.map(ingredient, IngredientDto.class);
+        ingredientDto.getGroup().setId(ingredient.getGroupId());
         log.debug("converting " + ingredient + " to dto: " + ingredientDto);
         return ingredientDto;
     }

@@ -8,6 +8,9 @@ public interface IngredientService {
     Flux<IngredientDto> getAllIngredientsDto();
     Mono<IngredientDto> getIngredientDto(String id);
     Mono<Ingredient> getIngredient(String id);
+
+    Mono<Ingredient> getIngredientAsRef(String id);
+
     Mono<IngredientDto> createIngredient(Mono<IngredientDto> ingredientDtoMono);
     Mono<IngredientDto> updateIngredient(String id, Mono<IngredientDto> ingredientDtoMono);
     Mono<Void> deleteIngredient(String id);

@@ -46,6 +46,12 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
     }
 
     @Override
+    public Mono<IngredientGroup> getIngredientGroupAsRef(String id) {
+        if (id == null) return Mono.empty();
+        return repository.findById(id);
+    }
+
+    @Override
     public Mono<IngredientGroupDto> createIngredientGroup(Mono<IngredientGroupDto> ingredientGroupDtoMono) {
         return ingredientGroupDtoMono
                 .flatMap(this::checkIngredientGroupNameForUniqueness)
@@ -76,7 +82,7 @@ public class IngredientGroupServiceImpl implements IngredientGroupService {
 
     private Mono<String> checkIngredientGroupId(String id) {
         if (id == null)
-            return Mono.error( new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "ingredient group id must not be null"));
         return Mono.just(id);
     }

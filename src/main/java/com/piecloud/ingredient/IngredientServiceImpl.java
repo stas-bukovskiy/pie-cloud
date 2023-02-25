@@ -3,8 +3,8 @@ package com.piecloud.ingredient;
 import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,7 @@ import reactor.util.function.Tuples;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class IngredientServiceImpl implements IngredientService{
 
     private final IngredientRepository repository;
@@ -22,20 +23,10 @@ public class IngredientServiceImpl implements IngredientService{
     private final IngredientGroupService groupService;
     private final ImageUploadService imageUploadService;
 
-    @Autowired
-    public IngredientServiceImpl(IngredientRepository repository,
-                                 IngredientConverter converter,
-                                 IngredientGroupService groupService,
-                                 ImageUploadService imageUploadService) {
-        this.repository = repository;
-        this.converter = converter;
-        this.groupService = groupService;
-        this.imageUploadService = imageUploadService;
-    }
-
     @Override
     public Flux<IngredientDto> getAllIngredientsDto() {
         return repository.findAll()
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
 
@@ -43,6 +34,7 @@ public class IngredientServiceImpl implements IngredientService{
     public Mono<IngredientDto> getIngredientDto(String id) {
         return checkIngredientId(id)
                 .flatMap(repository::findById)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found such ingredient")));
@@ -64,6 +56,13 @@ public class IngredientServiceImpl implements IngredientService{
     }
 
     @Override
+    public Mono<Ingredient> getIngredientAsRef(String id) {
+        if (id == null) return Mono.empty();
+        return repository.findById(id)
+                .flatMap(this::addGroupReference);
+    }
+
+    @Override
     public Mono<IngredientDto> createIngredient(Mono<IngredientDto> ingredientDtoMono) {
         return ingredientDtoMono
                 .flatMap(this::checkIngredientNameForUniqueness)
@@ -73,10 +72,11 @@ public class IngredientServiceImpl implements IngredientService{
                     IngredientGroup group = ingredientDtoIngredientGroupTuple2.getT2();
                     Ingredient newIngredient = ingredientDtoIngredientGroupTuple2.getT1();
                     newIngredient.setImageName(imageUploadService.getDefaultImageName());
-                    newIngredient.setGroup(group);
+                    newIngredient.setGroupId(group.getId());
                     return newIngredient;
                 })
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .doOnSuccess(onSuccess -> log.debug("created new ingredient successfully"));
     }
@@ -97,10 +97,11 @@ public class IngredientServiceImpl implements IngredientService{
                     IngredientDto ingredientDto = ingredientIngredientDtoIngredientGroupTuple3.getT2();
                     updatedIngredient.setName(ingredientDto.getName());
                     updatedIngredient.setPrice(ingredientDto.getPrice());
-                    updatedIngredient.setGroup(group);
+                    updatedIngredient.setId(group.getId());
                     return updatedIngredient;
                 })
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .doOnSuccess(onSuccess -> log.debug("updated ingredient successfully"));
     }
@@ -122,6 +123,7 @@ public class IngredientServiceImpl implements IngredientService{
                     return ingredient;
                 })
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
 
@@ -130,7 +132,22 @@ public class IngredientServiceImpl implements IngredientService{
         return getIngredient(id)
                 .map(this::removeImage)
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
+    }
+
+    private Mono<Ingredient> addGroupReference(Ingredient ingredient) {
+        return groupService.getIngredientGroupAsRef(ingredient.getGroupId())
+                .map(group -> {
+                    ingredient.setGroup(group);
+                    return ingredient;
+                }).switchIfEmpty(
+                        Mono.just(ingredient)
+                                .map(additionWithoutGroup -> {
+                                    additionWithoutGroup.setGroupId(null);
+                                    return additionWithoutGroup;
+                                }).flatMap(repository::save)
+                );
     }
 
     private Mono<String> generatePrefixImageName(String id) {

@@ -7,6 +7,9 @@ public interface IngredientGroupService {
     Flux<IngredientGroupDto> getAllIngredientGroupsDto();
     Mono<IngredientGroupDto> getIngredientGroupDto(String id);
     Mono<IngredientGroup> getIngredientGroup(String id);
+
+    Mono<IngredientGroup> getIngredientGroupAsRef(String id);
+
     Mono<IngredientGroupDto> createIngredientGroup(Mono<IngredientGroupDto> ingredientGroupDtoMono);
     Mono<IngredientGroupDto> updateIngredientGroup(String id, Mono<IngredientGroupDto> ingredientGroupDtoMono);
     Mono<Void> deleteIngredientGroup(String id);
