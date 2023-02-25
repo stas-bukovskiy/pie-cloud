@@ -1,5 +1,9 @@
 package com.piecloud;
 
+import com.piecloud.addition.Addition;
+import com.piecloud.addition.AdditionRepository;
+import com.piecloud.addition.group.AdditionGroup;
+import com.piecloud.addition.group.AdditionGroupRepository;
 import com.piecloud.user.User;
 import com.piecloud.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,13 +23,35 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DataInitializer {
 
-
+    private final AdditionRepository additionRepository;
+    private final AdditionGroupRepository additionGroupRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     @EventListener(value = ApplicationReadyEvent.class)
+    public void initAdditions() {
+        log.info("start additions data initialization...");
+        AdditionGroup additionGroup = additionGroupRepository.deleteAll()
+                .then(additionGroupRepository.save(new AdditionGroup(null, "грибочки")))
+                .block();
+        List<Addition> additions = additionRepository.deleteAll()
+                .thenMany(additionRepository.saveAll(List.of(
+                        new Addition(null, "підпеньки", "some.png", BigDecimal.TEN, additionGroup),
+                        new Addition(null, "білий гриб", "some.png", BigDecimal.TEN, additionGroup),
+                        new Addition(null, "пчих", "some.png", BigDecimal.TEN, additionGroup)
+                )))
+                .map(a -> {
+                    log.debug("addition: " + a);
+                    return a;
+                })
+                .collectList().block();
+
+        additionRepository.findAll().subscribe(a -> log.debug("found addition: " + a));
+    }
+
+    @EventListener(value = ApplicationReadyEvent.class)
     public void init() {
-        log.info("start data initialization...");
+        log.info("start user data initialization...");
         Flux<User> initUsers = this.userRepository.deleteAll()
                 .thenMany(
                         Flux.just("user", "admin")
@@ -50,5 +77,6 @@ public class DataInitializer {
                 );
 
     }
+
 
 }
