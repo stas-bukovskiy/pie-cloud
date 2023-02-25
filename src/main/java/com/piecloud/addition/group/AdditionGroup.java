@@ -9,10 +9,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document
+@Document(collection = "addition_groups")
 public class AdditionGroup {
     @Id
     private String id;
-
     private String name;
 }

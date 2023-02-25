@@ -1,6 +1,5 @@
 package com.piecloud.addition;
 
-import com.piecloud.addition.group.AdditionGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +14,7 @@ import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Document
+@Document(collection = "additions")
 public class Addition {
 
     @Id
@@ -23,10 +22,12 @@ public class Addition {
 
     private String name;
 
+    @Field(name = "image_name")
     private String imageName;
 
     @Field(targetType = DECIMAL128)
     private BigDecimal price;
 
-    private AdditionGroup group;
+    @Field(name = "group_id")
+    private String groupId;
 }

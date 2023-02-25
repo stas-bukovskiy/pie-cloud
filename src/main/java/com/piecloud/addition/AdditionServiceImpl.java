@@ -67,7 +67,7 @@ public class AdditionServiceImpl implements AdditionService {
                             additionDto.getName(),
                             imageUploadService.getDefaultImageName(),
                             additionDto.getPrice(),
-                            group);
+                            null);
                 })
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
@@ -91,7 +91,7 @@ public class AdditionServiceImpl implements AdditionService {
                     Addition updatedAddition = additionAndAdditionDtoAndGroup.getT1();
                     updatedAddition.setName(additionDto.getName());
                     updatedAddition.setPrice(additionDto.getPrice());
-                    updatedAddition.setGroup(group);
+//                    updatedAddition.setGroup(group);
                     return updatedAddition;
                 })
                 .flatMap(repository::save)
@@ -158,5 +158,9 @@ public class AdditionServiceImpl implements AdditionService {
 
     private boolean isAdditionNotHaveDefaultImage(Addition addition) {
         return !addition.getImageName().equals(imageUploadService.getDefaultImageName());
+    }
+
+    private AdditionDto covertToDtoWithGroup(Addition addition) {
+        return null;
     }
 }
