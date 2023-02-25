@@ -4,6 +4,12 @@ import com.piecloud.addition.Addition;
 import com.piecloud.addition.AdditionRepository;
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupRepository;
+import com.piecloud.ingredient.Ingredient;
+import com.piecloud.ingredient.IngredientRepository;
+import com.piecloud.ingredient.group.IngredientGroup;
+import com.piecloud.ingredient.group.IngredientGroupRepository;
+import com.piecloud.pie.Pie;
+import com.piecloud.pie.PieRepository;
 import com.piecloud.user.User;
 import com.piecloud.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +22,7 @@ import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 @Component
@@ -25,8 +32,34 @@ public class DataInitializer {
 
     private final AdditionRepository additionRepository;
     private final AdditionGroupRepository additionGroupRepository;
+    private final IngredientRepository ingredientRepository;
+    private final IngredientGroupRepository ingredientGroupRepository;
+    private final PieRepository pieRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @EventListener(value = ApplicationReadyEvent.class)
+    public void initIngredientsAndPies() {
+        log.info("start ingredient data initialization...");
+        ingredientGroupRepository.deleteAll()
+                .then(ingredientGroupRepository.save(new IngredientGroup(null, "веганс")))
+                .subscribe(group -> ingredientRepository.deleteAll()
+                        .thenMany(ingredientRepository.saveAll(List.of(
+                                new Ingredient(null, "тофу", "some.png", BigDecimal.TEN, group.getId(), group),
+                                new Ingredient(null, "шпинат", "some.png", BigDecimal.TEN, group.getId(), group),
+                                new Ingredient(null, "фалафель", "some.png", BigDecimal.TEN, group.getId(), group)
+
+                        )))
+                        .map(Ingredient::getId)
+                        .collectList()
+                        .subscribe(ingredientIds -> pieRepository.deleteAll().thenMany(pieRepository.saveAll(List.of(
+                                new Pie(null, "pie 1", "some.png", BigDecimal.TEN, new HashSet<>(ingredientIds), null),
+                                new Pie(null, "pie 2", "some.png", BigDecimal.TEN, new HashSet<>(ingredientIds), null),
+                                new Pie(null, "pie 3", "some.png", BigDecimal.TEN, new HashSet<>(ingredientIds), null)
+                        ))).subscribe())
+                );
+    }
+
 
     @EventListener(value = ApplicationReadyEvent.class)
     public void initAdditions() {
