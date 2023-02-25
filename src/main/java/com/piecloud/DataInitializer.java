@@ -36,9 +36,9 @@ public class DataInitializer {
                 .block();
         List<Addition> additions = additionRepository.deleteAll()
                 .thenMany(additionRepository.saveAll(List.of(
-                        new Addition(null, "підпеньки", "some.png", BigDecimal.TEN, additionGroup),
-                        new Addition(null, "білий гриб", "some.png", BigDecimal.TEN, additionGroup),
-                        new Addition(null, "пчих", "some.png", BigDecimal.TEN, additionGroup)
+                        new Addition(null, "підпеньки", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
+                        new Addition(null, "білий гриб", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
+                        new Addition(null, "пчих", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup)
                 )))
                 .map(a -> {
                     log.debug("addition: " + a);

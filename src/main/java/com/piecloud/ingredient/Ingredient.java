@@ -22,6 +22,7 @@ public class Ingredient {
 
     private String name;
 
+    @Field("image_name")
     private String imageName;
 
     @Field(targetType = DECIMAL128)

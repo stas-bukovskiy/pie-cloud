@@ -1,6 +1,8 @@
 package com.piecloud.addition;
 
 
+import com.piecloud.addition.group.AdditionGroup;
+import com.piecloud.addition.group.AdditionGroupDto;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
@@ -23,9 +25,10 @@ public class AdditionConverter {
                 .setAmbiguityIgnored(true)
                 .setFieldMatchingEnabled(true)
                 .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE)
-                .setMatchingStrategy(MatchingStrategies.STANDARD);
+                .setMatchingStrategy(MatchingStrategies.STRICT);
         modelMapper.createTypeMap(AdditionDto.class, Addition.class);
         modelMapper.createTypeMap(Addition.class, AdditionDto.class);
+        modelMapper.createTypeMap(AdditionGroup.class, AdditionGroupDto.class);
         modelMapper.getTypeMap(AdditionDto.class, Addition.class)
                 .addMappings(mapper -> mapper.skip(Addition::setId));
         return modelMapper;

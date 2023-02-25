@@ -45,6 +45,12 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     }
 
     @Override
+    public Mono<AdditionGroup> getAdditionGroupAsRef(String id) {
+        if (id == null) return Mono.empty();
+        return repository.findById(id);
+    }
+
+    @Override
     public Mono<AdditionGroupDto> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono) {
         return groupDtoMono
                 .flatMap(this::checkAdditionGroupNameForUniqueness)

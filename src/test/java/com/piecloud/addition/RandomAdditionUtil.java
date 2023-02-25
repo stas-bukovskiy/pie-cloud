@@ -18,6 +18,7 @@ public class RandomAdditionUtil {
                 RandomStringUtils.random(),
                 IMAGE_NAME,
                 PRICE,
+                group.getId(),
                 group
         );
     }

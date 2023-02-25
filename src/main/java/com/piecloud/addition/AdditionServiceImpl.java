@@ -35,6 +35,7 @@ public class AdditionServiceImpl implements AdditionService {
     @Override
     public Flux<AdditionDto> getAllAdditionsDto() {
         return repository.findAll()
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
 
@@ -42,6 +43,7 @@ public class AdditionServiceImpl implements AdditionService {
     public Mono<AdditionDto> getAdditionDto(String id) {
         return checkAdditionId(id)
                 .flatMap(repository::findById)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found addition with such id = " + id)));
@@ -51,6 +53,7 @@ public class AdditionServiceImpl implements AdditionService {
     public Mono<Addition> getAddition(String id) {
         return checkAdditionId(id)
                 .flatMap(repository::findById)
+                .flatMap(this::addGroupReference)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found addition with such id = " + id)));
     }
@@ -67,6 +70,7 @@ public class AdditionServiceImpl implements AdditionService {
                             additionDto.getName(),
                             imageUploadService.getDefaultImageName(),
                             additionDto.getPrice(),
+                            group.getId(),
                             group);
                 })
                 .flatMap(repository::save)
@@ -116,6 +120,16 @@ public class AdditionServiceImpl implements AdditionService {
                     return addition;
                 })
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
+                .map(converter::convertDocumentToDto);
+    }
+
+    @Override
+    public Mono<AdditionDto> removeImageFromAddition(String id) {
+        return getAddition(id)
+                .map(this::removeImage)
+                .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
 
@@ -132,7 +146,7 @@ public class AdditionServiceImpl implements AdditionService {
                 .map(isExist -> {
                     if (isExist)
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "addition mame is not unique");
+                                "addition mame is not unique");
                     return additionDto;
                 });
     }
@@ -141,12 +155,19 @@ public class AdditionServiceImpl implements AdditionService {
         return Mono.just("addition-" + id);
     }
 
-    @Override
-    public Mono<AdditionDto> removeImageFromAddition(String id) {
-        return getAddition(id)
-                .map(this::removeImage)
-                .flatMap(repository::save)
-                .map(converter::convertDocumentToDto);
+    private Mono<Addition> addGroupReference(Addition addition) {
+        return groupService.getAdditionGroupAsRef(addition.getGroupId())
+                .map(group -> {
+                    addition.setGroup(group);
+                    group.setId(addition.getId());
+                    return addition;
+                }).switchIfEmpty(
+                        Mono.just(addition)
+                                .map(additionWithoutGroup -> {
+                                    additionWithoutGroup.setGroupId(null);
+                                    return additionWithoutGroup;
+                                }).flatMap(repository::save)
+                );
     }
 
     private Addition removeImage(Addition addition) {
