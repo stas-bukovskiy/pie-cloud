@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.GET, "/api/pie/**").permitAll()
                 .pathMatchers(HttpMethod.GET, generateUrlToPublicResources(imageUploadProperties)).permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/order/**").authenticated()
+                .pathMatchers(HttpMethod.PATCH, "/api/order/**").hasAnyRole("ADMIN", "COOK")
                 .pathMatchers(HttpMethod.POST, "/api/order/**").authenticated()
                 .pathMatchers(HttpMethod.POST, "/api/register/**").permitAll()
                 .pathMatchers(HttpMethod.POST, "/api/login/**").permitAll()
