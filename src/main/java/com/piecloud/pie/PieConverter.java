@@ -23,7 +23,7 @@ public class PieConverter {
                 .setAmbiguityIgnored(true)
                 .setFieldMatchingEnabled(true)
                 .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE)
-                .setMatchingStrategy(MatchingStrategies.STANDARD);
+                .setMatchingStrategy(MatchingStrategies.STRICT);
 
         PropertyMap<PieDto, Pie> propertyMapWithSkippedIdInDtoToDocWay =
                 new PropertyMap<>() {

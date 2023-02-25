@@ -1,11 +1,11 @@
 package com.piecloud.pie;
 
 import com.piecloud.ingredient.Ingredient;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -17,7 +17,7 @@ import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Document
+@Document(collection = "pies")
 public class Pie {
 
     @Id
@@ -31,7 +31,10 @@ public class Pie {
     @Field(targetType = DECIMAL128)
     private BigDecimal price;
 
-    @Size(min = 1)
+    @Field("ingredient_ids")
+    private Set<String> ingredientIds;
+
+    @Transient
     private Set<Ingredient> ingredients;
 
 }

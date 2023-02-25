@@ -4,22 +4,25 @@ import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientDto;
 import com.piecloud.ingredient.IngredientService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class PieServiceImpl implements PieService {
 
     private final PieRepository repository;
@@ -27,20 +30,11 @@ public class PieServiceImpl implements PieService {
     private final IngredientService ingredientService;
     private final ImageUploadService imageUploadService;
 
-    @Autowired
-    public PieServiceImpl(PieRepository repository,
-                          PieConverter converter,
-                          IngredientService ingredientService, ImageUploadService imageUploadService) {
-        this.repository = repository;
-        this.converter = converter;
-        this.ingredientService = ingredientService;
-        this.imageUploadService = imageUploadService;
-    }
-
 
     @Override
     public Flux<PieDto> getAllPiesDto() {
         return repository.findAll()
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
 
@@ -48,6 +42,7 @@ public class PieServiceImpl implements PieService {
     public Mono<PieDto> getPieDto(String id) {
         return checkPieId(id)
                 .flatMap(repository::findById)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "not found pie with such id: " + id)));
@@ -82,10 +77,11 @@ public class PieServiceImpl implements PieService {
                     List<Ingredient> ingredients = pieDtoListTuple2.getT2();
                     Pie pie = converter.convertDtoToDocument(pieDtoListTuple2.getT1());
                     pie.setImageName(imageUploadService.getDefaultImageName());
-                    pie.setIngredients(new HashSet<>(ingredients));
+                    pie.setIngredientIds(ingredients.stream().map(Ingredient::getId).collect(Collectors.toSet()));
                     return pie;
                 })
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .doOnSuccess(onSuccess -> log.debug("created new pie successfully"));
     }
@@ -108,10 +104,11 @@ public class PieServiceImpl implements PieService {
                     PieDto pieDto = piePieDtoListTuple3.getT2();
                     List<Ingredient> ingredients = piePieDtoListTuple3.getT3();
                     updatedPie.setName(pieDto.getName());
-                    updatedPie.setIngredients(new HashSet<>(ingredients));
+                    updatedPie.setIngredientIds(ingredients.stream().map(Ingredient::getId).collect(Collectors.toSet()));
                     return updatedPie;
                 })
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .doOnSuccess(pieDto -> log.debug("updated pie successfully: " + pieDto));
     }
@@ -133,6 +130,7 @@ public class PieServiceImpl implements PieService {
                     return pie;
                 })
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
 
@@ -141,7 +139,23 @@ public class PieServiceImpl implements PieService {
         return getPie(id)
                 .map(this::removeImage)
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
+    }
+
+    private Mono<Pie> addGroupReference(Pie pie) {
+        return Flux.fromIterable(pie.getIngredientIds())
+                .flatMap(ingredientService::getIngredientAsRef)
+                .collectList()
+                .map(ingredients -> {
+                    pie.setIngredients(new HashSet<>(ingredients));
+                    pie.setIngredientIds(ingredients.stream()
+                            .map(Ingredient::getId)
+                            .collect(Collectors.toSet()));
+                    return pie;
+                }).zipWith(repository.save(pie))
+                .map(Tuple2::getT1);
+
     }
 
     private PieDto checkIngredients(PieDto pieDto) {
