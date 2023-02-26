@@ -1,6 +1,6 @@
 package com.piecloud.config;
 
-import com.piecloud.image.ImageUploadServiceProperties;
+import com.piecloud.image.ImageUploadProperties;
 import com.piecloud.security.jwt.JwtTokenAuthenticationFilter;
 import com.piecloud.security.jwt.JwtTokenProvider;
 import com.piecloud.user.UserRepository;
@@ -24,7 +24,7 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
                                                          JwtTokenProvider tokenProvider,
-                                                         ImageUploadServiceProperties imageUploadProperties) {
+                                                         ImageUploadProperties imageUploadProperties) {
         return http
                 .csrf().disable()
                 .httpBasic().disable()
@@ -52,7 +52,7 @@ public class SecurityConfig {
                 .build();
     }
 
-    private String generateUrlToPublicResources(ImageUploadServiceProperties imageUploadProperties) {
+    private String generateUrlToPublicResources(ImageUploadProperties imageUploadProperties) {
         return "/" + imageUploadProperties.getUploadDirectory() + "/**";
     }
 
