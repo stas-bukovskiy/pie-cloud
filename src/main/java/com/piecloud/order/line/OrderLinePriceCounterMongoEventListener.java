@@ -16,8 +16,7 @@ public class OrderLinePriceCounterMongoEventListener extends AbstractMongoEventL
     public void onBeforeConvert(BeforeConvertEvent<OrderLine> event) {
         BigDecimal price = countPriceForOrderLine(event.getSource());
         event.getSource().setPrice(price);
-        log.debug("counted price for order line: " + event.getSource());
-
+        log.debug("[ORDER_LINE] count price {} for {}", price, event.getSource());
         super.onBeforeConvert(event);
     }
 

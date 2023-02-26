@@ -26,7 +26,7 @@ public class PiePriceCounterMongoEventListener extends AbstractMongoEventListene
         BigDecimal price = countPrice(sourcePie);
         event.getSource().setPrice(price);
 
-        log.debug("counted price for " + sourcePie + ": " + price);
+        log.debug("[PIE] count price {} for {}", price, event.getSource());
         super.onBeforeConvert(event);
     }
 
@@ -36,11 +36,12 @@ public class PiePriceCounterMongoEventListener extends AbstractMongoEventListene
                 .flatMap(ingredientRepository::findById)
                 .collectList()
                 .block();
-        assert ingredients != null;
-        for (Ingredient ingredient : ingredients) {
-            price = price.add(ingredient.getPrice());
+        if (ingredients != null)
+            for (Ingredient ingredient : ingredients)
+                price = price.add(ingredient.getPrice());
+        else {
+            log.error("[PIE] something bad happened while counting price");
         }
-
         return price;
     }
 }
