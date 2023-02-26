@@ -10,13 +10,14 @@ import static com.piecloud.utils.ExtensionUtils.getFileExtension;
 
 @Slf4j
 @Component
-public class ImageFileValidator  {
-    public FilePart checkValidImageFilePart(FilePart fiePart) {
+public class ImageFileValidator {
+
+    public FilePart checkImageFilePartExtension(FilePart fiePart) {
         String filename = fiePart.filename();
         String extension = getFileExtension(filename);
         boolean isSupportedExtension = isSupportedExtension(extension);
 
-        log.debug(String.format("Checking result for %s: %s", filename, isSupportedExtension));
+        log.debug("[IMAGE_FILE] check extension '{}': {}", filename, isSupportedExtension);
 
         if (!isSupportedExtension)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -29,4 +30,5 @@ public class ImageFileValidator  {
                 || extension.equalsIgnoreCase("jpg")
                 || extension.equalsIgnoreCase("jpeg"));
     }
+
 }

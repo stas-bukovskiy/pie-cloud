@@ -25,9 +25,7 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "roles";
-
     private final JwtProperties jwtProperties;
-
     private SecretKey secretKey;
 
     @Autowired
