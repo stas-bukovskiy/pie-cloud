@@ -1,6 +1,10 @@
 package com.piecloud.pie;
 
 import com.piecloud.ingredient.Ingredient;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,14 +27,21 @@ public class Pie {
     @Id
     private String id;
 
+    @NotBlank
+    @Size(min = 3, max = 50)
     private String name;
 
+    @NotBlank
     @Field("image_name")
     private String imageName;
 
+    @NotNull
+    @DecimalMin(value = "0.0")
     @Field(targetType = DECIMAL128)
     private BigDecimal price;
 
+    @NotNull
+    @Size(min = 1)
     @Field("ingredient_ids")
     private Set<String> ingredientIds;
 

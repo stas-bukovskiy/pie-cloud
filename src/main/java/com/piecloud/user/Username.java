@@ -11,7 +11,5 @@ import java.io.Serializable;
 @AllArgsConstructor(onConstructor = @__({@JsonCreator}))
 @ToString
 public class Username implements Serializable {
-
     private String username;
-
 }
