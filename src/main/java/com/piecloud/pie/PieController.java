@@ -1,37 +1,38 @@
 package com.piecloud.pie;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping(value = "api/pie")
+@RequestMapping(value = "api/pie",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 public class PieController {
-    
+
     private final PieService service;
 
-    @Autowired
-    public PieController(PieService service) {
-        this.service = service;
+
+    @GetMapping(value = "/", consumes = "*/*")
+    public Flux<PieDto> getPies(@RequestParam(value = "sort", required = false,
+            defaultValue = "name,asc") String sortParams) {
+        return service.getAllPiesDto(sortParams);
     }
 
-    @GetMapping("/")
-    public Flux<PieDto> getPies() {
-        return service.getAllPiesDto();
-    }
-
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", consumes = "*/*")
     public Mono<PieDto> getPie(@PathVariable String id) {
         return service.getPieDto(id);
     }
 
     @PutMapping("/{id}")
     public Mono<PieDto> updatePieGroup(@PathVariable String id,
-                                    @Valid @RequestBody Mono<PieDto> pieDtoMono) {
+                                       @Valid @RequestBody Mono<PieDto> pieDtoMono) {
         return service.updatePie(id, pieDtoMono);
     }
 
@@ -41,7 +42,7 @@ public class PieController {
         return service.createPie(pieDtoMono);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value = "/{id}", consumes = "*/*")
     public Mono<Void> deletePieGroup(@PathVariable String id) {
         return service.deletePie(id);
     }
@@ -51,7 +52,7 @@ public class PieController {
         return service.addImageToPie(id, image);
     }
 
-    @DeleteMapping("/{id}/image")
+    @DeleteMapping(value = "/{id}/image", consumes = "*/*")
     public Mono<PieDto> deleteImageFromAddition(@PathVariable String id) {
         return service.removeImageFromPie(id);
     }

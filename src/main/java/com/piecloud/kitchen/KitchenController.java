@@ -12,18 +12,16 @@ import reactor.core.publisher.Flux;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "api/kitchen")
+@RequestMapping(value = "api/kitchen", consumes = MediaType.ALL_VALUE)
 @RequiredArgsConstructor
 public class KitchenController {
 
     private final KitchenService kitchenService;
 
+
     @GetMapping(value = "/order-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<OrderDto>> getOrders() {
         return kitchenService.getOrdersSseStream();
     }
-
-
-
 
 }

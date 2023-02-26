@@ -3,26 +3,31 @@ package com.piecloud.ingredient;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping(value = "api/ingredient")
+@RequestMapping(value = "api/ingredient",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class IngredientController {
 
     private final IngredientService service;
 
-    @GetMapping("/")
-    public Flux<IngredientDto> getIngredients(@RequestParam(value = "group_id", required = false) String groupId) {
+    @GetMapping(value = "/", consumes = "*/*")
+    public Flux<IngredientDto> getIngredients(@RequestParam(value = "group_id", required = false) String groupId,
+                                              @RequestParam(value = "sort", required = false,
+                                                      defaultValue = "name,asc") String sortParams) {
         if (groupId != null)
-            return service.getAllIngredientsDtoByGroup(groupId);
-        return service.getAllIngredientsDto();
+            return service.getAllIngredientsDtoByGroup(groupId, sortParams);
+        return service.getAllIngredientsDto(sortParams);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", consumes = "*/*")
     public Mono<IngredientDto> getIngredient(@PathVariable String id) {
         return service.getIngredientDto(id);
     }
@@ -39,7 +44,7 @@ public class IngredientController {
         return service.createIngredient(ingredientDtoMono);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value = "/{id}", consumes = "*/*")
     public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
         return service.deleteIngredient(id);
     }
@@ -49,7 +54,7 @@ public class IngredientController {
         return service.addImageToIngredient(id, image);
     }
 
-    @DeleteMapping("/{id}/image")
+    @DeleteMapping(value = "/{id}/image", consumes = "*/*")
     public Mono<IngredientDto> deleteImageFromAddition(@PathVariable String id) {
         return service.removeImageFromIngredient(id);
     }

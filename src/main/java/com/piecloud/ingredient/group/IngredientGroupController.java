@@ -1,38 +1,39 @@
 package com.piecloud.ingredient.group;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "api/ingredient/group")
+@RequestMapping(value = "api/ingredient/group",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 public class IngredientGroupController {
 
     private final IngredientGroupService service;
 
-    @Autowired
-    public IngredientGroupController(IngredientGroupService service) {
-        this.service = service;
+
+    @GetMapping(value = "/", consumes = "*/*")
+    public Flux<IngredientGroupDto> getIngredientGroups(@RequestParam(value = "sort", required = false,
+            defaultValue = "name,asc") String sortParams) {
+        return service.getAllIngredientGroupsDto(sortParams);
     }
 
-    @GetMapping("/")
-    public Flux<IngredientGroupDto> getIngredientGroups() {
-        return service.getAllIngredientGroupsDto();
-    }
-
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", consumes = "*/*")
     public Mono<IngredientGroupDto> getIngredientGroup(@PathVariable String id) {
         return service.getIngredientGroupDto(id);
     }
 
     @PutMapping("/{id}")
     public Mono<IngredientGroupDto> updateIngredientGroup(@PathVariable String id,
-                                         @Valid @RequestBody Mono<IngredientGroupDto> groupDtoMono) {
+                                                          @Valid @RequestBody Mono<IngredientGroupDto> groupDtoMono) {
         return service.updateIngredientGroup(id, groupDtoMono);
     }
 
@@ -42,7 +43,7 @@ public class IngredientGroupController {
         return service.createIngredientGroup(groupDtoMono);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value = "/{id}", consumes = "*/*")
     public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
         return service.deleteIngredientGroup(id);
     }

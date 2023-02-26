@@ -3,13 +3,16 @@ package com.piecloud.addition;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping(value = "api/addition")
+@RequestMapping(value = "api/addition",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
 public class AdditionController {
 
     private final AdditionService service;
@@ -19,14 +22,16 @@ public class AdditionController {
         this.service = service;
     }
 
-    @GetMapping("/")
-    public Flux<AdditionDto> getAll(@RequestParam(value = "group_id", required = false) String groupId) {
+    @GetMapping(value = "/", consumes = "*/*")
+    public Flux<AdditionDto> getAll(@RequestParam(value = "group_id", required = false) String groupId,
+                                    @RequestParam(value = "sort", required = false,
+                                            defaultValue = "name,asc") String sortParams) {
         if (groupId != null)
-            return service.getAllAdditionsDtoByGroup(groupId);
-        return service.getAllAdditionsDto();
+            return service.getAllAdditionsDtoByGroup(groupId, sortParams);
+        return service.getAllAdditionsDto(sortParams);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", consumes = "*/*")
     public Mono<AdditionDto> getOne(@PathVariable String id) {
         return service.getAdditionDto(id);
     }
@@ -43,7 +48,7 @@ public class AdditionController {
         return service.updateAddition(id, additionDtoMono);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value = "/{id}", consumes = "*/*")
     public Mono<Void> delete(@PathVariable String id) {
         return service.deleteAddition(id);
     }
@@ -54,7 +59,7 @@ public class AdditionController {
         return service.addImageToAddition(id, image);
     }
 
-    @DeleteMapping("/{id}/image")
+    @DeleteMapping(value = "/{id}/image", consumes = "*/*")
     public Mono<AdditionDto> deleteImageFromAddition(@PathVariable String id) {
         return service.removeImageFromAddition(id);
     }
