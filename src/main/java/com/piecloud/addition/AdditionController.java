@@ -20,7 +20,9 @@ public class AdditionController {
     }
 
     @GetMapping("/")
-    public Flux<AdditionDto> getAll() {
+    public Flux<AdditionDto> getAll(@RequestParam(value = "group_id", required = false) String groupId) {
+        if (groupId != null)
+            return service.getAllAdditionsDtoByGroup(groupId);
         return service.getAllAdditionsDto();
     }
 

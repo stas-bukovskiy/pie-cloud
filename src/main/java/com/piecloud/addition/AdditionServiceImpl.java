@@ -3,8 +3,8 @@ package com.piecloud.addition;
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupService;
 import com.piecloud.image.ImageUploadService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,7 @@ import reactor.util.function.Tuples;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AdditionServiceImpl implements AdditionService {
 
     private final AdditionRepository repository;
@@ -22,19 +23,17 @@ public class AdditionServiceImpl implements AdditionService {
     private final AdditionGroupService groupService;
     private final ImageUploadService imageUploadService;
 
-    @Autowired
-    public AdditionServiceImpl(AdditionRepository repository,
-                               AdditionConverter converter,
-                               AdditionGroupService groupService, ImageUploadService imageUploadService) {
-        this.repository = repository;
-        this.converter = converter;
-        this.groupService = groupService;
-        this.imageUploadService = imageUploadService;
-    }
 
     @Override
     public Flux<AdditionDto> getAllAdditionsDto() {
         return repository.findAll()
+                .flatMap(this::addGroupReference)
+                .map(converter::convertDocumentToDto);
+    }
+
+    @Override
+    public Flux<AdditionDto> getAllAdditionsDtoByGroup(String groupId) {
+        return repository.findAllByGroupId(groupId)
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
