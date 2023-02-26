@@ -38,13 +38,13 @@ public class PieConverter {
 
     public PieDto convertDocumentToDto(Pie pie){
         PieDto pieDto = mapper.map(pie, PieDto.class);
-        log.debug("converting " + pie + " to dto: " + pieDto);
+        log.debug("[PIE] convert doc {} to dto {} ", pie, pieDto);
         return pieDto;
     }
 
     public Pie convertDtoToDocument(PieDto pieDto) {
         Pie pie = mapper.map(pieDto, Pie.class);
-        log.debug("converting " + pieDto + " to document: " + pie);
+        log.debug("[ORDER] convert dto {} to doc {} ", pieDto, pie);
         return pie;
     }
     

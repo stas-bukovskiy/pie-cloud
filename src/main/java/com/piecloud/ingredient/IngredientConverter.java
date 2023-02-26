@@ -39,13 +39,13 @@ public class IngredientConverter {
     public IngredientDto convertDocumentToDto(Ingredient ingredient){
         IngredientDto ingredientDto = mapper.map(ingredient, IngredientDto.class);
         ingredientDto.getGroup().setId(ingredient.getGroupId());
-        log.debug("converting " + ingredient + " to dto: " + ingredientDto);
+        log.debug("[INGREDIENT] convert doc {} to dto {} ", ingredient, ingredientDto);
         return ingredientDto;
     }
 
     public Ingredient convertDtoToDocument(IngredientDto ingredientDto) {
         Ingredient ingredient = mapper.map(ingredientDto, Ingredient.class);
-        log.debug("converting " + ingredientDto + " to document: " + ingredient);
+        log.debug("[INGREDIENT] convert dto {} to doc {} ", ingredientDto, ingredient);
         return ingredient;
     }
 

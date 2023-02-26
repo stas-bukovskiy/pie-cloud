@@ -28,15 +28,11 @@ public class UserConverter {
     }
 
     public UserDto convertDocumentToDto(User user){
-        UserDto userDto = mapper.map(user, UserDto.class);
-        log.debug("converting " + user + " to dto: " + userDto);
-        return userDto;
+        return mapper.map(user, UserDto.class);
     }
 
     public User convertDtoToDocument(UserDto userDto) {
-        User user = mapper.map(userDto, User.class);
-        log.debug("converting " + userDto + " to document: " + user);
-        return user;
+        return mapper.map(userDto, User.class);
     }
 
 }

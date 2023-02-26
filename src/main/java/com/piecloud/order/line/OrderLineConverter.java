@@ -38,13 +38,13 @@ public class OrderLineConverter {
 
     public OrderLineDto convertDocumentToDto(OrderLine orderLine){
         OrderLineDto orderLineDto = mapper.map(orderLine, OrderLineDto.class);
-        log.debug("converting " + orderLine + " to dto: " + orderLineDto);
+        log.debug("[ORDER_LINE] convert doc {} to dto {} ", orderLine, orderLineDto);
         return orderLineDto;
     }
 
     public OrderLine convertDtoToDocument(OrderLineDto orderLineDto) {
         OrderLine orderLine = mapper.map(orderLineDto, OrderLine.class);
-        log.debug("converting " + orderLineDto + " to document: " + orderLine);
+        log.debug("[ORDER_LINE] convert dto {} to doc {} ", orderLineDto, orderLine);
         return orderLine;
     }
     

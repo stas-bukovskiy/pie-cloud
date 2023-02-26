@@ -38,13 +38,14 @@ public class OrderConverter {
 
     public OrderDto convertDocumentToDto(Order order){
         OrderDto orderDto = mapper.map(order, OrderDto.class);
-        log.debug("converting " + order + " to dto: " + orderDto);
+        log.debug("[ORDER] convert doc {} to dto {} ", order, orderDto);
         return orderDto;
     }
 
     public Order convertDtoToDocument(OrderDto orderDto) {
         Order order = mapper.map(orderDto, Order.class);
-        log.debug("converting " + orderDto + " to document: " + order);
+        log.debug("[ORDER] convert dto {} to doc {} ", orderDto, order);
+
         return order;
     }
     

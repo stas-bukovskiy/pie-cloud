@@ -31,13 +31,13 @@ public class AdditionGroupConverter {
 
     public AdditionGroupDto convertDocumentToDto(AdditionGroup additionGroup){
         AdditionGroupDto convertedGroupDto = mapper.map(additionGroup, AdditionGroupDto.class);
-        log.debug("converting " + additionGroup + " to dto:" + convertedGroupDto);
+        log.debug("[ADDITION_GROUP] convert doc {} to dto {} ", additionGroup, convertedGroupDto);
         return convertedGroupDto;
     }
 
     public AdditionGroup convertDtoToDocument(AdditionGroupDto additionGroupDto) {
         AdditionGroup convertedGroup = mapper.map(additionGroupDto, AdditionGroup.class);
-        log.debug("converting " + additionGroupDto + " to document: " + convertedGroup);
+        log.debug("[ADDITION_GROUP] convert dto {} to doc {} ", additionGroupDto, convertedGroup);
         return convertedGroup;
     }
 
