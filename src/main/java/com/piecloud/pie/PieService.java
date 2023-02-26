@@ -5,7 +5,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface PieService {
-    Flux<PieDto> getAllPiesDto();
+    Flux<PieDto> getAllPiesDto(String sortParams);
+
     Mono<PieDto> getPieDto(String id);
     Mono<Pie> getPie(String id);
     Mono<PieDto> createPie(Mono<PieDto> pieDtoMono);

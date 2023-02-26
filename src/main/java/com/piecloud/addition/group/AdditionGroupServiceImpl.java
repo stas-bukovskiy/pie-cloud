@@ -1,7 +1,8 @@
 package com.piecloud.addition.group;
 
+import com.piecloud.utils.SortParamsParser;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -10,20 +11,16 @@ import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AdditionGroupServiceImpl implements AdditionGroupService{
 
     private final AdditionGroupRepository repository;
     private final AdditionGroupConverter converter;
 
-    @Autowired
-    public AdditionGroupServiceImpl(AdditionGroupRepository ingredientGroupRepository, AdditionGroupConverter converter) {
-        this.repository = ingredientGroupRepository;
-        this.converter = converter;
-    }
 
     @Override
-    public Flux<AdditionGroupDto> getAllAdditionGroupsDto() {
-        return repository.findAll()
+    public Flux<AdditionGroupDto> getAllAdditionGroupsDto(String sortParams) {
+        return repository.findAll(SortParamsParser.parse(sortParams))
                 .map(converter::convertDocumentToDto);
     }
 
@@ -32,16 +29,14 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
         return checkGroupId(id)
                 .flatMap(repository::findById)
                 .map(converter::convertDocumentToDto)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found addition group with such id: " + id)));
+                .switchIfEmpty(Mono.error(getNotFoundException(id)));
     }
 
     @Override
     public Mono<AdditionGroup> getAdditionGroup(String id) {
         return checkGroupId(id)
                 .flatMap(repository::findById)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found addition group with such id: " + id)));
+                .switchIfEmpty(Mono.error(getNotFoundException(id)));
     }
 
     @Override
@@ -53,31 +48,39 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     @Override
     public Mono<AdditionGroupDto> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono) {
         return groupDtoMono
-                .flatMap(this::checkAdditionGroupNameForUniqueness)
+                .flatMap(this::checkNameForUniquenessWhileUpdating)
                 .map(converter::convertDtoToDocument)
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
-                .doOnSuccess(onSuccess -> log.debug("created new addition group successfully"))
-                .doOnError(onError -> log.debug("error occurred while creating addition group"));
+                .doOnSuccess(onSuccess -> log.debug("[ADDITION_GROUP] successfully create: {}", onSuccess))
+                .doOnError(onError -> log.debug("[ADDITION_GROUP] error occurred while creating: {}", onError.getMessage()));
     }
 
     @Override
     public Mono<AdditionGroupDto> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono) {
         return getAdditionGroup(id)
-                .zipWith(groupDtoMono.flatMap(this::checkAdditionGroupNameForUniqueness))
+                .zipWith(groupDtoMono.flatMap(this::checkNameForUniquenessWhileCreating))
                 .map(groupAndGroupDto -> {
-                    groupAndGroupDto.getT1().setName(groupAndGroupDto.getT2().getName());
-                    return groupAndGroupDto.getT1();
+                    AdditionGroup group = groupAndGroupDto.getT1();
+                    String newName = groupAndGroupDto.getT2().getName();
+                    group.setName(newName);
+                    return group;
                 })
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
-                .doOnSuccess(onSuccess -> log.debug("updated addition group successfully"));
+                .doOnSuccess(onSuccess -> log.debug("[ADDITION_GROUP] successfully update: {}", onSuccess))
+                .doOnError(onError -> log.debug("[ADDITION_GROUP] error occurred while updating: {}", onError.getMessage()));
     }
 
     @Override
     public Mono<Void> deleteAdditionGroup(String id) {
         return checkGroupId(id)
                 .flatMap(repository::deleteById);
+    }
+
+    @Override
+    public Mono<Boolean> isAdditionGroupExistById(String id) {
+        return checkGroupId(id).flatMap(repository::existsById);
     }
 
 
@@ -88,9 +91,24 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
         return Mono.just(id);
     }
 
-    private Mono<AdditionGroupDto> checkAdditionGroupNameForUniqueness(AdditionGroupDto groupDto) {
+    private Throwable getNotFoundException(String id) {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "not found addition group with such id: " + id);
+    }
+
+    private Mono<AdditionGroupDto> checkNameForUniquenessWhileUpdating(AdditionGroupDto groupDto) {
         return repository.existsByNameAndIdIsNot(groupDto.getName(),
                         groupDto.getId() == null ? "" : groupDto.getId())
+                .map(isExist -> {
+                    if (isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "addition group mame is not unique");
+                    return groupDto;
+                });
+    }
+
+    private Mono<AdditionGroupDto> checkNameForUniquenessWhileCreating(AdditionGroupDto groupDto) {
+        return repository.existsByName(groupDto.getName())
                 .map(isExist -> {
                     if (isExist)
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

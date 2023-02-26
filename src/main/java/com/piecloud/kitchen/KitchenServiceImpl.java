@@ -17,6 +17,7 @@ public class KitchenServiceImpl implements KitchenService {
     private final OrderConsumerService orderConsumerService;
     private final OrderService orderService;
 
+
     @Override
     public Flux<ServerSentEvent<OrderDto>> getOrdersSseStream() {
         return orderService.getUncompletedOrders()
@@ -26,6 +27,9 @@ public class KitchenServiceImpl implements KitchenService {
                         .id(order.getId())
                         .event("order")
                         .data(order)
-                        .build());
+                        .build())
+                .doOnSubscribe(subscription -> log.debug("[KITCHEN] successfully create order sse stream"))
+                .doOnError(onError -> log.debug("[KITCHEN] error occurred while order sse stream creating: {}", onError.getMessage(), onError));
     }
+
 }

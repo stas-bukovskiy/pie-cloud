@@ -1,6 +1,5 @@
 package com.piecloud.order;
 
-import com.piecloud.order.OrderDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -18,16 +17,16 @@ public class OrderConsumerService {
     public Flux<OrderDto> consumeOrderDto() {
         return reactiveKafkaConsumerTemplate
                 .receiveAutoAck()
-                // .delayElements(Duration.ofSeconds(2L)) // BACKPRESSURE
-                .doOnNext(consumerRecord -> log.info("received key={}, value={} from topic={}, offset={}",
-                        consumerRecord.key(),
-                        consumerRecord.value(),
-                        consumerRecord.topic(),
-                        consumerRecord.offset())
+                .doOnNext(consumerRecord ->
+                        log.info("[ORDER_CONSUMER] received key={}, value={} from topic={}, offset={}",
+                                consumerRecord.key(),
+                                consumerRecord.value(),
+                                consumerRecord.topic(),
+                                consumerRecord.offset())
                 )
                 .map(ConsumerRecord::value)
-                .doOnNext(fakeConsumerDTO -> log.info("successfully consumed {}={}", OrderDto.class.getSimpleName(), fakeConsumerDTO))
-                .doOnError(throwable -> log.error("something bad happened while consuming : {}", throwable.getMessage()));
+                .doOnNext(fakeConsumerDTO -> log.info("[ORDER_CONSUMER] successfully consumed {}={}", OrderDto.class.getSimpleName(), fakeConsumerDTO))
+                .doOnError(throwable -> log.error("[ORDER_CONSUMER] something bad happened while consuming : {}", throwable.getMessage()));
     }
 
 }

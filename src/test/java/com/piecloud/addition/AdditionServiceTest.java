@@ -48,7 +48,7 @@ public class AdditionServiceTest {
         );
         Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(additionsToSave));
 
-        Flux<AdditionDto> result = service.getAllAdditionsDto();
+        Flux<AdditionDto> result = service.getAllAdditionsDto("name,asc");
 
         StepVerifier.create(result)
                 .expectNextCount(additionsToSave.size())

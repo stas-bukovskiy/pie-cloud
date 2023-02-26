@@ -1,6 +1,5 @@
 package com.piecloud.order;
 
-import com.piecloud.order.OrderDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,9 +18,9 @@ public class OrderProducerService {
 
 
     public void send(OrderDto orderDto) {
-        log.info("send to topic={}, {}={},", topic, OrderDto.class.getSimpleName(), orderDto);
+        log.info("[ORDER_PRODUCER] send to topic={}, {}={},", topic, OrderDto.class.getSimpleName(), orderDto);
         reactiveKafkaProducerTemplate.send(topic, orderDto)
-                .doOnSuccess(senderResult -> log.info("sent {} offset : {}", orderDto, senderResult.recordMetadata().offset()))
+                .doOnSuccess(senderResult -> log.info("[ORDER_PRODUCER] sent {} offset : {}", orderDto, senderResult.recordMetadata().offset()))
                 .subscribe();
     }
 }

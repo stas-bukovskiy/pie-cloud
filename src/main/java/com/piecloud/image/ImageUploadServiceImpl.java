@@ -22,12 +22,12 @@ import static com.piecloud.utils.ExtensionUtils.getFileExtension;
 @Service
 public class ImageUploadServiceImpl implements ImageUploadService {
 
-    private final ImageUploadServiceProperties properties;
+    private final ImageUploadProperties properties;
     private final ImageFileValidator validator;
     private final Path uploadDirectoryPath;
 
     @Autowired
-    public ImageUploadServiceImpl(ImageUploadServiceProperties properties, ImageFileValidator validator) {
+    public ImageUploadServiceImpl(ImageUploadProperties properties, ImageFileValidator validator) {
         this.properties = properties;
         this.validator = validator;
         uploadDirectoryPath = tryToCreateUploadDirectoryPath();
@@ -52,7 +52,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     @Override
     public Mono<String> saveImage(Mono<String> prefixMono, Mono<FilePart> imageMono) {
         return imageMono
-                .map(validator::checkValidImageFilePart)
+                .map(validator::checkImageFilePartExtension)
                 .zipWith(prefixMono)
                 .map(imageAndPrefix -> {
                     String prefix = imageAndPrefix.getT2();
@@ -72,7 +72,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
         if (imagesToBeRemoved != null) {
             Arrays.stream(imagesToBeRemoved).forEach(file -> {
                 if (file.delete())
-                    log.debug(String.format("%s was removed successfully", file.getName()));
+                    log.debug("[IMAGE_FILE] successfully delete file '{}'", file.getName());
             });
         }
     }
@@ -84,20 +84,20 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     }
 
     private File tryToCreateImageFile(Path imageFilePath) {
-        File imageFile;
         try {
-            imageFile = Files.createFile(imageFilePath).toFile();
-        } catch (IOException e) {
-            log.error("Error while image file was creating:", e);
+            return Files.createFile(imageFilePath).toFile();
+        } catch (IOException ex) {
+            log.error("[IMAGE_FILE] error occurred while creating empty file '{}'", ex.getMessage(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "something went wrong while image was saving, try again");
         }
-        return imageFile;
     }
 
-    private void transferFilePartToFile(FilePart filePart, File destination) {
-        filePart.transferTo(destination)
-                .subscribe(file -> log.debug("saving image to " + destination));
+    private void transferFilePartToFile(FilePart filePart, File destinationFile) {
+        filePart.transferTo(destinationFile)
+                .doOnSuccess(destination -> log.debug("[IMAGE_FILE] successfully save image file: '{}'", destination))
+                .doOnError(throwable -> log.error("[IMAGE_FILE] error occurred while saveing image '{}'", throwable.getMessage(), throwable))
+                .subscribe();
     }
 
     @Override
@@ -109,8 +109,8 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     private void tryToRemove(Path imagePathToRemove) {
         try {
             Files.delete(imagePathToRemove);
-        } catch (IOException e) {
-            log.error("Error while file was removing:", e);
+        } catch (IOException ex) {
+            log.error("[IMAGE_FILE] error occurred while removing file '{}'", ex.getMessage(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "something went wrong while image was removing, try again");
         }

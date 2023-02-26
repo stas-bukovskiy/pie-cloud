@@ -4,6 +4,7 @@ import com.piecloud.order.line.OrderLine;
 import com.piecloud.order.line.OrderLineService;
 import com.piecloud.user.User;
 import com.piecloud.user.UserService;
+import com.piecloud.utils.SortParamsParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -27,21 +28,11 @@ public class OrderServiceImpl implements OrderService {
     private final OrderProducerService producerService;
 
     @Override
-    public Flux<OrderDto> getOrders() {
+    public Flux<OrderDto> getOrders(String sortParams) {
         return userService.getCurrentUser()
                 .map(User::getId)
-                .flatMapMany(repository::findAllByUserId)
+                .flatMapMany(userId -> repository.findAllByUserId(userId, SortParamsParser.parse(sortParams)))
                 .map(converter::convertDocumentToDto);
-    }
-
-    @Override
-    public Mono<OrderDto> getOrder(String id) {
-        return userService.getCurrentUser()
-                .map(User::getId)
-                .flatMap(userId -> repository.findByIdAndUserId(id, userId))
-                .map(converter::convertDocumentToDto)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found order with id = " + id)));
     }
 
     @Override
@@ -67,7 +58,8 @@ public class OrderServiceImpl implements OrderService {
                     producerService.send(orderDto);
                     return orderDto;
                 })
-                .doOnSuccess(newOrder -> log.debug("created new order: " + newOrder));
+                .doOnSuccess(onSuccess -> log.debug("[ORDER] successfully create: {}", onSuccess))
+                .doOnError(onError -> log.debug("[ORDER] error occurred while creating: {}", onError.getMessage()));
     }
 
     @Override
@@ -89,7 +81,16 @@ public class OrderServiceImpl implements OrderService {
                 .map(orderDto -> {
                     producerService.send(orderDto);
                     return orderDto;
-                });
+                })
+                .doOnSuccess(onSuccess -> log.debug("[ORDER] successfully update: {}", onSuccess))
+                .doOnError(onError -> log.debug("[ORDER] error occurred while updating: {}", onError.getMessage()));
+
+    }
+
+    @Override
+    public Flux<OrderDto> getUncompletedOrders() {
+        return repository.findAllByStatusNotOrderByStatusAscCreatedDateAsc(OrderStatus.COMPLETED)
+                .map(converter::convertDocumentToDto);
     }
 
     private Mono<OrderStatus> checkAndConvertToStatus(Mono<String> statusMono) {
@@ -106,9 +107,4 @@ public class OrderServiceImpl implements OrderService {
         });
     }
 
-    @Override
-    public Flux<OrderDto> getUncompletedOrders() {
-        return repository.findAllByStatusNotOrderByStatusAscCreatedDateAsc(OrderStatus.COMPLETED)
-                .map(converter::convertDocumentToDto);
-    }
 }

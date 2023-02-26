@@ -54,6 +54,8 @@ public class UserServiceImpl implements UserService {
                 .flatMap(this::checkUsernameForUniqueness)
                 .map(this::createUser)
                 .flatMap(repository::save)
+                .doOnSuccess(onSuccess -> log.debug("[USER] successfully create: {}", onSuccess.getUsername()))
+                .doOnError(onError -> log.debug("[USER] error occurred while creating: {}", onError.getMessage()))
                 .flatMap(user -> Mono.empty());
     }
 
@@ -63,6 +65,8 @@ public class UserServiceImpl implements UserService {
                 .flatMap(this::checkUsernameForUniqueness)
                 .map(this::createAdmin)
                 .flatMap(repository::save)
+                .doOnSuccess(onSuccess -> log.debug("[ADMIN] successfully create: {}", onSuccess.getUsername()))
+                .doOnError(onError -> log.debug("[ADMIN] error occurred while creating: {}", onError.getMessage()))
                 .flatMap(user -> Mono.empty());
     }
 
@@ -72,6 +76,8 @@ public class UserServiceImpl implements UserService {
                 .flatMap(this::checkUsernameForUniqueness)
                 .map(this::createCook)
                 .flatMap(repository::save)
+                .doOnSuccess(onSuccess -> log.debug("[COOK] successfully create: {}", onSuccess.getUsername()))
+                .doOnError(onError -> log.debug("[COOK] error occurred while creating: {}", onError.getMessage()))
                 .flatMap(user -> Mono.empty());
     }
 
@@ -90,8 +96,6 @@ public class UserServiceImpl implements UserService {
         String password = userDto.getPassword();
         user.setPassword(passwordEncoder.encode(password));
         user.setRoles(List.of("ROLE_USER"));
-
-        log.debug("registered new user: " + user);
         return user;
     }
 
@@ -100,8 +104,6 @@ public class UserServiceImpl implements UserService {
         String password = adminDto.getPassword();
         admin.setPassword(passwordEncoder.encode(password));
         admin.setRoles(List.of("ROLE_ADMIN", "ROLE_COOK"));
-
-        log.debug("registered new admin: " + admin);
         return admin;
     }
 
@@ -110,8 +112,6 @@ public class UserServiceImpl implements UserService {
         String password = cookDto.getPassword();
         cook.setPassword(passwordEncoder.encode(password));
         cook.setRoles(List.of("ROLE_COOK"));
-
-        log.debug("registered new cook: " + cook);
         return cook;
     }
 

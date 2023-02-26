@@ -1,8 +1,8 @@
 package com.piecloud.ingredient;
 
 import com.piecloud.image.ImageUploadService;
-import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupService;
+import com.piecloud.utils.SortParamsParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuples;
 
 @Service
 @Slf4j
@@ -23,16 +22,17 @@ public class IngredientServiceImpl implements IngredientService {
     private final IngredientGroupService groupService;
     private final ImageUploadService imageUploadService;
 
+
     @Override
-    public Flux<IngredientDto> getAllIngredientsDto() {
-        return repository.findAll()
+    public Flux<IngredientDto> getAllIngredientsDto(String sortParams) {
+        return repository.findAll(SortParamsParser.parse(sortParams))
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
 
     @Override
-    public Flux<IngredientDto> getAllIngredientsDtoByGroup(String groupId) {
-        return repository.findAllByGroupId(groupId)
+    public Flux<IngredientDto> getAllIngredientsDtoByGroup(String groupId, String sortParams) {
+        return repository.findAllByGroupId(groupId, SortParamsParser.parse(sortParams))
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
@@ -43,23 +43,14 @@ public class IngredientServiceImpl implements IngredientService {
                 .flatMap(repository::findById)
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found such ingredient")));
-    }
-
-    private Mono<String> checkIngredientId(String id) {
-        if (id == null)
-            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "ingredient id must not be null"));
-        return Mono.just(id);
+                .switchIfEmpty(Mono.error(getNotFoundException(id)));
     }
 
     @Override
     public Mono<Ingredient> getIngredient(String id) {
         return checkIngredientId(id)
                 .flatMap(repository::findById)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found such ingredient")));
+                .switchIfEmpty(Mono.error(getNotFoundException(id)));
     }
 
     @Override
@@ -73,44 +64,40 @@ public class IngredientServiceImpl implements IngredientService {
     public Mono<IngredientDto> createIngredient(Mono<IngredientDto> ingredientDtoMono) {
         return ingredientDtoMono
                 .flatMap(this::checkIngredientNameForUniqueness)
-                .map(converter::convertDtoToDocument)
-                .zipWhen(ingredient -> groupService.getIngredientGroup(ingredient.getGroup().getId()))
-                .map(ingredientDtoIngredientGroupTuple2 -> {
-                    IngredientGroup group = ingredientDtoIngredientGroupTuple2.getT2();
-                    Ingredient newIngredient = ingredientDtoIngredientGroupTuple2.getT1();
-                    newIngredient.setImageName(imageUploadService.getDefaultImageName());
-                    newIngredient.setGroupId(group.getId());
-                    return newIngredient;
-                })
+                .flatMap(this::checkIngredientGroupExisting)
+                .map(ingredientDto -> new Ingredient(null,
+                        ingredientDto.getName(),
+                        imageUploadService.getDefaultImageName(),
+                        ingredientDto.getPrice(),
+                        ingredientDto.getGroup().getId(),
+                        null
+                ))
                 .flatMap(repository::save)
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
-                .doOnSuccess(onSuccess -> log.debug("created new ingredient successfully"));
+                .doOnSuccess(onSuccess -> log.debug("[INGREDIENT] successfully create: {}", onSuccess))
+                .doOnError(onError -> log.debug("[INGREDIENT] error occurred while creating: {}", onError.getMessage()));
     }
 
     @Override
     public Mono<IngredientDto> updateIngredient(String id, Mono<IngredientDto> ingredientDtoMono) {
         return getIngredient(id)
-                .zipWith(ingredientDtoMono.flatMap(this::checkIngredientNameForUniqueness))
-                .zipWhen(ingredientAndIngredientDto ->
-                        groupService.getIngredientGroup(ingredientAndIngredientDto.getT2().getGroup().getId()),
-                        (ingredientAndIngredientDto, group) -> Tuples.of(
-                                ingredientAndIngredientDto.getT1(),
-                                ingredientAndIngredientDto.getT2(),
-                                group))
-                .map(ingredientIngredientDtoIngredientGroupTuple3 -> {
-                    IngredientGroup group = ingredientIngredientDtoIngredientGroupTuple3.getT3();
-                    Ingredient updatedIngredient = ingredientIngredientDtoIngredientGroupTuple3.getT1();
-                    IngredientDto ingredientDto = ingredientIngredientDtoIngredientGroupTuple3.getT2();
-                    updatedIngredient.setName(ingredientDto.getName());
-                    updatedIngredient.setPrice(ingredientDto.getPrice());
-                    updatedIngredient.setId(group.getId());
-                    return updatedIngredient;
+                .zipWith(ingredientDtoMono
+                        .flatMap(ingredientDto -> checkIngredientNameForUniqueness(id, ingredientDto))
+                        .flatMap(this::checkIngredientGroupExisting))
+                .map(ingredientIngredientDtoTuple2 -> {
+                    Ingredient ingredientToUpdate = ingredientIngredientDtoTuple2.getT1();
+                    IngredientDto ingredientDto = ingredientIngredientDtoTuple2.getT2();
+                    ingredientToUpdate.setName(ingredientDto.getName());
+                    ingredientToUpdate.setPrice(ingredientDto.getPrice());
+                    ingredientToUpdate.setGroupId(ingredientDto.getGroup().getId());
+                    return ingredientToUpdate;
                 })
                 .flatMap(repository::save)
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
-                .doOnSuccess(onSuccess -> log.debug("updated ingredient successfully"));
+                .doOnSuccess(onSuccess -> log.debug("[INGREDIENT] successfully update: {}", onSuccess))
+                .doOnError(onError -> log.debug("[INGREDIENT] error occurred while updating: {}", onError.getMessage()));
     }
 
     @Override
@@ -131,7 +118,9 @@ public class IngredientServiceImpl implements IngredientService {
                 })
                 .flatMap(repository::save)
                 .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto);
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("[INGREDIENT] successfully add image: {}", onSuccess))
+                .doOnError(onError -> log.error("[INGREDIENT] error occurred while image adding: {}", onError.getCause(), onError));
     }
 
     @Override
@@ -140,7 +129,26 @@ public class IngredientServiceImpl implements IngredientService {
                 .map(this::removeImage)
                 .flatMap(repository::save)
                 .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto);
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("[INGREDIENT] successfully remove image: {}", onSuccess))
+                .doOnError(onError -> log.error("[INGREDIENT] error occurred while image removing: {}", onError.getCause(), onError));
+    }
+
+    @Override
+    public Mono<Boolean> isIngredientExistById(String id) {
+        return repository.existsById(id);
+    }
+
+    private Throwable getNotFoundException(String id) {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "not found ingredient with such id: " + id);
+    }
+
+    private Mono<String> checkIngredientId(String id) {
+        if (id == null)
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "ingredient id must not be null"));
+        return Mono.just(id);
     }
 
     private Mono<Ingredient> addGroupReference(Ingredient ingredient) {
@@ -162,12 +170,31 @@ public class IngredientServiceImpl implements IngredientService {
     }
 
     private Mono<IngredientDto> checkIngredientNameForUniqueness(IngredientDto ingredientDto) {
-        return repository.existsByNameAndIdIsNot(ingredientDto.getName(),
-                        ingredientDto.getId() == null ? "" : ingredientDto.getId())
+        return repository.existsByName(ingredientDto.getName())
                 .map(isExist -> {
                     if (isExist)
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                 "ingredient mame is not unique");
+                    return ingredientDto;
+                });
+    }
+
+    private Mono<IngredientDto> checkIngredientNameForUniqueness(String id, IngredientDto ingredientDto) {
+        return repository.existsByNameAndIdIsNot(ingredientDto.getName(), id)
+                .map(isExist -> {
+                    if (isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "ingredient mame is not unique");
+                    return ingredientDto;
+                });
+    }
+
+    private Mono<IngredientDto> checkIngredientGroupExisting(IngredientDto ingredientDto) {
+        return groupService.isIngredientGroupExistById(ingredientDto.getGroup().getId())
+                .map(isExist -> {
+                    if (!isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "not found ingredient group with such id: " + ingredientDto.getGroup().getId());
                     return ingredientDto;
                 });
     }
@@ -182,5 +209,4 @@ public class IngredientServiceImpl implements IngredientService {
     private boolean isAdditionNotHaveDefaultImage(Ingredient ingredient) {
         return !ingredient.getImageName().equals(imageUploadService.getDefaultImageName());
     }
-
 }

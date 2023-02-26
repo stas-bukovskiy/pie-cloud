@@ -5,19 +5,26 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface IngredientService {
-    Flux<IngredientDto> getAllIngredientsDto();
+    Flux<IngredientDto> getAllIngredientsDto(String sortParams);
 
-    Flux<IngredientDto> getAllIngredientsDtoByGroup(String groupId);
+    Flux<IngredientDto> getAllIngredientsDtoByGroup(String groupId, String sortParams);
 
     Mono<IngredientDto> getIngredientDto(String id);
+
     Mono<Ingredient> getIngredient(String id);
 
     Mono<Ingredient> getIngredientAsRef(String id);
 
     Mono<IngredientDto> createIngredient(Mono<IngredientDto> ingredientDtoMono);
+
     Mono<IngredientDto> updateIngredient(String id, Mono<IngredientDto> ingredientDtoMono);
+
     Mono<Void> deleteIngredient(String id);
-    Mono<IngredientDto> addImageToIngredient(String id, Mono<FilePart>  image);
+
+    Mono<IngredientDto> addImageToIngredient(String id, Mono<FilePart> image);
+
     Mono<IngredientDto> removeImageFromIngredient(String id);
+
+    Mono<Boolean> isIngredientExistById(String id);
 
 }

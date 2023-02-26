@@ -4,6 +4,7 @@ import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientDto;
 import com.piecloud.ingredient.IngredientService;
+import com.piecloud.utils.SortParamsParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,6 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.util.HashSet;
 import java.util.List;
@@ -32,8 +32,8 @@ public class PieServiceImpl implements PieService {
 
 
     @Override
-    public Flux<PieDto> getAllPiesDto() {
-        return repository.findAll()
+    public Flux<PieDto> getAllPiesDto(String sortParams) {
+        return repository.findAll(SortParamsParser.parse(sortParams))
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
@@ -44,73 +44,55 @@ public class PieServiceImpl implements PieService {
                 .flatMap(repository::findById)
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found pie with such id: " + id)));
-    }
-
-    private Mono<String> checkPieId(String id) {
-        if (id == null)
-            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "pie id must not be null"));
-        return Mono.just(id);
+                .switchIfEmpty(Mono.error(getNotFoundEException(id)));
     }
 
     @Override
     public Mono<Pie> getPie(String id) {
         return checkPieId(id)
                 .flatMap(repository::findById)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found pie with such id: " + id)));
+                .switchIfEmpty(Mono.error(getNotFoundEException(id)));
     }
 
     @Override
     public Mono<PieDto> createPie(Mono<PieDto> pieDtoMono) {
-        return pieDtoMono
-                .flatMap(this::checkPieNameForUniqueness)
-                .map(this::checkIngredients)
-                .zipWhen(pie -> Flux.fromIterable(pie.getIngredients())
-                        .map(IngredientDto::getId)
-                        .flatMap(ingredientService::getIngredient)
-                        .collectList()
-                )
-                .map(pieDtoListTuple2 -> {
-                    List<Ingredient> ingredients = pieDtoListTuple2.getT2();
-                    Pie pie = converter.convertDtoToDocument(pieDtoListTuple2.getT1());
-                    pie.setImageName(imageUploadService.getDefaultImageName());
-                    pie.setIngredientIds(ingredients.stream().map(Ingredient::getId).collect(Collectors.toSet()));
-                    return pie;
-                })
+        return pieDtoMono.flatMap(this::checkNameForUniqueness)
+                .map(this::checkIngredientsForNullable)
+                .flatMap(this::checkIngredientsForExisting)
+                .map(pieDto -> new Pie(null,
+                        pieDto.getName(),
+                        imageUploadService.getDefaultImageName(),
+                        null,
+                        pieDto.getIngredients().stream().map(IngredientDto::getId).collect(Collectors.toSet()),
+                        null))
                 .flatMap(repository::save)
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
-                .doOnSuccess(onSuccess -> log.debug("created new pie successfully"));
+                .doOnSuccess(onSuccess -> log.debug("[PIE] successfully create: {}", onSuccess))
+                .doOnError(onError -> log.debug("[PIE] error occurred while creating: {}", onError.getMessage()));
     }
 
     @Override
     public Mono<PieDto> updatePie(String id, Mono<PieDto> pieDtoMono) {
         return getPie(id)
-                .zipWith(pieDtoMono.flatMap(this::checkPieNameForUniqueness))
-                .zipWhen(pieAndPieDto -> Flux.fromIterable(pieAndPieDto.getT2().getIngredients())
-                                .map(IngredientDto::getId)
-                                .flatMap(ingredientService::getIngredient)
-                                .collectList(),
-                        (pieAndPieDto, ingredients) -> Tuples.of(
-                                pieAndPieDto.getT1(),
-                                pieAndPieDto.getT2(),
-                                ingredients
-                        ))
-                .map(piePieDtoListTuple3 -> {
-                    Pie updatedPie = piePieDtoListTuple3.getT1();
-                    PieDto pieDto = piePieDtoListTuple3.getT2();
-                    List<Ingredient> ingredients = piePieDtoListTuple3.getT3();
-                    updatedPie.setName(pieDto.getName());
-                    updatedPie.setIngredientIds(ingredients.stream().map(Ingredient::getId).collect(Collectors.toSet()));
-                    return updatedPie;
+                .zipWith(pieDtoMono
+                        .flatMap(pieDto -> checkNameForUniqueness(id, pieDto))
+                        .map(this::checkIngredientsForNullable)
+                        .flatMap(this::checkIngredientsForExisting))
+                .map(piePieDtoTuple2 -> {
+                    Pie pieToUpdate = piePieDtoTuple2.getT1();
+                    PieDto pieDto = piePieDtoTuple2.getT2();
+                    pieToUpdate.setName(pieDto.getName());
+                    pieToUpdate.setIngredientIds(pieDto.getIngredients().stream()
+                            .map(IngredientDto::getId)
+                            .collect(Collectors.toSet()));
+                    return pieToUpdate;
                 })
                 .flatMap(repository::save)
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
-                .doOnSuccess(pieDto -> log.debug("updated pie successfully: " + pieDto));
+                .doOnSuccess(onSuccess -> log.debug("[PIE] successfully update: {}", onSuccess))
+                .doOnError(onError -> log.debug("[PIE] error occurred while updating: {}", onError.getMessage()));
     }
 
     @Override
@@ -131,7 +113,9 @@ public class PieServiceImpl implements PieService {
                 })
                 .flatMap(repository::save)
                 .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto);
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("[PIE] successfully add image: {}", onSuccess))
+                .doOnError(onError -> log.error("[PIE] error occurred while image adding: {}", onError.getCause(), onError));
     }
 
     @Override
@@ -140,7 +124,22 @@ public class PieServiceImpl implements PieService {
                 .map(this::removeImage)
                 .flatMap(repository::save)
                 .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto);
+                .map(converter::convertDocumentToDto)
+                .doOnSuccess(onSuccess -> log.debug("[PIE] successfully remove image: {}", onSuccess))
+                .doOnError(onError -> log.error("[PIE] error occurred while image removing: {}", onError.getCause(), onError));
+
+    }
+
+    private Throwable getNotFoundEException(String id) {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "not found pie with such id: " + id);
+    }
+
+    private Mono<String> checkPieId(String id) {
+        if (id == null)
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "pie id must not be null"));
+        return Mono.just(id);
     }
 
     private Mono<Pie> addGroupReference(Pie pie) {
@@ -158,7 +157,7 @@ public class PieServiceImpl implements PieService {
 
     }
 
-    private PieDto checkIngredients(PieDto pieDto) {
+    private PieDto checkIngredientsForNullable(PieDto pieDto) {
         List<IngredientDto> ingredients = pieDto.getIngredients();
         Optional<IngredientDto> ingredientDtoWithNullId = ingredients.stream()
                 .filter(ingredient -> ingredient.getId() == null).findAny();
@@ -168,10 +167,33 @@ public class PieServiceImpl implements PieService {
         return pieDto;
     }
 
-    private Mono<PieDto> checkPieNameForUniqueness(PieDto pieDto) {
+    private Mono<PieDto> checkIngredientsForExisting(PieDto pieDto) {
+        return Flux.fromIterable(pieDto.getIngredients())
+                .map(IngredientDto::getId)
+                .flatMap(ingredientService::isIngredientExistById)
+                .all(Boolean.TRUE::equals)
+                .map(isInvalidIngredient -> {
+                    if (isInvalidIngredient)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "not found such ingredient");
+                    return pieDto;
+                });
+    }
+
+    private Mono<PieDto> checkNameForUniqueness(PieDto pieDto) {
         if (pieDto.getName() == null) return Mono.just(pieDto);
-        return repository.existsByNameAndIdIsNot(pieDto.getName(),
-                        pieDto.getId() == null ? "" : pieDto.getId())
+        return repository.existsByName(pieDto.getName())
+                .map(isExist -> {
+                    if (isExist)
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "pie mame is not unique");
+                    return pieDto;
+                });
+    }
+
+    private Mono<PieDto> checkNameForUniqueness(String id, PieDto pieDto) {
+        if (pieDto.getName() == null) return Mono.just(pieDto);
+        return repository.existsByNameAndIdIsNot(pieDto.getName(), id)
                 .map(isExist -> {
                     if (isExist)
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

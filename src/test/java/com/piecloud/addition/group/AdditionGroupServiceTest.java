@@ -36,7 +36,7 @@ class AdditionGroupServiceTest {
         );
         Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(additionGroups));
 
-        Flux<AdditionGroupDto> result = service.getAllAdditionGroupsDto();
+        Flux<AdditionGroupDto> result = service.getAllAdditionGroupsDto("name,asc");
 
         StepVerifier.create(result)
                 .expectNextCount(additionGroups.size())

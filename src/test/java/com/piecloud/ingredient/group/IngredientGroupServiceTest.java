@@ -36,7 +36,7 @@ class IngredientGroupServiceTest {
         );
         Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(ingredientGroups));
 
-        Flux<IngredientGroupDto> result = service.getAllIngredientGroupsDto();
+        Flux<IngredientGroupDto> result = service.getAllIngredientGroupsDto("name,asc");
 
         StepVerifier.create(result)
                 .expectNextCount(ingredientGroups.size())

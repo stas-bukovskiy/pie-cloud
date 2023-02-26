@@ -50,7 +50,7 @@ public class IngredientServiceTest {
         );
         Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(ingredientsToSave));
 
-        Flux<IngredientDto> result = service.getAllIngredientsDto();
+        Flux<IngredientDto> result = service.getAllIngredientsDto("name,asc");
 
         StepVerifier.create(result)
                 .expectNextCount(ingredientsToSave.size())
