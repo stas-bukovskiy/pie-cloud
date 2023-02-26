@@ -8,4 +8,5 @@ import reactor.core.publisher.Mono;
 public interface PieRepository extends ReactiveMongoRepository<Pie, String> {
     Mono<Boolean> existsByNameAndIdIsNot(String name, String id);
 
+    Mono<Boolean> existsByName(String name);
 }

@@ -9,4 +9,5 @@ public interface IngredientGroupRepository
         extends ReactiveMongoRepository<IngredientGroup, String> {
     Mono<Boolean> existsByNameAndIdIsNot(String name, String id);
 
+    Mono<Boolean> existsByName(String name);
 }
