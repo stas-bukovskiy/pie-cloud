@@ -2,6 +2,7 @@ package com.piecloud.ingredient;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.piecloud.ingredient.group.IngredientGroupDto;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
@@ -17,10 +18,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class IngredientDto {
 
+    @Nullable
     private String id;
 
     @NotNull(message = "ingredient name must not be null")
-    @Size(min = 3, message = "ingredient name must have more than 3 characters")
+    @Size(min = 3, max = 50, message = "ingredient name must have more than 3 and less that 50 characters")
     private String name;
 
     @JsonProperty("image_name")

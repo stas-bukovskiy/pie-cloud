@@ -2,6 +2,7 @@ package com.piecloud.pie;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.piecloud.ingredient.IngredientDto;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 public class PieDto {
 
+    @Nullable
     private String id;
 
     @NotNull(message = "pie name must not be null")
@@ -25,6 +27,7 @@ public class PieDto {
     @JsonProperty("image_name")
     private String imageName;
 
+    @Nullable
     private BigDecimal price;
 
     @NotNull(message = "pie ingredients must not be null")
