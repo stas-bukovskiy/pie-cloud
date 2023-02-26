@@ -6,6 +6,9 @@ import reactor.core.publisher.Mono;
 
 public interface IngredientService {
     Flux<IngredientDto> getAllIngredientsDto();
+
+    Flux<IngredientDto> getAllIngredientsDtoByGroup(String groupId);
+
     Mono<IngredientDto> getIngredientDto(String id);
     Mono<Ingredient> getIngredient(String id);
 
@@ -16,4 +19,5 @@ public interface IngredientService {
     Mono<Void> deleteIngredient(String id);
     Mono<IngredientDto> addImageToIngredient(String id, Mono<FilePart>  image);
     Mono<IngredientDto> removeImageFromIngredient(String id);
+
 }

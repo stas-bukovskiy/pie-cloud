@@ -1,7 +1,7 @@
 package com.piecloud.ingredient;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
@@ -10,17 +10,15 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping(value = "api/ingredient")
+@RequiredArgsConstructor
 public class IngredientController {
 
     private final IngredientService service;
 
-    @Autowired
-    public IngredientController(IngredientService service) {
-        this.service = service;
-    }
-
     @GetMapping("/")
-    public Flux<IngredientDto> getIngredients() {
+    public Flux<IngredientDto> getIngredients(@RequestParam(value = "group_id", required = false) String groupId) {
+        if (groupId != null)
+            return service.getAllIngredientsDtoByGroup(groupId);
         return service.getAllIngredientsDto();
     }
 

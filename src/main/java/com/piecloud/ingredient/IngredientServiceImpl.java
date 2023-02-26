@@ -16,7 +16,7 @@ import reactor.util.function.Tuples;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class IngredientServiceImpl implements IngredientService{
+public class IngredientServiceImpl implements IngredientService {
 
     private final IngredientRepository repository;
     private final IngredientConverter converter;
@@ -26,6 +26,13 @@ public class IngredientServiceImpl implements IngredientService{
     @Override
     public Flux<IngredientDto> getAllIngredientsDto() {
         return repository.findAll()
+                .flatMap(this::addGroupReference)
+                .map(converter::convertDocumentToDto);
+    }
+
+    @Override
+    public Flux<IngredientDto> getAllIngredientsDtoByGroup(String groupId) {
+        return repository.findAllByGroupId(groupId)
                 .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto);
     }
