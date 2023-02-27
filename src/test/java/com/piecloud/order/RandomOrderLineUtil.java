@@ -1,26 +1,31 @@
-package com.piecloud.order.line;
+package com.piecloud.order;
 
 import com.piecloud.addition.Addition;
+import com.piecloud.order.line.OrderLine;
 import com.piecloud.pie.Pie;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+
+import static com.piecloud.order.line.RandomOrderLineUtil.randomOrderLineDto;
 
 public class RandomOrderLineUtil {
 
     private static final Random random = new SecureRandom();
 
-    public static OrderLineDto randomOrderLineDto() {
-        return new OrderLineDto(
+    public static OrderDto randomOrderDto() {
+        return new OrderDto(
                 UUID.randomUUID().toString(),
-                randomAmount(),
                 null,
                 null,
-                null
+                null,
+                List.of(randomOrderLineDto(), randomOrderLineDto(), randomOrderLineDto())
         );
+
     }
 
     public static OrderLine randomOrderLine(Addition addition) {
