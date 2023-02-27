@@ -25,7 +25,7 @@ public class AdditionConverterTest {
 
     @Test
     public void testConvertingDocumentToDto() {
-        Addition documentToConvert = new Addition("id", "name", "image.png", BigDecimal.TEN, group);
+        Addition documentToConvert = new Addition("id", "name", "image.png", BigDecimal.TEN, group.getId(), group);
         AdditionDto convertedDto = converter.convertDocumentToDto(documentToConvert);
 
         assertEquals(documentToConvert.getId(), convertedDto.getId());

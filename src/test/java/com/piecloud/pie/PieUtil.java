@@ -19,6 +19,7 @@ public class PieUtil {
                 RandomStringUtils.random(),
                 IMAGE_NAME,
                 RandomPriceUtil.random(),
+                ingredients.stream().map(Ingredient::getId).collect(Collectors.toSet()),
                 new HashSet<>(ingredients)
         );
     }

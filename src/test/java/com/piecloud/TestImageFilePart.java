@@ -18,11 +18,19 @@ public class TestImageFilePart implements FilePart {
 
     private static final DataBufferFactory factory = new DefaultDataBufferFactory();
 
-    private final static String FILENAME = "test.png";
+    private String fileName = "test.png";
+
+
+    public TestImageFilePart() {
+    }
+
+    public TestImageFilePart(String fileName) {
+        this.fileName = fileName;
+    }
 
     @Override
     public String filename() {
-        return FILENAME;
+        return fileName;
     }
 
     @Override

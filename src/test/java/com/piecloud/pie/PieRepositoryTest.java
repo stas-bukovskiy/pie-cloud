@@ -13,7 +13,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import reactor.test.StepVerifier;
 
-import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +31,7 @@ class PieRepositoryTest {
     static class PieRepositoryTestConfig {
         @Bean
         public PiePriceCounterMongoEventListener priceCounterMongoEventListener() {
-            return new PiePriceCounterMongoEventListener();
+            return new PiePriceCounterMongoEventListener(null);
         }
     }
 

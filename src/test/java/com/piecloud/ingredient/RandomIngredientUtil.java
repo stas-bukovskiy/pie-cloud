@@ -18,6 +18,7 @@ public class RandomIngredientUtil {
                 RandomStringUtils.random(),
                 IMAGE_NAME,
                 PRICE,
+                group.getId(),
                 group
         );
     }
