@@ -45,7 +45,7 @@ class OrderLineRepositoryTest {
         pie = randomPie(List.of(
                 randomIngredient(randomIngredientGroup()),
                 randomIngredient(randomIngredientGroup())
-                ));
+        ));
     }
 
     @Test
@@ -82,7 +82,7 @@ class OrderLineRepositoryTest {
 
 
     @Test
-    void testFindById_shouldReturnPie() {
+    void testFindById_shouldReturnOrderLine() {
         OrderLine orderLine = randomOrderLine(addition);
         String ID = orderLine.getId();
 
@@ -91,10 +91,12 @@ class OrderLineRepositoryTest {
                 .then(repository.findById(ID));
 
         StepVerifier.create(setup)
-                .consumeNextWith(foundPie -> assertEquals(orderLine.getAddition(), foundPie.getAddition()))
+                .consumeNextWith(foundPie -> {
+                    orderLine.getAddition().setGroup(null);
+                    assertEquals(orderLine.getAddition(), foundPie.getAddition());
+                })
                 .verifyComplete();
     }
-
 
 
 }
