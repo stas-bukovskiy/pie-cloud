@@ -29,7 +29,9 @@ public class OrderCreatorMongoEventListener extends AbstractMongoEventListener<O
     private BigDecimal countPrice(Order order) {
         BigDecimal price = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         for (OrderLine orderLine : order.getOrderLines()) {
-            price = price.add(orderLine.getPrice());
+            if (orderLine.getPrice() == null)
+                log.error("[ORDER] price for order line '{}' is null", orderLine);
+            else price = price.add(orderLine.getPrice());
         }
         return price;
     }
