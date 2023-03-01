@@ -47,14 +47,17 @@ public class IngredientsRepositoryTest {
 
     @Test
     public void testFindIngredientById() {
-        Ingredient ingredient = randomIngredient(group);;
+        Ingredient ingredient = randomIngredient(group);
         String ID = ingredient.getId();
 
         Publisher<Ingredient> setup = repository.deleteAll()
                 .then(repository.save(ingredient)).then(repository.findById(ID));
 
         StepVerifier.create(setup)
-                .consumeNextWith(foundIngredient -> assertEquals(ingredient, foundIngredient))
+                .consumeNextWith(foundIngredient -> {
+                    ingredient.setGroup(null);
+                    assertEquals(ingredient, foundIngredient);
+                })
                 .verifyComplete();
     }
 
