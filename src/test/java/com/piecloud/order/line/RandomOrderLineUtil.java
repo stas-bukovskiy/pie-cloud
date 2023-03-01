@@ -13,6 +13,8 @@ import java.util.Random;
 import java.util.UUID;
 
 import static com.piecloud.RandomStringUtils.random;
+import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
+import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroupDto;
 
 public class RandomOrderLineUtil {
@@ -44,6 +46,16 @@ public class RandomOrderLineUtil {
         );
     }
 
+    public static OrderLine randomOrderLineWithAddition() {
+        return new OrderLine(
+                UUID.randomUUID().toString(),
+                randomAmount(),
+                RandomPriceUtil.random(),
+                null,
+                randomAddition(randomAdditionGroup())
+        );
+    }
+
     public static OrderLineDto randomOrderLineDtoWithPieId(String pieId) {
         return new OrderLineDto(
                 UUID.randomUUID().toString(),
@@ -62,6 +74,16 @@ public class RandomOrderLineUtil {
                 null,
                 null,
                 addition
+        );
+    }
+
+    public static OrderLine randomOrderLine() {
+        return new OrderLine(
+                UUID.randomUUID().toString(),
+                randomAmount(),
+                null,
+                null,
+                null
         );
     }
 

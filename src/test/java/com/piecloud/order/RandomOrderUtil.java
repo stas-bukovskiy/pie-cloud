@@ -1,19 +1,20 @@
 package com.piecloud.order;
 
-import com.piecloud.addition.Addition;
 import com.piecloud.order.line.OrderLine;
-import com.piecloud.pie.Pie;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
+import static com.piecloud.order.OrderStatus.IN_LINE;
 import static com.piecloud.order.line.RandomOrderLineUtil.randomOrderLineDto;
+import static com.piecloud.order.line.RandomOrderLineUtil.randomOrderLineWithAddition;
 
-public class RandomOrderLineUtil {
+public class RandomOrderUtil {
 
     private static final Random random = new SecureRandom();
 
@@ -28,33 +29,22 @@ public class RandomOrderLineUtil {
 
     }
 
-    public static OrderLine randomOrderLine(Addition addition) {
-        return new OrderLine(
+    public static Order randomOrder() {
+        return new Order(
                 UUID.randomUUID().toString(),
-                randomAmount(),
                 null,
+                IN_LINE,
                 null,
-                addition
+                Set.of(randomOrderLineWithAddition(), randomOrderLineWithAddition(), randomOrderLineWithAddition()),
+                UUID.randomUUID().toString()
         );
     }
 
-    public static OrderLine randomOrderLine(Pie pie) {
-        return new OrderLine(
-                UUID.randomUUID().toString(),
-                randomAmount(),
-                null,
-                pie,
-                null
-        );
-    }
 
-    public static BigDecimal countPriceForOrderLine(OrderLine orderLine) {
+    public static BigDecimal countPrice(Order order) {
         BigDecimal price = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        BigDecimal amount = BigDecimal.valueOf(orderLine.getAmount());
-        if (orderLine.getAddition() != null) {
-            price = price.add(orderLine.getAddition().getPrice().multiply(amount));
-        } else if (orderLine.getPie() != null) {
-            price = price.add(orderLine.getPie().getPrice().multiply(amount));
+        for (OrderLine orderLine : order.getOrderLines()) {
+            price = price.add(orderLine.getPrice());
         }
         return price;
     }

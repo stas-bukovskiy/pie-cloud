@@ -5,7 +5,9 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -18,6 +20,8 @@ import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128
 
 @Data
 @Document(collection = "orders")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Order {
 
     @Id
