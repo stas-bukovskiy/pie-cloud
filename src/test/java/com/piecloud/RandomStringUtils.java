@@ -19,4 +19,9 @@ public class RandomStringUtils {
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
     }
+
+
+    public static String randomEmail() {
+        return random(5) + "@mail.co";
+    }
 }
