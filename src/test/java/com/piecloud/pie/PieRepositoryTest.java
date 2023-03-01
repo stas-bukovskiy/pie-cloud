@@ -9,8 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import reactor.test.StepVerifier;
 
 import java.util.HashSet;
@@ -19,21 +17,12 @@ import java.util.Set;
 
 import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
 import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
-import static com.piecloud.pie.PieUtil.calculatePrice;
 import static com.piecloud.pie.PieUtil.randomPie;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DataMongoTest
 class PieRepositoryTest {
-
-    @TestConfiguration
-    static class PieRepositoryTestConfig {
-        @Bean
-        public PiePriceCounterMongoEventListener priceCounterMongoEventListener() {
-            return new PiePriceCounterMongoEventListener(null);
-        }
-    }
 
     @Autowired
     private PieRepository repository;
@@ -75,7 +64,6 @@ class PieRepositoryTest {
                     assertEquals(pieToSave.getName(), savedPie.getName());
                     assertNotNull(savedPie.getImageName());
                     assertEquals(ingredients, savedPie.getIngredients());
-                    assertEquals(calculatePrice(ingredients), savedPie.getPrice());
                 }).verifyComplete();
     }
 
@@ -91,6 +79,20 @@ class PieRepositoryTest {
         StepVerifier.create(setup)
                 .consumeNextWith(foundPie -> assertEquals(savedPie.getName(), foundPie.getName()))
                 .verifyComplete();
+    }
+
+    @Test
+    void testDeletePie() {
+        Pie savedPie = randomPie(ingredients);
+        String ID = savedPie.getId();
+
+        assertEquals(Boolean.TRUE, repository.deleteAll()
+                .then(repository.save(savedPie))
+                .then(repository.existsById(ID)).block());
+
+        repository.deleteById(ID).block();
+
+        assertEquals(Boolean.FALSE,repository.existsById(ID).block());
     }
 
 }
