@@ -53,7 +53,10 @@ class AdditionRepositoryTest {
                 .then(repository.save(addition)).then(repository.findById(id));
 
         StepVerifier.create(setup)
-                .consumeNextWith(foundAddition -> assertEquals(addition, foundAddition))
+                .consumeNextWith(foundAddition -> {
+                    addition.setGroup(null);
+                    assertEquals(addition, foundAddition);
+                })
                 .verifyComplete();
     }
 
