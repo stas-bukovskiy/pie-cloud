@@ -36,14 +36,13 @@ public class AdditionConverter {
 
     public AdditionDto convertDocumentToDto(Addition addition){
         AdditionDto additionDto = mapper.map(addition, AdditionDto.class);
-        additionDto.getGroup().setId(addition.getGroupId());
+        if (addition.getGroup() != null) additionDto.getGroup().setId(addition.getGroupId());
         log.debug("[ADDITION] convert doc {} to dto {} ", addition, additionDto);
         return additionDto;
     }
 
     public Addition convertDtoToDocument(AdditionDto additionDto) {
         Addition addition = mapper.map(additionDto, Addition.class);
-        log.debug("converting " + additionDto + " to document: " + addition);
         log.debug("[ADDITION] convert dto {} to dto {} ", additionDto, additionDto);
         return addition;
     }

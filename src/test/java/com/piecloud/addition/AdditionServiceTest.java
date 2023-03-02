@@ -3,13 +3,16 @@ package com.piecloud.addition;
 import com.piecloud.TestImageFilePart;
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupRepository;
+import com.piecloud.addition.group.AdditionGroupServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -20,21 +23,25 @@ import java.util.List;
 import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.data.domain.Sort.Direction.ASC;
 
+@ActiveProfiles("test")
 @SpringBootTest
-public class AdditionServiceTest {
+class AdditionServiceTest {
     @MockBean
     private AdditionRepository repository;
     @Autowired
     private AdditionService service;
     @MockBean
     private AdditionGroupRepository groupRepository;
+    @MockBean
+    private AdditionGroupServiceImpl groupService;
     @Autowired
     private AdditionConverter converter;
     private AdditionGroup group;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         group = randomAdditionGroup();
     }
 
@@ -46,7 +53,8 @@ public class AdditionServiceTest {
                 randomAddition(group),
                 randomAddition(group)
         );
-        Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(additionsToSave));
+        Mockito.when(repository.findAll(Sort.by(ASC, "name"))).thenReturn(Flux.fromIterable(additionsToSave));
+        Mockito.when(groupService.getAdditionGroupAsRef(group.getId())).thenReturn(Mono.just(group));
 
         Flux<AdditionDto> result = service.getAllAdditionsDto("name,asc");
 
@@ -60,6 +68,7 @@ public class AdditionServiceTest {
         Addition addition = randomAddition(group);
         String ID = addition.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
+        Mockito.when(groupService.getAdditionGroupAsRef(addition.getGroupId())).thenReturn(Mono.just(group));
 
         Mono<AdditionDto> result = service.getAdditionDto(ID);
 
@@ -87,6 +96,7 @@ public class AdditionServiceTest {
         Addition addition = randomAddition(group);
         String ID = addition.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
+        Mockito.when(groupService.getAdditionGroupAsRef(addition.getGroupId())).thenReturn(Mono.just(group));
 
         Mono<Addition> result = service.getAddition(ID);
 
@@ -109,11 +119,19 @@ public class AdditionServiceTest {
     void testCreateAddition() {
         Addition addition = randomAddition(group);
         AdditionDto additionDtoToSave = converter.convertDocumentToDto(addition);
-        Mockito.when(repository.save(converter.convertDtoToDocument(additionDtoToSave)))
+
+        Mockito.when(repository.existsByName(addition.getName())).thenReturn(Mono.just(Boolean.FALSE));
+        Mockito.when(groupService.isAdditionGroupExistById(addition.getGroupId())).thenReturn(Mono.just(Boolean.TRUE));
+        Mockito.when(repository.save(new Addition(null,
+                        addition.getName(),
+                        addition.getImageName(),
+                        addition.getPrice(),
+                        addition.getGroup().getId(),
+                        null)))
                 .thenReturn(Mono.just(addition));
-        Mockito.when(repository.existsByNameAndIdIsNot(addition.getName(), addition.getId()))
-                .thenReturn(Mono.just(Boolean.FALSE));
         Mockito.when(groupRepository.findById(group.getId())).thenReturn(Mono.just(group));
+        Mockito.when(groupService.getAdditionGroupAsRef(group.getId())).thenReturn(Mono.just(group));
+
 
         Mono<AdditionDto> result = service.createAddition(Mono.just(additionDtoToSave));
 
@@ -130,6 +148,8 @@ public class AdditionServiceTest {
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
         addition.setImageName(imageName);
         Mockito.when(repository.save(addition)).thenReturn(Mono.just(addition));
+        Mockito.when(groupService.getAdditionGroupAsRef(addition.getGroupId())).thenReturn(Mono.just(group));
+
         FilePart filePart = new TestImageFilePart();
 
         Mono<AdditionDto> result = service.addImageToAddition(ID, Mono.just(filePart));

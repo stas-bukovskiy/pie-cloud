@@ -8,6 +8,7 @@ import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -20,7 +21,9 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(classes = {ImageUploadServiceImpl.class, ImageUploadProperties.class, ImageFileValidator.class})
+@ActiveProfiles("test")
+@SpringBootTest(classes = {ImageUploadServiceImpl.class,
+        ImageUploadProperties.class, ImageFileValidator.class})
 class ImageUploadServiceTest {
 
     private static String UPLOAD_PATH;

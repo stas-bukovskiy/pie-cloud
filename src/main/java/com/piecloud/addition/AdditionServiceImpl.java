@@ -66,6 +66,7 @@ public class AdditionServiceImpl implements AdditionService {
                         additionDto.getGroup().getId(),
                         null))
                 .flatMap(repository::save)
+                .flatMap(this::addGroupReference)
                 .map(converter::convertDocumentToDto)
                 .doOnSuccess(onSuccess -> log.debug("[ADDITION] successfully create: {}", onSuccess))
                 .doOnError(onError -> log.debug("[ADDITION] error occurred while creating: {}", onError.getMessage()));
