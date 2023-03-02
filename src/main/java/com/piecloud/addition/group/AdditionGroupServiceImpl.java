@@ -48,7 +48,7 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     @Override
     public Mono<AdditionGroupDto> createAdditionGroup(Mono<AdditionGroupDto> groupDtoMono) {
         return groupDtoMono
-                .flatMap(this::checkNameForUniquenessWhileUpdating)
+                .flatMap(this::checkNameForUniquenessWhileCreating)
                 .map(converter::convertDtoToDocument)
                 .flatMap(repository::save)
                 .map(converter::convertDocumentToDto)
@@ -59,7 +59,7 @@ public class AdditionGroupServiceImpl implements AdditionGroupService{
     @Override
     public Mono<AdditionGroupDto> updateAdditionGroup(String id, Mono<AdditionGroupDto> groupDtoMono) {
         return getAdditionGroup(id)
-                .zipWith(groupDtoMono.flatMap(this::checkNameForUniquenessWhileCreating))
+                .zipWith(groupDtoMono.flatMap(this::checkNameForUniquenessWhileUpdating))
                 .map(groupAndGroupDto -> {
                     AdditionGroup group = groupAndGroupDto.getT1();
                     String newName = groupAndGroupDto.getT2().getName();

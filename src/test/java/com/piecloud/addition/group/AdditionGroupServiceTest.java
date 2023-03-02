@@ -6,6 +6,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -15,7 +17,9 @@ import java.util.List;
 
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.data.domain.Sort.Direction.ASC;
 
+@ActiveProfiles("test")
 @SpringBootTest
 class AdditionGroupServiceTest {
 
@@ -34,7 +38,7 @@ class AdditionGroupServiceTest {
                 randomAdditionGroup(),
                 randomAdditionGroup()
         );
-        Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(additionGroups));
+        Mockito.when(repository.findAll(Sort.by(ASC, "name"))).thenReturn(Flux.fromIterable(additionGroups));
 
         Flux<AdditionGroupDto> result = service.getAllAdditionGroupsDto("name,asc");
 
@@ -100,16 +104,13 @@ class AdditionGroupServiceTest {
         AdditionGroupDto additionGroupDto = converter.convertDocumentToDto(additionGroup);
         Mockito.when(repository.save(converter.convertDtoToDocument(additionGroupDto)))
                 .thenReturn(Mono.just(additionGroup));
-        Mockito.when(repository.existsByNameAndIdIsNot(additionGroupDto.getName(), additionGroupDto.getId()))
+        Mockito.when(repository.existsByName(additionGroupDto.getName()))
                 .thenReturn(Mono.just(Boolean.FALSE));
 
         Mono<AdditionGroupDto> result = service.createAdditionGroup(Mono.just(additionGroupDto));
 
         StepVerifier.create(result)
-                .consumeNextWith(saved -> {
-                    assertEquals(additionGroup.getName(), saved.getName());
-                    System.out.println(saved);
-                })
+                .consumeNextWith(saved -> assertEquals(additionGroup.getName(), saved.getName()))
                 .verifyComplete();
     }
 
@@ -118,6 +119,7 @@ class AdditionGroupServiceTest {
         AdditionGroup additionGroup = randomAdditionGroup();
         String ID = additionGroup.getId();
         AdditionGroupDto additionGroupDto = converter.convertDocumentToDto(additionGroup);
+
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(new AdditionGroup(ID, RandomStringUtils.random())));
         Mockito.when(repository.save(additionGroup)).thenReturn(Mono.just(additionGroup));
         Mockito.when(repository.existsByNameAndIdIsNot(additionGroupDto.getName(), ID))
