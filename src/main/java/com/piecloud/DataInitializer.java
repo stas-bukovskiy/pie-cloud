@@ -15,6 +15,7 @@ import com.piecloud.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+@Profile("dev")
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -105,9 +107,9 @@ public class DataInitializer {
                 );
 
         initUsers.subscribe(
-                        data -> log.info("data:" + data), err -> log.error("error:" + err),
-                        () -> log.info("done initialization...")
-                );
+                data -> log.info("data:" + data), err -> log.error("error:" + err),
+                () -> log.info("done initialization...")
+        );
 
     }
 
