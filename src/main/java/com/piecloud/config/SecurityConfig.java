@@ -4,6 +4,7 @@ import com.piecloud.image.ImageUploadProperties;
 import com.piecloud.security.jwt.JwtTokenAuthenticationFilter;
 import com.piecloud.security.jwt.JwtTokenProvider;
 import com.piecloud.user.UserRepository;
+import org.springframework.boot.actuate.autoconfigure.security.reactive.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,7 +34,8 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.GET, "/api/addition/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/ingredient/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/pie/**").permitAll()
-                .pathMatchers(HttpMethod.GET, generateUrlToPublicResources(imageUploadProperties)).permitAll()
+                .pathMatchers(HttpMethod.GET,
+                        generateUrlToPublicResources(imageUploadProperties.getUploadDirectory())).permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/order/**").authenticated()
                 .pathMatchers(HttpMethod.PATCH, "/api/order/**").hasAnyRole("ADMIN", "COOK")
                 .pathMatchers(HttpMethod.POST, "/api/order/**").authenticated()
@@ -47,13 +49,16 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.POST, "/api/pie/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.PUT, "/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.DELETE, "/**").hasRole("ADMIN")
+                .matchers(EndpointRequest.toAnyEndpoint()
+                        .excluding("health", "info")).hasRole("ADMIN")
                 .and()
                 .addFilterAt(new JwtTokenAuthenticationFilter(tokenProvider), SecurityWebFiltersOrder.HTTP_BASIC)
                 .build();
     }
 
-    private String generateUrlToPublicResources(ImageUploadProperties imageUploadProperties) {
-        return "/" + imageUploadProperties.getUploadDirectory() + "/**";
+    private String generateUrlToPublicResources(String uploadDirectories) {
+        String path = "/" + uploadDirectories + "/**";
+        return path.replaceAll("[\\\\/]+", "/");
     }
 
     @Bean
