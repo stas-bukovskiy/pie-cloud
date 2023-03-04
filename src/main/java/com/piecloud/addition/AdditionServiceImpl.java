@@ -57,7 +57,7 @@ public class AdditionServiceImpl implements AdditionService {
     @Override
     public Mono<AdditionDto> createAddition(Mono<AdditionDto> additionDtoMono) {
         return additionDtoMono
-                .flatMap(this::checkNameForUniquenessWhileCreating)
+                .flatMap(this::checkNameForUniqueness)
                 .flatMap(this::checkAdditionGroupExisting)
                 .map(additionDto -> new Addition(null,
                         additionDto.getName(),
@@ -76,7 +76,7 @@ public class AdditionServiceImpl implements AdditionService {
     public Mono<AdditionDto> updateAddition(String id, Mono<AdditionDto> additionDtoMono) {
         return getAddition(id)
                 .zipWith(additionDtoMono
-                        .flatMap(this::checkNameForUniquenessWhileUpdating)
+                        .flatMap(additionDto -> checkNameForUniqueness(id, additionDto))
                         .flatMap(this::checkAdditionGroupExisting))
                 .map(additionAndAdditionDtoAndGroup -> {
                     AdditionDto additionDto = additionAndAdditionDtoAndGroup.getT2();
@@ -154,9 +154,8 @@ public class AdditionServiceImpl implements AdditionService {
         return Mono.just(id);
     }
 
-    private Mono<AdditionDto> checkNameForUniquenessWhileUpdating(AdditionDto additionDto) {
-        return repository.existsByNameAndIdIsNot(additionDto.getName(),
-                        additionDto.getId() == null ? "" : additionDto.getId())
+    private Mono<AdditionDto> checkNameForUniqueness(String id, AdditionDto additionDto) {
+        return repository.existsByNameAndIdIsNot(additionDto.getName(), id)
                 .map(isExist -> {
                     if (isExist)
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -165,7 +164,7 @@ public class AdditionServiceImpl implements AdditionService {
                 });
     }
 
-    private Mono<AdditionDto> checkNameForUniquenessWhileCreating(AdditionDto additionDto) {
+    private Mono<AdditionDto> checkNameForUniqueness(AdditionDto additionDto) {
         return repository.existsByName(additionDto.getName())
                 .map(isExist -> {
                     if (isExist)

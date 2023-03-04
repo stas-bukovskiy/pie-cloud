@@ -23,6 +23,7 @@ import java.util.List;
 import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 
 @ActiveProfiles("test")
@@ -97,12 +98,33 @@ class AdditionServiceTest {
         String ID = addition.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
         Mockito.when(groupService.getAdditionGroupAsRef(addition.getGroupId())).thenReturn(Mono.just(group));
+        Mockito.when(groupService.getAdditionGroupAsRef(addition.getGroupId())).thenReturn(Mono.just(group));
 
         Mono<Addition> result = service.getAddition(ID);
 
         StepVerifier.create(result)
                 .consumeNextWith(foundAddition ->
                         assertEquals(addition, foundAddition))
+                .verifyComplete();
+    }
+
+    @Test
+    void testGetAdditionWithDeletedGroup() {
+        Addition addition = randomAddition(group);
+        String ID = addition.getId();
+        Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
+        Mockito.when(groupService.getAdditionGroupAsRef(addition.getGroupId())).thenReturn(Mono.empty());
+        addition.setGroup(null);
+        Mockito.when(repository.save(addition)).thenReturn(Mono.just(addition));
+
+        Mono<Addition> result = service.getAddition(ID);
+
+        StepVerifier.create(result)
+                .consumeNextWith(foundAddition -> {
+                            assertNull(foundAddition.getGroup());
+                            assertNull(foundAddition.getGroupId());
+                        }
+                )
                 .verifyComplete();
     }
 
@@ -139,6 +161,37 @@ class AdditionServiceTest {
                 .consumeNextWith(savedAdditionDto -> assertEquals(additionDtoToSave, savedAdditionDto))
                 .verifyComplete();
     }
+
+    @Test
+    void testCreateAdditionWithNotUniqueName() {
+        Addition addition = randomAddition(group);
+        AdditionDto additionDtoToSave = converter.convertDocumentToDto(addition);
+
+        Mockito.when(repository.existsByName(addition.getName())).thenReturn(Mono.just(Boolean.FALSE));
+        Mockito.when(groupService.isAdditionGroupExistById(addition.getGroupId())).thenReturn(Mono.just(Boolean.FALSE));
+
+        Mono<AdditionDto> result = service.createAddition(Mono.just(additionDtoToSave));
+
+        StepVerifier.create(result)
+                .expectError(ResponseStatusException.class)
+                .verify();
+    }
+
+    @Test
+    void testCreateAdditionWithNotExistingGroup() {
+        Addition addition = randomAddition(group);
+        AdditionDto additionDtoToSave = converter.convertDocumentToDto(addition);
+
+        Mockito.when(groupService.isAdditionGroupExistById(addition.getGroupId())).thenReturn(Mono.just(Boolean.FALSE));
+        Mockito.when(repository.existsByName(addition.getName())).thenReturn(Mono.just(Boolean.TRUE));
+
+        Mono<AdditionDto> result = service.createAddition(Mono.just(additionDtoToSave));
+
+        StepVerifier.create(result)
+                .expectError(ResponseStatusException.class)
+                .verify();
+    }
+
 
     @Test
     void testAddImageToAddition() {

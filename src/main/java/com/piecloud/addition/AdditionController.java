@@ -54,8 +54,8 @@ public class AdditionController {
     }
 
 
-    @PostMapping(value = "/{id}/image")
-    public Mono<AdditionDto> postImageToAddition(@PathVariable String id, Mono<FilePart> image) {
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<AdditionDto> postImageToAddition(@PathVariable String id, @RequestPart("image") Mono<FilePart> image) {
         return service.addImageToAddition(id, image);
     }
 
