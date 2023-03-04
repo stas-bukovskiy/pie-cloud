@@ -49,11 +49,10 @@ class AdditionGroupServiceTest {
 
     @Test
     void testGetAdditionGroupDto() {
-        String ID = "id";
         AdditionGroup additionGroup = randomAdditionGroup();
-        Mockito.when(repository.findById(ID)).thenReturn(Mono.just(additionGroup));
+        Mockito.when(repository.findById(additionGroup.getId())).thenReturn(Mono.just(additionGroup));
 
-        Mono<AdditionGroupDto> result = service.getAdditionGroupDto(ID);
+        Mono<AdditionGroupDto> result = service.getAdditionGroupDto(additionGroup.getId());
 
         StepVerifier.create(result)
                 .consumeNextWith(additionGroupDto -> assertEquals(
@@ -77,11 +76,10 @@ class AdditionGroupServiceTest {
 
     @Test
     void testGetAdditionGroup() {
-        String ID = "id";
         AdditionGroup additionGroup = randomAdditionGroup();
-        Mockito.when(repository.findById(ID)).thenReturn(Mono.just(additionGroup));
+        Mockito.when(repository.findById(additionGroup.getId())).thenReturn(Mono.just(additionGroup));
 
-        Mono<AdditionGroup> result = service.getAdditionGroup(ID);
+        Mono<AdditionGroup> result = service.getAdditionGroup(additionGroup.getId());
 
         StepVerifier.create(result)
                 .consumeNextWith(resAdditionGroup -> assertEquals(

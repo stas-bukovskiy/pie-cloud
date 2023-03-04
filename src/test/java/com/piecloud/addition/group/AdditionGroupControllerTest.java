@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -19,6 +20,7 @@ import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAddition
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@ActiveProfiles("test")
 @DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -48,6 +50,36 @@ public class AdditionGroupControllerTest {
                 .isCreated()
                 .expectBody(AdditionGroupDto.class)
                 .value(saved -> assertEquals(groupDto.getName(), saved.getName()));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPostInvalidGroup_shouldReturn404() {
+        AdditionGroupDto groupDto = randomAdditionGroupDto();
+        groupDto.setName("");
+
+        webTestClient
+                .post()
+                .uri("/api/addition/group/")
+                .bodyValue(groupDto)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(400);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPostWithNotUniqueName_shouldReturn400() {
+        AdditionGroup group = randomAdditionGroup();
+        repository.save(group).block();
+
+        webTestClient
+                .post()
+                .uri("/api/addition/group/")
+                .bodyValue(new AdditionGroupDto(null, group.getName()))
+                .exchange()
+                .expectStatus()
+                .isEqualTo(400);
     }
 
     @Test
@@ -111,7 +143,7 @@ public class AdditionGroupControllerTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
-    public void testDelete_shouldDeleteFromBD() {
+    public void testDelete_shouldDeleteFromDb() {
         AdditionGroup group = repository.deleteAll().then(repository.save(
                 randomAdditionGroup()
         )).block();
