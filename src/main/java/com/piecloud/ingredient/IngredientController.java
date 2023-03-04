@@ -49,8 +49,8 @@ public class IngredientController {
         return service.deleteIngredient(id);
     }
 
-    @PostMapping(value = "/{id}/image")
-    public Mono<IngredientDto> postImageToAddition(@PathVariable String id, Mono<FilePart> image) {
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<IngredientDto> postImageToAddition(@PathVariable String id, @RequestPart("image") Mono<FilePart> image) {
         return service.addImageToIngredient(id, image);
     }
 

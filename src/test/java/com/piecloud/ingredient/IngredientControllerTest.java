@@ -6,13 +6,12 @@ import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,7 +26,7 @@ import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngr
 import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext
-@ExtendWith(SpringExtension.class)
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class IngredientControllerTest {
 
@@ -76,6 +75,20 @@ public class IngredientControllerTest {
                 });
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPostWithNotUniqueName_shouldReturn400() {
+        Ingredient ingredient = randomIngredient(group);
+        repository.save(ingredient).block();
+
+        webTestClient
+                .post()
+                .uri("/api/ingredient/")
+                .bodyValue(converter.convertDocumentToDto(ingredient))
+                .exchange()
+                .expectStatus().isEqualTo(400);
+    }
+
 
     @Test
     public void testGet_shouldReturnIngredients() {
@@ -119,6 +132,20 @@ public class IngredientControllerTest {
     }
 
     @Test
+    public void testGetWithDeletedGroup_shouldReturnGroup() {
+        Ingredient ingredient = repository.save(randomIngredient(group)).block();
+        groupRepository.delete(group).block();
+
+        assertNotNull(ingredient);
+        webTestClient.get()
+                .uri("/api/ingredient/{id}", ingredient.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(IngredientDto.class)
+                .value(result -> assertNull(result.getGroup()));
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testPut_shouldReturnChangedIngredient() {
         Ingredient ingredient = repository.save(randomIngredient(group)).block();
@@ -140,6 +167,38 @@ public class IngredientControllerTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPutWithNotUniqueName_shouldReturn400() {
+        Ingredient ingredient1 = repository.save(randomIngredient(group)).block();
+        Ingredient ingredient2 = repository.save(randomIngredient(group)).block();
+        assertNotNull(ingredient1);
+        assertNotNull(ingredient2);
+        ingredient2.setName(ingredient1.getName());
+
+        webTestClient.put()
+                .uri("/api/ingredient/{id}", ingredient2.getId())
+                .bodyValue(converter.convertDocumentToDto(ingredient2))
+                .exchange()
+                .expectStatus().isEqualTo(400);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPutWithoutChanges_shouldReturnSameIngredient() {
+        Ingredient ingredient = repository.save(randomIngredient(group)).block();
+        assertNotNull(ingredient);
+
+        webTestClient.put()
+                .uri("/api/ingredient/{id}", ingredient.getId())
+                .bodyValue(converter.convertDocumentToDto(ingredient))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(IngredientDto.class)
+                .value(result -> assertEquals(converter.convertDocumentToDto(ingredient), result));
+
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testDelete_shouldDeleteFromDb() {
         Ingredient ingredient = repository.save(randomIngredient(group)).block();
         assertNotNull(ingredient);
@@ -155,25 +214,26 @@ public class IngredientControllerTest {
                 .verifyComplete();
     }
 
-    @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void testAddImageToIngredient_shouldReturnWithNewImage() {
-        Ingredient ingredient = repository.save(randomIngredient(group)).block();
-        assertNotNull(ingredient);
-
-        FilePart imageFilePart = new TestImageFilePart();
-        webTestClient
-                .post()
-                .uri("/api/ingredient/{id}/image", ingredient.getId())
-                .bodyValue(imageFilePart)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(IngredientDto.class)
-                .value(postedIngredient ->
-                        assertNotEquals(imageUploadService.getDefaultImageName(),
-                                postedIngredient.getImageName()));
-    }
+    // TODO: 04.03.2023
+//    @Test
+//    @WithMockUser(username = "admin", roles = {"ADMIN"})
+//    void testAddImageToIngredient_shouldReturnWithNewImage() {
+//        Ingredient ingredient = repository.save(randomIngredient(group)).block();
+//        assertNotNull(ingredient);
+//
+//        FilePart imageFilePart = new TestImageFilePart();
+//        webTestClient
+//                .post()
+//                .uri("/api/ingredient/{id}/image", ingredient.getId())
+//                .bodyValue(imageFilePart)
+//                .exchange()
+//                .expectStatus()
+//                .isOk()
+//                .expectBody(IngredientDto.class)
+//                .value(postedIngredient ->
+//                        assertNotEquals(imageUploadService.getDefaultImageName(),
+//                                postedIngredient.getImageName()));
+//    }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})

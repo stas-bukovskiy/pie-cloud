@@ -3,13 +3,16 @@ package com.piecloud.ingredient;
 import com.piecloud.TestImageFilePart;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
+import com.piecloud.ingredient.group.IngredientGroupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,13 +24,18 @@ import java.util.UUID;
 import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
 import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.springframework.data.domain.Sort.Direction.ASC;
 
+@ActiveProfiles("test")
 @SpringBootTest
 public class IngredientServiceTest {
     @MockBean
     private IngredientRepository repository;
     @Autowired
     private IngredientService service;
+    @Autowired
+    private IngredientGroupService groupService;
     @MockBean
     private IngredientGroupRepository groupRepository;
     @Autowired
@@ -48,7 +56,9 @@ public class IngredientServiceTest {
                 randomIngredient(group),
                 randomIngredient(group)
         );
-        Mockito.when(repository.findAll()).thenReturn(Flux.fromIterable(ingredientsToSave));
+        Mockito.when(repository.findAll(Sort.by(ASC, "name"))).thenReturn(Flux.fromIterable(ingredientsToSave));
+        Mockito.when(groupService.getIngredientGroupAsRef(group.getId())).thenReturn(Mono.just(group));
+
 
         Flux<IngredientDto> result = service.getAllIngredientsDto("name,asc");
 
@@ -62,6 +72,7 @@ public class IngredientServiceTest {
         Ingredient ingredient = randomIngredient(group);
         String ID = ingredient.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(ingredient));
+        Mockito.when(groupService.getIngredientGroupAsRef(group.getId())).thenReturn(Mono.just(group));
 
         Mono<IngredientDto> result = service.getIngredientDto(ID);
 
@@ -90,12 +101,33 @@ public class IngredientServiceTest {
         Ingredient ingredient = randomIngredient(group);
         String ID = ingredient.getId();
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(ingredient));
+        Mockito.when(groupService.getIngredientGroupAsRef(ingredient.getGroupId())).thenReturn(Mono.just(group));
 
-        Mono<Ingredient> result = service.getIngredient(ID);
+        Mono<Ingredient> result = service.getIngredientAsRef(ID);
 
         StepVerifier.create(result)
                 .consumeNextWith(foundIngredient ->
                         assertEquals(ingredient, foundIngredient))
+                .verifyComplete();
+    }
+
+    @Test
+    void testGetIngredientWithDeletedGroup() {
+        Ingredient ingredient = randomIngredient(group);
+        String ID = ingredient.getId();
+        Mockito.when(repository.findById(ID)).thenReturn(Mono.just(ingredient));
+        Mockito.when(groupService.getIngredientGroupAsRef(ingredient.getGroupId())).thenReturn(Mono.empty());
+        ingredient.setGroup(null);
+        Mockito.when(repository.save(ingredient)).thenReturn(Mono.just(ingredient));
+
+        Mono<Ingredient> result = service.getIngredientAsRef(ID);
+
+        StepVerifier.create(result)
+                .consumeNextWith(foundIngredient -> {
+                            assertNull(foundIngredient.getGroup());
+                            assertNull(foundIngredient.getGroupId());
+                        }
+                )
                 .verifyComplete();
     }
 
@@ -113,11 +145,18 @@ public class IngredientServiceTest {
         Ingredient ingredient = randomIngredient(group);
         IngredientDto ingredientDtoToSave = converter.convertDocumentToDto(ingredient);
 
-        Mockito.when(repository.save(converter.convertDtoToDocument(ingredientDtoToSave)))
+        Mockito.when(repository.existsByName(ingredient.getName())).thenReturn(Mono.just(Boolean.FALSE));
+        Mockito.when(groupService.isIngredientGroupExistById(ingredient.getGroupId())).thenReturn(Mono.just(Boolean.TRUE));
+        Mockito.when(repository.save(new Ingredient(null,
+                        ingredient.getName(),
+                        ingredient.getImageName(),
+                        ingredient.getPrice(),
+                        ingredient.getGroup().getId(),
+                        null)))
                 .thenReturn(Mono.just(ingredient));
         Mockito.when(groupRepository.findById(group.getId())).thenReturn(Mono.just(group));
-        Mockito.when(repository.existsByNameAndIdIsNot(ingredientDtoToSave.getName(), ingredientDtoToSave.getId()))
-                .thenReturn(Mono.just(Boolean.FALSE));
+        Mockito.when(groupService.getIngredientGroupAsRef(group.getId())).thenReturn(Mono.just(group));
+
 
         Mono<IngredientDto> result = service.createIngredient(Mono.just(ingredientDtoToSave));
 
@@ -127,11 +166,43 @@ public class IngredientServiceTest {
     }
 
     @Test
+    void testCreateIngredientWithNotUniqueName() {
+        Ingredient ingredient = randomIngredient(group);
+        IngredientDto ingredientDtoToSave = converter.convertDocumentToDto(ingredient);
+
+        Mockito.when(repository.existsByName(ingredient.getName())).thenReturn(Mono.just(Boolean.FALSE));
+        Mockito.when(groupService.isIngredientGroupExistById(ingredient.getGroupId())).thenReturn(Mono.just(Boolean.FALSE));
+
+        Mono<IngredientDto> result = service.createIngredient(Mono.just(ingredientDtoToSave));
+
+        StepVerifier.create(result)
+                .expectError(ResponseStatusException.class)
+                .verify();
+    }
+
+    @Test
+    void testCreateIngredientWithNotExistingGroup() {
+        Ingredient ingredient = randomIngredient(group);
+        IngredientDto ingredientDtoToSave = converter.convertDocumentToDto(ingredient);
+
+        Mockito.when(groupService.isIngredientGroupExistById(ingredient.getGroupId())).thenReturn(Mono.just(Boolean.FALSE));
+        Mockito.when(repository.existsByName(ingredient.getName())).thenReturn(Mono.just(Boolean.TRUE));
+
+        Mono<IngredientDto> result = service.createIngredient(Mono.just(ingredientDtoToSave));
+
+        StepVerifier.create(result)
+                .expectError(ResponseStatusException.class)
+                .verify();
+    }
+
+
+    @Test
     void testAddImageToIngredient() {
         String ID = UUID.randomUUID().toString();
         String imageName = "ingredient-" + ID + ".png";
         Ingredient ingredient = randomIngredient(group);
         Mockito.when(repository.findById(ID)).thenReturn(Mono.just(ingredient));
+        Mockito.when(groupService.getIngredientGroupAsRef(group.getId())).thenReturn(Mono.just(group));
         ingredient.setImageName(imageName);
         Mockito.when(repository.save(ingredient)).thenReturn(Mono.just(ingredient));
         FilePart filePart = new TestImageFilePart();

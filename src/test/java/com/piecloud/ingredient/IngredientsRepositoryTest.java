@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -15,7 +16,7 @@ import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
 import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
+@ActiveProfiles("test")
 @DataMongoTest
 public class IngredientsRepositoryTest {
 

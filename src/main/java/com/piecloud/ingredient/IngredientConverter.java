@@ -38,7 +38,8 @@ public class IngredientConverter {
 
     public IngredientDto convertDocumentToDto(Ingredient ingredient){
         IngredientDto ingredientDto = mapper.map(ingredient, IngredientDto.class);
-        ingredientDto.getGroup().setId(ingredient.getGroupId());
+        if (ingredient.getGroup() != null)
+            ingredientDto.getGroup().setId(ingredient.getGroupId());
         log.debug("[INGREDIENT] convert doc {} to dto {} ", ingredient, ingredientDto);
         return ingredientDto;
     }
