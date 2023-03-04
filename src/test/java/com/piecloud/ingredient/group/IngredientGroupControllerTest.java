@@ -1,12 +1,11 @@
 package com.piecloud.ingredient.group;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -18,8 +17,8 @@ import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngr
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@ActiveProfiles("test")
 @DirtiesContext
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class IngredientGroupControllerTest {
 
@@ -43,6 +42,21 @@ public class IngredientGroupControllerTest {
                 .isCreated()
                 .expectBody(IngredientGroupDto.class)
                 .value(saved -> assertEquals(groupDto.getName(), saved.getName()));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPostWithNotUniqueName_shouldReturn400() {
+        IngredientGroup group = repository.deleteAll()
+                .then(repository.save(randomIngredientGroup())).block();
+        assertNotNull(group);
+
+        webTestClient
+                .post()
+                .uri("/api/ingredient/group/")
+                .bodyValue(new IngredientGroupDto(null, group.getName()))
+                .exchange()
+                .expectStatus().isEqualTo(400);
     }
 
     @Test
@@ -106,6 +120,23 @@ public class IngredientGroupControllerTest {
                 .expectStatus().isOk()
                 .expectBody(IngredientGroupDto.class)
                 .value(result -> assertEquals(changedGroup.getName(), result.getName()));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPutWithNotUniqueName_shouldReturnChangedGroup() {
+        IngredientGroup savedGroup1 = repository.deleteAll()
+                .then(repository.save(randomIngredientGroup())).block();
+        IngredientGroup savedGroup2 = repository.save(randomIngredientGroup()).block();
+        assertNotNull(savedGroup1);
+        assertNotNull(savedGroup2);
+        savedGroup2.setName(savedGroup1.getName());
+
+        webTestClient.put()
+                .uri("/api/ingredient/group/{id}", savedGroup2.getId())
+                .bodyValue(savedGroup1)
+                .exchange()
+                .expectStatus().isEqualTo(400);
     }
 
     @Test
