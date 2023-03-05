@@ -108,7 +108,7 @@ public class IngredientControllerTest {
     }
 
     @Test
-    public void testGetWithId_shouldReturnGroup() {
+    public void testGetWithId() {
         Ingredient ingredient = repository.save(randomIngredient(group)).block();
 
         assertNotNull(ingredient);
