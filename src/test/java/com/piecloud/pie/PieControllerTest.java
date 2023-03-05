@@ -3,24 +3,25 @@ package com.piecloud.pie;
 import com.piecloud.RandomStringUtils;
 import com.piecloud.TestImageFilePart;
 import com.piecloud.image.ImageUploadService;
-import com.piecloud.ingredient.*;
+import com.piecloud.ingredient.Ingredient;
+import com.piecloud.ingredient.IngredientConverter;
+import com.piecloud.ingredient.IngredientDto;
+import com.piecloud.ingredient.IngredientRepository;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
@@ -29,7 +30,6 @@ import static com.piecloud.pie.PieUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class PieControllerTest {
 
@@ -95,6 +95,36 @@ class PieControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPostWithNotUniqueName_shouldReturn400() {
+        Pie savedPie = repository.save(randomPie(ingredients)).block();
+        assertNotNull(savedPie);
+        PieDto pieDtoToPost = randomPieDto(ingredientsDto.stream().map(IngredientDto::getId).collect(Collectors.toList()));
+        pieDtoToPost.setName(savedPie.getName());
+
+        webTestClient
+                .post()
+                .uri("/api/pie/")
+                .bodyValue(pieDtoToPost)
+                .exchange()
+                .expectStatus().isEqualTo(400);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPostWithNotExistingIngredient_shouldReturn400() {
+        PieDto pieDtoToPost = randomPieDto(List.of(UUID.randomUUID().toString()));
+
+        webTestClient
+                .post()
+                .uri("/api/pie/")
+                .bodyValue(pieDtoToPost)
+                .exchange()
+                .expectStatus().isEqualTo(400);
+    }
+
+
+    @Test
     public void testGet_shouldReturnPieList() {
         List<Pie> savedPies = repository.saveAll(List.of(
                 randomPie(ingredients),
@@ -132,6 +162,22 @@ class PieControllerTest {
                 });
     }
 
+    @Test
+    public void testGetWithDeletedIngredient_shouldReturnPieWithoutIf() {
+        Pie savedPie = repository.save(randomPie(ingredients)).block();
+        assertNotNull(savedPie);
+        Ingredient deletedIngredient = (Ingredient) savedPie.getIngredients().toArray()[0];
+        ingredientRepository.delete(deletedIngredient).block();
+
+        webTestClient
+                .get()
+                .uri("/api/pie/{id}", savedPie.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(PieDto.class)
+                .value(pieDto -> assertEquals(savedPie.getIngredients().size() - 1, pieDto.getIngredients().size()));
+    }
+
 
     @Test
     void testGetPieWithWrongId_ShouldReturn404() {
@@ -166,6 +212,22 @@ class PieControllerTest {
                     assertEquals(savedPie.getName(), updatedPie.getName());
                     assertEquals(calculatePrice(savedPie.getIngredients()), updatedPie.getPrice());
                 });
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    public void testPutWithNotUniqueName_shouldReturn400() {
+        Pie savedPie1 = repository.save(randomPie(ingredients)).block();
+        Pie savedPie2 = repository.save(randomPie(ingredients)).block();
+        assertNotNull(savedPie1);
+        assertNotNull(savedPie2);
+        savedPie2.setName(savedPie1.getName());
+
+        webTestClient.put()
+                .uri("/api/pie/{id}", savedPie2.getId())
+                .bodyValue(converter.convertDocumentToDto(savedPie2))
+                .exchange()
+                .expectStatus().isEqualTo(400);
     }
 
     @Test

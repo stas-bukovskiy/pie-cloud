@@ -1,5 +1,6 @@
 package com.piecloud.pie;
 
+import com.piecloud.RandomStringUtils;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientRepository;
 import com.piecloud.ingredient.group.IngredientGroup;
@@ -9,19 +10,22 @@ import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.test.context.ActiveProfiles;
 import reactor.test.StepVerifier;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
+import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredients;
 import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
 import static com.piecloud.pie.PieUtil.randomPie;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DataMongoTest
+@ActiveProfiles("test")
 class PieRepositoryTest {
 
     @Autowired
@@ -40,11 +44,9 @@ class PieRepositoryTest {
                 .then(ingredientGroupRepository.save(randomIngredientGroup())).block();
 
         List<Ingredient> ingredientsList = ingredientRepository.deleteAll()
-                .thenMany(ingredientRepository.saveAll(List.of(
-                      randomIngredient(ingredientGroup),
-                      randomIngredient(ingredientGroup),
-                      randomIngredient(ingredientGroup)
-                ))).collectList().block();
+                .thenMany(ingredientRepository.saveAll(
+                        randomIngredients(ingredientGroup, 3)
+                )).collectList().block();
 
         assert ingredientsList != null;
         ingredients = new HashSet<>(ingredientsList);
@@ -78,6 +80,21 @@ class PieRepositoryTest {
 
         StepVerifier.create(setup)
                 .consumeNextWith(foundPie -> assertEquals(savedPie.getName(), foundPie.getName()))
+                .verifyComplete();
+    }
+
+    @Test
+    void testUpdate() {
+        Pie savedPie = repository.deleteAll()
+                .then(repository.save(randomPie(ingredients))).block();
+        assertNotNull(savedPie);
+
+        savedPie.setName(RandomStringUtils.random());
+        savedPie.setIngredients(ingredients.stream().skip(1).collect(Collectors.toSet()));
+        Publisher<Pie> setup = repository.save(savedPie);
+
+        StepVerifier.create(setup)
+                .consumeNextWith(result -> assertEquals(savedPie, result))
                 .verifyComplete();
     }
 

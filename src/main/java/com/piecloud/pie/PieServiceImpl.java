@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.util.HashSet;
 import java.util.List;
@@ -146,15 +145,16 @@ public class PieServiceImpl implements PieService {
         return Flux.fromIterable(pie.getIngredientIds())
                 .flatMap(ingredientService::getIngredientAsRef)
                 .collectList()
-                .map(ingredients -> {
+                .flatMap(ingredients -> {
+                    boolean needToSave = ingredients.size() != pie.getIngredients().size();
                     pie.setIngredients(new HashSet<>(ingredients));
                     pie.setIngredientIds(ingredients.stream()
                             .map(Ingredient::getId)
                             .collect(Collectors.toSet()));
-                    return pie;
-                }).zipWith(repository.save(pie))
-                .map(Tuple2::getT1);
-
+                    if (needToSave)
+                        return repository.save(pie);
+                    return Mono.just(pie);
+                });
     }
 
     private PieDto checkIngredientsForNullable(PieDto pieDto) {
@@ -172,8 +172,8 @@ public class PieServiceImpl implements PieService {
                 .map(IngredientDto::getId)
                 .flatMap(ingredientService::isIngredientExistById)
                 .all(Boolean.TRUE::equals)
-                .map(isInvalidIngredient -> {
-                    if (isInvalidIngredient)
+                .map(isValidIngredient -> {
+                    if (!isValidIngredient)
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                 "not found such ingredient");
                     return pieDto;

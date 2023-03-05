@@ -5,6 +5,8 @@ import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupDto;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class RandomIngredientUtil {
@@ -31,6 +33,13 @@ public class RandomIngredientUtil {
                 PRICE,
                 new IngredientGroupDto(groupId, "")
         );
+    }
+
+    public static List<Ingredient> randomIngredients(IngredientGroup group, int numOfIngredients) {
+        List<Ingredient> res = new ArrayList<>();
+        for (int i = 0; i < numOfIngredients; i++)
+            res.add(randomIngredient(group));
+        return res;
     }
 
 }

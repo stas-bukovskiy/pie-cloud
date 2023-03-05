@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
@@ -43,9 +44,9 @@ public class Pie {
     @NotNull
     @Size(min = 1)
     @Field("ingredient_ids")
-    private Set<String> ingredientIds;
+    private Set<String> ingredientIds = new LinkedHashSet<>();
 
     @Transient
-    private Set<Ingredient> ingredients;
+    private Set<Ingredient> ingredients = new LinkedHashSet<>();
 
 }
