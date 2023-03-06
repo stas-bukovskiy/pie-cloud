@@ -1,7 +1,6 @@
 package com.piecloud.pie;
 
 import com.piecloud.ingredient.Ingredient;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -16,8 +15,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import static org.springframework.data.mongodb.core.mapping.FieldType.DECIMAL128;
 
 @Data
 @AllArgsConstructor
@@ -36,9 +33,7 @@ public class Pie {
     @Field("image_name")
     private String imageName;
 
-    @NotNull
-    @DecimalMin(value = "0.0")
-    @Field(targetType = DECIMAL128)
+    @Transient
     private BigDecimal price;
 
     @NotNull

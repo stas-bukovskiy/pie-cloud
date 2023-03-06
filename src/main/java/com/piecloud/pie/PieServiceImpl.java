@@ -13,7 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -145,16 +148,25 @@ public class PieServiceImpl implements PieService {
         return Flux.fromIterable(pie.getIngredientIds())
                 .flatMap(ingredientService::getIngredientAsRef)
                 .collectList()
+                .publishOn(Schedulers.boundedElastic())
                 .flatMap(ingredients -> {
-                    boolean needToSave = ingredients.size() != pie.getIngredients().size();
+                    boolean needToSave = ingredients.size() != pie.getIngredientIds().size();
                     pie.setIngredients(new HashSet<>(ingredients));
                     pie.setIngredientIds(ingredients.stream()
                             .map(Ingredient::getId)
                             .collect(Collectors.toSet()));
+                    pie.setPrice(countPrice(ingredients));
                     if (needToSave)
-                        return repository.save(pie);
+                        repository.save(pie).subscribe();
                     return Mono.just(pie);
                 });
+    }
+
+    private BigDecimal countPrice(List<Ingredient> ingredients) {
+        BigDecimal price = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        for (Ingredient ingredient : ingredients)
+            price = price.add(ingredient.getPrice());
+        return price;
     }
 
     private PieDto checkIngredientsForNullable(PieDto pieDto) {
