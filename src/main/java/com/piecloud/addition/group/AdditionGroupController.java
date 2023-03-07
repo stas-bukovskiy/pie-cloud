@@ -19,13 +19,13 @@ public class AdditionGroupController {
 
     private final AdditionGroupService service;
 
-    @GetMapping(value = "/", consumes = "*/*")
+    @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
     public Flux<AdditionGroupDto> getIngredientGroups(@RequestParam(value = "sort", required = false,
             defaultValue = "name,asc") String sortParams) {
         return service.getAllAdditionGroupsDto(sortParams);
     }
 
-    @GetMapping(value = "/{id}", consumes = "*/*")
+    @GetMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
     public Mono<AdditionGroupDto> getIngredientGroup(@PathVariable String id) {
         return service.getAdditionGroupDto(id);
     }
@@ -42,7 +42,7 @@ public class AdditionGroupController {
         return service.createAdditionGroup(groupDtoMono);
     }
 
-    @DeleteMapping(value = "/{id}", consumes = "*/*")
+    @DeleteMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
     public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
         return service.deleteAdditionGroup(id);
     }

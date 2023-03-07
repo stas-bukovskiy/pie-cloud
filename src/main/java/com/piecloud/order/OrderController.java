@@ -23,7 +23,7 @@ public class OrderController {
         this.service = service;
     }
 
-    @GetMapping(value = "/", consumes = "*/*")
+    @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
     public Flux<OrderDto> getAllOrders(@RequestParam(value = "sort", required = false,
             defaultValue = "name,asc") String sortParams) {
         return service.getOrders(sortParams);

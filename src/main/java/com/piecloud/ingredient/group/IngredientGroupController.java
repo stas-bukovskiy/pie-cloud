@@ -20,13 +20,13 @@ public class IngredientGroupController {
     private final IngredientGroupService service;
 
 
-    @GetMapping(value = "/", consumes = "*/*")
+    @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
     public Flux<IngredientGroupDto> getIngredientGroups(@RequestParam(value = "sort", required = false,
             defaultValue = "name,asc") String sortParams) {
         return service.getAllIngredientGroupsDto(sortParams);
     }
 
-    @GetMapping(value = "/{id}", consumes = "*/*")
+    @GetMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
     public Mono<IngredientGroupDto> getIngredientGroup(@PathVariable String id) {
         return service.getIngredientGroupDto(id);
     }
@@ -43,7 +43,7 @@ public class IngredientGroupController {
         return service.createIngredientGroup(groupDtoMono);
     }
 
-    @DeleteMapping(value = "/{id}", consumes = "*/*")
+    @DeleteMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
     public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
         return service.deleteIngredientGroup(id);
     }
