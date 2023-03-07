@@ -214,26 +214,25 @@ public class IngredientControllerTest {
                 .verifyComplete();
     }
 
-    // TODO: 04.03.2023
-//    @Test
-//    @WithMockUser(username = "admin", roles = {"ADMIN"})
-//    void testAddImageToIngredient_shouldReturnWithNewImage() {
-//        Ingredient ingredient = repository.save(randomIngredient(group)).block();
-//        assertNotNull(ingredient);
-//
-//        FilePart imageFilePart = new TestImageFilePart();
-//        webTestClient
-//                .post()
-//                .uri("/api/ingredient/{id}/image", ingredient.getId())
-//                .bodyValue(imageFilePart)
-//                .exchange()
-//                .expectStatus()
-//                .isOk()
-//                .expectBody(IngredientDto.class)
-//                .value(postedIngredient ->
-//                        assertNotEquals(imageUploadService.getDefaultImageName(),
-//                                postedIngredient.getImageName()));
-//    }
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testAddImageToIngredient_shouldReturnWithNewImage() {
+        Ingredient ingredient = repository.save(randomIngredient(group)).block();
+        assertNotNull(ingredient);
+
+        FilePart imageFilePart = new TestImageFilePart();
+        webTestClient
+                .post()
+                .uri("/api/ingredient/{id}/image", ingredient.getId())
+                .bodyValue(imageFilePart)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(IngredientDto.class)
+                .value(postedIngredient ->
+                        assertNotEquals(imageUploadService.getDefaultImageName(),
+                                postedIngredient.getImageName()));
+    }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})

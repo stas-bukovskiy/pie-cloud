@@ -226,30 +226,25 @@ public class AdditionControllerTest {
                 .verifyComplete();
     }
 
-    // TODO: 04.03.2023
-//    @Test
-//    @WithMockUser(username = "admin", roles = {"ADMIN"})
-//    void testAddImageToAddition_shouldReturnWithNewImage() {
-//        Addition addition = repository.deleteAll()
-//                .then(repository.save(randomAddition(group))).block();
-//
-//        assertNotNull(addition);
-//        FilePart imageFilePart = new TestImageFilePart();
-//        MultiValueMap<String, FilePart> multiValueMap = new LinkedMultiValueMap<>();
-//        multiValueMap.put("image", List.of(imageFilePart));
-//        webTestClient
-//                .post()
-//                .uri("/api/addition/{id}/image", addition.getId())
-//                .header("Content-type", MediaType.MULTIPART_FORM_DATA_VALUE)
-//                .body(BodyInserters.fromMultipartData(multiValueMap))
-//                .exchange()
-//                .expectStatus()
-//                .isOk()
-//                .expectBody(AdditionDto.class)
-//                .value(postedAddition ->
-//                        assertNotEquals(imageUploadService.getDefaultImageName(),
-//                                postedAddition.getImageName()));
-//    }
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testAddImageToAddition_shouldReturnWithNewImage() {
+        Addition addition = repository.save(randomAddition(group)).block();
+        assertNotNull(addition);
+
+        FilePart imageFilePart = new TestImageFilePart();
+        webTestClient
+                .post()
+                .uri("/api/addition/{id}/image", addition.getId())
+                .bodyValue(imageFilePart)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(AdditionDto.class)
+                .value(additionWithImage ->
+                        assertNotEquals(imageUploadService.getDefaultImageName(),
+                                additionWithImage.getImageName()));
+    }
 
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})

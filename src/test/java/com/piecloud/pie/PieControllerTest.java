@@ -156,7 +156,7 @@ class PieControllerTest {
                 .value(pieDto -> {
                     assertEquals(savedPie.getId(), pieDto.getId());
                     assertEquals(savedPie.getName(), pieDto.getName());
-                    assertEquals(savedPie.getPrice(), pieDto.getPrice());
+                    assertEquals(countPrice(pieDto), pieDto.getPrice());
                     assertEquals(savedPie.getImageName(), pieDto.getImageName());
                     assertEquals(savedPie.getIngredients().size(), pieDto.getIngredients().size());
                 });
@@ -210,7 +210,7 @@ class PieControllerTest {
                 .expectBody(PieDto.class)
                 .value(updatedPie -> {
                     assertEquals(savedPie.getName(), updatedPie.getName());
-                    assertEquals(calculatePrice(savedPie.getIngredients()), updatedPie.getPrice());
+                    assertEquals(countPrice(savedPie.getIngredients()), updatedPie.getPrice());
                 });
     }
 

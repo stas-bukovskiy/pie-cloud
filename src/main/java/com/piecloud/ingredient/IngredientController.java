@@ -18,7 +18,7 @@ public class IngredientController {
 
     private final IngredientService service;
 
-    @GetMapping(value = "/", consumes = "*/*")
+    @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
     public Flux<IngredientDto> getIngredients(@RequestParam(value = "group_id", required = false) String groupId,
                                               @RequestParam(value = "sort", required = false,
                                                       defaultValue = "name,asc") String sortParams) {
@@ -27,7 +27,7 @@ public class IngredientController {
         return service.getAllIngredientsDto(sortParams);
     }
 
-    @GetMapping(value = "/{id}", consumes = "*/*")
+    @GetMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
     public Mono<IngredientDto> getIngredient(@PathVariable String id) {
         return service.getIngredientDto(id);
     }
@@ -44,17 +44,17 @@ public class IngredientController {
         return service.createIngredient(ingredientDtoMono);
     }
 
-    @DeleteMapping(value = "/{id}", consumes = "*/*")
+    @DeleteMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
     public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
         return service.deleteIngredient(id);
     }
 
-    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
     public Mono<IngredientDto> postImageToAddition(@PathVariable String id, @RequestPart("image") Mono<FilePart> image) {
         return service.addImageToIngredient(id, image);
     }
 
-    @DeleteMapping(value = "/{id}/image", consumes = "*/*")
+    @DeleteMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
     public Mono<IngredientDto> deleteImageFromAddition(@PathVariable String id) {
         return service.removeImageFromIngredient(id);
     }

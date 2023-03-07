@@ -22,7 +22,7 @@ public class AdditionController {
         this.service = service;
     }
 
-    @GetMapping(value = "/", consumes = "*/*")
+    @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
     public Flux<AdditionDto> getAll(@RequestParam(value = "group_id", required = false) String groupId,
                                     @RequestParam(value = "sort", required = false,
                                             defaultValue = "name,asc") String sortParams) {
@@ -31,7 +31,7 @@ public class AdditionController {
         return service.getAllAdditionsDto(sortParams);
     }
 
-    @GetMapping(value = "/{id}", consumes = "*/*")
+    @GetMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
     public Mono<AdditionDto> getOne(@PathVariable String id) {
         return service.getAdditionDto(id);
     }
@@ -48,18 +48,18 @@ public class AdditionController {
         return service.updateAddition(id, additionDtoMono);
     }
 
-    @DeleteMapping(value = "/{id}", consumes = "*/*")
+    @DeleteMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
     public Mono<Void> delete(@PathVariable String id) {
         return service.deleteAddition(id);
     }
 
 
-    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
     public Mono<AdditionDto> postImageToAddition(@PathVariable String id, @RequestPart("image") Mono<FilePart> image) {
         return service.addImageToAddition(id, image);
     }
 
-    @DeleteMapping(value = "/{id}/image", consumes = "*/*")
+    @DeleteMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
     public Mono<AdditionDto> deleteImageFromAddition(@PathVariable String id) {
         return service.removeImageFromAddition(id);
     }
