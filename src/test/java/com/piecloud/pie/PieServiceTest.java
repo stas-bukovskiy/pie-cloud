@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredients;
 import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
+import static com.piecloud.pie.PieUtil.countPrice;
 import static com.piecloud.pie.PieUtil.randomPie;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -223,7 +224,12 @@ class PieServiceTest {
 
         Mono<PieDto> result = service.updatePie(savedPie.getId(), Mono.just(pieToUpdate));
         StepVerifier.create(result)
-                .expectNext(pieToUpdate)
+                .consumeNextWith(updatedPie -> {
+                    assertEquals(pieToUpdate.getId(), updatedPie.getId());
+                    assertEquals(pieToUpdate.getName(), updatedPie.getName());
+                    assertEquals(countPrice(pieToUpdate), updatedPie.getPrice());
+                    assertEquals(pieToUpdate.getIngredients(), updatedPie.getIngredients());
+                })
                 .verifyComplete();
     }
 

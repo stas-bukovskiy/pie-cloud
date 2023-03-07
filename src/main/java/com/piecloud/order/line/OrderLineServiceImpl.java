@@ -26,15 +26,6 @@ public class OrderLineServiceImpl implements OrderLineService {
 
 
     @Override
-    public Mono<OrderLine> getOrderLine(String id) {
-
-        return checkOrderLineId(id)
-                .flatMap(repository::findById)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "not found order line with such id = " + id)));
-    }
-
-    @Override
     public Mono<OrderLine> createOrderLine(Mono<OrderLineDto> orderLineDtoMono) {
         return orderLineDtoMono
                 .flatMap(this::checkOrderLineDto)
@@ -101,13 +92,6 @@ public class OrderLineServiceImpl implements OrderLineService {
                     return orderLineDto;
                 })
                 .map(converter::convertDtoToDocument);
-    }
-
-    private Mono<String> checkOrderLineId(String id) {
-        if (id == null)
-            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "order line id must not be null"));
-        return Mono.just(id);
     }
 
 

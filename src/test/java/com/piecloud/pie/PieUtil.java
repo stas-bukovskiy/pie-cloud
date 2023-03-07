@@ -43,9 +43,15 @@ public class PieUtil {
                 .reduce(BigDecimal.ZERO.setScale(2), (subtotal, element) -> subtotal = subtotal.add(element));
     }
 
-    public static BigDecimal calculatePrice(Set<Ingredient> ingredients) {
+    public static BigDecimal countPrice(Collection<Ingredient> ingredients) {
         return ingredients.stream()
                 .map(Ingredient::getPrice)
+                .reduce(BigDecimal.ZERO.setScale(2), (subtotal, element) -> subtotal = subtotal.add(element));
+    }
+
+    public static BigDecimal countPrice(PieDto pieDto) {
+        return pieDto.getIngredients().stream()
+                .map(IngredientDto::getPrice)
                 .reduce(BigDecimal.ZERO.setScale(2), (subtotal, element) -> subtotal = subtotal.add(element));
     }
 
