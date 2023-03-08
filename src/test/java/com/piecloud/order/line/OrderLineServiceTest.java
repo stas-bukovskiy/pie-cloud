@@ -8,7 +8,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -18,7 +17,6 @@ import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAddition
 import static com.piecloud.order.line.RandomOrderLineUtil.*;
 
 @SpringBootTest
-@ActiveProfiles("test")
 class OrderLineServiceTest {
 
     @Autowired

@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -27,7 +26,7 @@ import static com.piecloud.addition.RandomAdditionUtil.randomAdditionDto;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ActiveProfiles("test")
+
 @DirtiesContext
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
