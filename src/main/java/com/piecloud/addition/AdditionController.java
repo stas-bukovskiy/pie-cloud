@@ -1,7 +1,7 @@
 package com.piecloud.addition;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
@@ -13,43 +13,40 @@ import reactor.core.publisher.Mono;
 @RequestMapping(value = "api/addition",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 public class AdditionController {
 
     private final AdditionService service;
 
-    @Autowired
-    public AdditionController(AdditionService service) {
-        this.service = service;
-    }
 
     @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
-    public Flux<AdditionDto> getAll(@RequestParam(value = "group_id", required = false) String groupId,
-                                    @RequestParam(value = "sort", required = false,
-                                            defaultValue = "name,asc") String sortParams) {
+    public Flux<AdditionDto> getAllAdditions(@RequestParam(value = "group_id", required = false) String groupId,
+                                             @RequestParam(value = "sort", required = false,
+                                                     defaultValue = "name,asc") String sortParams) {
         if (groupId != null)
             return service.getAllAdditionsDtoByGroup(groupId, sortParams);
         return service.getAllAdditionsDto(sortParams);
     }
 
     @GetMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
-    public Mono<AdditionDto> getOne(@PathVariable String id) {
+    public Mono<AdditionDto> getAddition(@PathVariable String id) {
         return service.getAdditionDto(id);
     }
 
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<AdditionDto> create(@RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
+    public Mono<AdditionDto> createAddition(@RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
         return service.createAddition(additionDtoMono);
     }
 
     @PutMapping("/{id}")
-    public Mono<AdditionDto> update(@PathVariable String id,
-                                    @RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
+    public Mono<AdditionDto> updateAddition(@PathVariable String id,
+                                            @RequestBody @Valid Mono<AdditionDto> additionDtoMono) {
         return service.updateAddition(id, additionDtoMono);
     }
 
     @DeleteMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
-    public Mono<Void> delete(@PathVariable String id) {
+    public Mono<Void> deleteAddition(@PathVariable String id) {
         return service.deleteAddition(id);
     }
 

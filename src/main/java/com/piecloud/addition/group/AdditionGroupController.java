@@ -20,30 +20,30 @@ public class AdditionGroupController {
     private final AdditionGroupService service;
 
     @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
-    public Flux<AdditionGroupDto> getIngredientGroups(@RequestParam(value = "sort", required = false,
+    public Flux<AdditionGroupDto> getAllAdditionGroups(@RequestParam(value = "sort", required = false,
             defaultValue = "name,asc") String sortParams) {
         return service.getAllAdditionGroupsDto(sortParams);
     }
 
     @GetMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
-    public Mono<AdditionGroupDto> getIngredientGroup(@PathVariable String id) {
+    public Mono<AdditionGroupDto> getAdditionGrou(@PathVariable String id) {
         return service.getAdditionGroupDto(id);
     }
 
     @PutMapping("/{id}")
-    public Mono<AdditionGroupDto> updateIngredientGroup(@PathVariable String id,
-                                                        @Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
+    public Mono<AdditionGroupDto> updateAdditionGroup(@PathVariable String id,
+                                                      @Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
         return service.updateAdditionGroup(id, groupDtoMono);
     }
 
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<AdditionGroupDto> createIngredientGroup(@Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
+    public Mono<AdditionGroupDto> postAdditionGroup(@Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
         return service.createAdditionGroup(groupDtoMono);
     }
 
     @DeleteMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
-    public Mono<Void> deleteIngredientGroup(@PathVariable String id) {
+    public Mono<Void> deleteAdditionGroup(@PathVariable String id) {
         return service.deleteAdditionGroup(id);
     }
 

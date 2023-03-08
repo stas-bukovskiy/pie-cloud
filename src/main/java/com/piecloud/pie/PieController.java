@@ -20,7 +20,7 @@ public class PieController {
 
 
     @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
-    public Flux<PieDto> getPies(@RequestParam(value = "sort", required = false,
+    public Flux<PieDto> getAllPies(@RequestParam(value = "sort", required = false,
             defaultValue = "name,asc") String sortParams) {
         return service.getAllPiesDto(sortParams);
     }
@@ -31,29 +31,29 @@ public class PieController {
     }
 
     @PutMapping("/{id}")
-    public Mono<PieDto> updatePieGroup(@PathVariable String id,
-                                       @Valid @RequestBody Mono<PieDto> pieDtoMono) {
+    public Mono<PieDto> updatePie(@PathVariable String id,
+                                  @Valid @RequestBody Mono<PieDto> pieDtoMono) {
         return service.updatePie(id, pieDtoMono);
     }
 
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<PieDto> createPieGroup(@Valid @RequestBody Mono<PieDto> pieDtoMono) {
+    public Mono<PieDto> createPie(@Valid @RequestBody Mono<PieDto> pieDtoMono) {
         return service.createPie(pieDtoMono);
     }
 
     @DeleteMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
-    public Mono<Void> deletePieGroup(@PathVariable String id) {
+    public Mono<Void> deletePie(@PathVariable String id) {
         return service.deletePie(id);
     }
 
     @PostMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
-    public Mono<PieDto> postImageToAddition(@PathVariable String id, @RequestPart("image") Mono<FilePart> image) {
+    public Mono<PieDto> postImageToPie(@PathVariable String id, @RequestPart("image") Mono<FilePart> image) {
         return service.addImageToPie(id, image);
     }
 
     @DeleteMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
-    public Mono<PieDto> deleteImageFromAddition(@PathVariable String id) {
+    public Mono<PieDto> deleteImageFromPie(@PathVariable String id) {
         return service.removeImageFromPie(id);
     }
 }

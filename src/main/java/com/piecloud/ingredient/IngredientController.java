@@ -33,14 +33,14 @@ public class IngredientController {
     }
 
     @PutMapping("/{id}")
-    public Mono<IngredientDto> updateIngredientGroup(@PathVariable String id,
-                                                  @Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
+    public Mono<IngredientDto> updateIngredient(@PathVariable String id,
+                                                @Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
         return service.updateIngredient(id, ingredientDtoMono);
     }
 
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<IngredientDto> createIngredientGroup(@Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
+    public Mono<IngredientDto> createIngredient(@Valid @RequestBody Mono<IngredientDto> ingredientDtoMono) {
         return service.createIngredient(ingredientDtoMono);
     }
 
@@ -50,12 +50,12 @@ public class IngredientController {
     }
 
     @PostMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
-    public Mono<IngredientDto> postImageToAddition(@PathVariable String id, @RequestPart("image") Mono<FilePart> image) {
+    public Mono<IngredientDto> postImageToIngredient(@PathVariable String id, @RequestPart("image") Mono<FilePart> image) {
         return service.addImageToIngredient(id, image);
     }
 
     @DeleteMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
-    public Mono<IngredientDto> deleteImageFromAddition(@PathVariable String id) {
+    public Mono<IngredientDto> deleteImageFromIngredient(@PathVariable String id) {
         return service.removeImageFromIngredient(id);
     }
 
