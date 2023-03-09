@@ -23,6 +23,7 @@ public class OrderDto {
     private String id;
 
     @Nullable
+    @JsonProperty("created_date")
     private Date createdDate;
 
     @Nullable

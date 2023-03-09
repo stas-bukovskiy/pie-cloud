@@ -1,7 +1,7 @@
 package com.piecloud.order;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -14,14 +14,10 @@ import java.util.Map;
 @RequestMapping(value = "api/order",
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService service;
-
-    @Autowired
-    public OrderController(OrderService service) {
-        this.service = service;
-    }
 
     @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
     public Flux<OrderDto> getAllOrders(@RequestParam(value = "sort", required = false,

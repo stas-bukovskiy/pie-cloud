@@ -28,6 +28,7 @@ public class Order {
     private String id;
 
     @NotNull
+    @Field(name = "created_date")
     private Date createdDate;
 
     @NotNull
