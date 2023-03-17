@@ -1,5 +1,6 @@
 package com.piecloud;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
@@ -29,22 +30,22 @@ public class TestImageFilePart implements FilePart {
     }
 
     @Override
-    public String filename() {
+    public @NotNull String filename() {
         return fileName;
     }
 
     @Override
-    public Mono<Void> transferTo(Path dest) {
+    public @NotNull Mono<Void> transferTo(@NotNull Path dest) {
         return Mono.empty();
     }
 
     @Override
-    public String name() {
+    public @NotNull String name() {
         return "image";
     }
 
     @Override
-    public HttpHeaders headers() {
+    public @NotNull HttpHeaders headers() {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -52,7 +53,7 @@ public class TestImageFilePart implements FilePart {
     }
 
     @Override
-    public Flux<DataBuffer> content() {
+    public @NotNull Flux<DataBuffer> content() {
         return DataBufferUtils.read(
                 new ByteArrayResource("name".getBytes(StandardCharsets.UTF_8)), factory, 1024);
 
