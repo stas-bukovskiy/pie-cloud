@@ -25,7 +25,6 @@ import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngr
 import static org.junit.jupiter.api.Assertions.*;
 
 @DirtiesContext
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class IngredientControllerTest {
 

@@ -146,13 +146,7 @@ public class IngredientServiceTest {
 
         Mockito.when(repository.existsByName(ingredient.getName())).thenReturn(Mono.just(Boolean.FALSE));
         Mockito.when(groupService.isIngredientGroupExistById(ingredient.getGroupId())).thenReturn(Mono.just(Boolean.TRUE));
-        Mockito.when(repository.save(new Ingredient(null,
-                        ingredient.getName(),
-                        ingredient.getImageName(),
-                        ingredient.getPrice(),
-                        ingredient.getGroup().getId(),
-                        null)))
-                .thenReturn(Mono.just(ingredient));
+        Mockito.when(repository.save(Mockito.any())).thenReturn(Mono.just(ingredient));
         Mockito.when(groupRepository.findById(group.getId())).thenReturn(Mono.just(group));
         Mockito.when(groupService.getIngredientGroupAsRef(group.getId())).thenReturn(Mono.just(group));
 
