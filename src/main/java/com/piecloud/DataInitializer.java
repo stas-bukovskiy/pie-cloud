@@ -69,7 +69,8 @@ public class DataInitializer {
         AdditionGroup additionGroup = additionGroupRepository.deleteAll()
                 .then(additionGroupRepository.save(new AdditionGroup(null, "грибочки")))
                 .block();
-        List<Addition> additions = additionRepository.deleteAll()
+        assert additionGroup != null;
+        additionRepository.deleteAll()
                 .thenMany(additionRepository.saveAll(List.of(
                         new Addition(null, "підпеньки", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
                         new Addition(null, "білий гриб", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
@@ -80,8 +81,6 @@ public class DataInitializer {
                     return a;
                 })
                 .collectList().block();
-
-        additionRepository.findAll().subscribe(a -> log.debug("found addition: " + a));
     }
 
     @EventListener(value = ApplicationReadyEvent.class)
