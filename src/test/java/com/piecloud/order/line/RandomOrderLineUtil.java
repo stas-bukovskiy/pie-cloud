@@ -3,7 +3,6 @@ package com.piecloud.order.line;
 import com.piecloud.RandomPriceUtil;
 import com.piecloud.addition.Addition;
 import com.piecloud.addition.AdditionDto;
-import com.piecloud.ingredient.Ingredient;
 import com.piecloud.pie.Pie;
 import com.piecloud.pie.PieDto;
 
@@ -12,15 +11,11 @@ import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static com.piecloud.RandomStringUtils.random;
 import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroupDto;
-import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredients;
-import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
-import static com.piecloud.pie.PieUtil.randomPieDto;
 
 public class RandomOrderLineUtil {
 
@@ -51,20 +46,6 @@ public class RandomOrderLineUtil {
         );
     }
 
-    public static OrderLineDto randomOrderLineDtoWithAddition() {
-        return new OrderLineDto(
-                UUID.randomUUID().toString(),
-                randomAmount(),
-                null,
-                null,
-                new AdditionDto(UUID.randomUUID().toString(),
-                        random(),
-                        null,
-                        RandomPriceUtil.random(),
-                        randomAdditionGroupDto())
-        );
-    }
-
     public static OrderLine randomOrderLineWithAddition() {
         return new OrderLine(
                 UUID.randomUUID().toString(),
@@ -85,16 +66,6 @@ public class RandomOrderLineUtil {
         );
     }
 
-    public static OrderLineDto randomOrderLineDtoWithPie() {
-        return new OrderLineDto(
-                UUID.randomUUID().toString(),
-                randomAmount(),
-                null,
-                randomPieDto(randomIngredients(randomIngredientGroup(), 3).stream().map(Ingredient::getId).collect(Collectors.toList())),
-                null
-        );
-    }
-
 
     public static OrderLine randomOrderLine(Addition addition) {
         return new OrderLine(
@@ -103,16 +74,6 @@ public class RandomOrderLineUtil {
                 null,
                 null,
                 addition
-        );
-    }
-
-    public static OrderLine randomOrderLine() {
-        return new OrderLine(
-                UUID.randomUUID().toString(),
-                randomAmount(),
-                null,
-                null,
-                null
         );
     }
 

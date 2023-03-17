@@ -6,15 +6,16 @@ import com.piecloud.pie.Pie;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.security.SecureRandom;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.piecloud.order.OrderStatus.IN_LINE;
 import static com.piecloud.order.line.RandomOrderLineUtil.*;
 
 public class RandomOrderUtil {
 
-    private static final Random random = new SecureRandom();
 
     public static OrderDto randomOrderDto() {
         return new OrderDto(
@@ -52,14 +53,9 @@ public class RandomOrderUtil {
     public static BigDecimal countPrice(Order order) {
         BigDecimal price = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         for (OrderLine orderLine : order.getOrderLines()) {
-            price = price.add(orderLine.getPrice());
+            if (orderLine.getPrice() != null) price = price.add(orderLine.getPrice());
         }
         return price;
     }
-
-    private static int randomAmount() {
-        return random.nextInt(1, 11);
-    }
-
 
 }
