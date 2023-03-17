@@ -96,7 +96,7 @@ class OrderServiceTest {
         Order order = randomOrder();
         order.setUserId(user.getId());
         Mockito.when(userService.getCurrentUser()).thenReturn(Mono.just(user));
-        Mockito.when(repository.findByIdAndUserId(order.getId(), order.getUserId())).thenReturn(Mono.just(order));
+        Mockito.when(repository.findById(order.getId())).thenReturn(Mono.just(order));
         order.setStatus(OrderStatus.COMPLETED);
         Mockito.when(repository.save(order)).thenReturn(Mono.just(order));
         order.setStatus(OrderStatus.IN_LINE);

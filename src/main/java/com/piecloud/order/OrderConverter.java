@@ -2,7 +2,6 @@ package com.piecloud.order;
 
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.modelmapper.config.Configuration;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.stereotype.Component;
@@ -23,16 +22,11 @@ public class OrderConverter {
                 .setAmbiguityIgnored(true)
                 .setFieldMatchingEnabled(true)
                 .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE)
-                .setMatchingStrategy(MatchingStrategies.STANDARD);
+                .setMatchingStrategy(MatchingStrategies.STRICT);
+        mapper.createTypeMap(OrderDto.class, Order.class);
+        mapper.getTypeMap(OrderDto.class, Order.class)
+                .addMappings(mapping -> mapping.skip(Order::setId));
 
-        PropertyMap<OrderDto, Order> propertyMapWithSkippedIdInDtoToDocWay =
-                new PropertyMap<>() {
-                    @Override
-                    protected void configure() {
-                        skip(destination.getId());
-                    }
-                };
-        mapper.addMappings(propertyMapWithSkippedIdInDtoToDocWay);
         return mapper;
     }
 
@@ -45,7 +39,6 @@ public class OrderConverter {
     public Order convertDtoToDocument(OrderDto orderDto) {
         Order order = mapper.map(orderDto, Order.class);
         log.debug("[ORDER] convert dto {} to doc {} ", orderDto, order);
-
         return order;
     }
     

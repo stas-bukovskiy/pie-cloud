@@ -65,11 +65,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Mono<OrderDto> changeStatus(String id, Mono<String> statusMono) {
         return checkAndConvertToStatus(statusMono)
-                .zipWith(userService.getCurrentUser()
-                        .map(User::getId)
-                        .flatMap(userId -> repository.findByIdAndUserId(id, userId))
+                .zipWith(repository.findById(id))
                         .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                "not found order with id = " + id))))
+                                "not found order with id = " + id)))
                 .map(statusOrderTuple2 -> {
                     OrderStatus status = statusOrderTuple2.getT1();
                     Order order = statusOrderTuple2.getT2();
@@ -102,7 +100,8 @@ public class OrderServiceImpl implements OrderService {
                 return Mono.just(OrderStatus.valueOf(status));
             } catch (IllegalArgumentException ex) {
                 return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "order status must be one of:" + OrderStatus.IN_LINE + OrderStatus.COMPLETED + OrderStatus.IN_PROCESSING));
+                        "order status must be one of:" + OrderStatus.IN_LINE + ", " + OrderStatus.COMPLETED + " or " +
+                                OrderStatus.IN_PROCESSING));
             }
         });
     }
