@@ -35,6 +35,6 @@ public class JwtTokenAuthenticationFilter implements WebFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(HEADER_PREFIX)) {
             return bearerToken.substring(HEADER_PREFIX.length());
         }
-        return null;
+        return "";
     }
 }
