@@ -26,7 +26,7 @@ public class AdditionGroupController {
     }
 
     @GetMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
-    public Mono<AdditionGroupDto> getAdditionGrou(@PathVariable String id) {
+    public Mono<AdditionGroupDto> getAdditionGroup(@PathVariable String id) {
         return service.getAdditionGroupDto(id);
     }
 

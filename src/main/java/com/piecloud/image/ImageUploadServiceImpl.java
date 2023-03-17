@@ -96,7 +96,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
     private void transferFilePartToFile(FilePart filePart, File destinationFile) {
         filePart.transferTo(destinationFile)
                 .doOnSuccess(destination -> log.debug("[IMAGE_FILE] successfully save image file: '{}'", destination))
-                .doOnError(throwable -> log.error("[IMAGE_FILE] error occurred while saveing image '{}'", throwable.getMessage(), throwable))
+                .doOnError(throwable -> log.error("[IMAGE_FILE] error occurred while saving image '{}'", throwable.getMessage(), throwable))
                 .subscribe();
     }
 
