@@ -143,13 +143,7 @@ class AdditionServiceTest {
 
         Mockito.when(repository.existsByName(addition.getName())).thenReturn(Mono.just(Boolean.FALSE));
         Mockito.when(groupService.isAdditionGroupExistById(addition.getGroupId())).thenReturn(Mono.just(Boolean.TRUE));
-        Mockito.when(repository.save(new Addition(null,
-                        addition.getName(),
-                        addition.getImageName(),
-                        addition.getPrice(),
-                        addition.getGroup().getId(),
-                        null)))
-                .thenReturn(Mono.just(addition));
+        Mockito.when(repository.save(Mockito.any())).thenReturn(Mono.just(addition));
         Mockito.when(groupRepository.findById(group.getId())).thenReturn(Mono.just(group));
         Mockito.when(groupService.getAdditionGroupAsRef(group.getId())).thenReturn(Mono.just(group));
 
