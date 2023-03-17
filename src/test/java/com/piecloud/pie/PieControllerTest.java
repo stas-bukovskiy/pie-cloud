@@ -87,7 +87,7 @@ class PieControllerTest {
                 .expectBody(PieDto.class)
                 .value(postedPie -> {
                     assertNotNull(postedPie.getId());
-                    assertEquals(postedPie.getName(), postedPie.getName());
+                    assertEquals(pieDtoToPost.getName(), postedPie.getName());
                     assertNotNull(postedPie.getImageName());
                     assertEquals(calculatePrice(postedPie.getIngredients()), postedPie.getPrice());
                     assertEquals(ingredientsDto.size(), pieDtoToPost.getIngredients().size());
