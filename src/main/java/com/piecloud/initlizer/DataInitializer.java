@@ -1,4 +1,4 @@
-package com.piecloud;
+package com.piecloud.initlizer;
 
 import com.piecloud.addition.Addition;
 import com.piecloud.addition.AdditionRepository;
@@ -42,50 +42,48 @@ public class DataInitializer {
 
     @EventListener(value = ApplicationReadyEvent.class)
     public void initIngredientsAndPies() {
-        log.info("start ingredient data initialization...");
+        log.info("[DATA_INITIALIZER] start ingredient data initialization...");
         ingredientGroupRepository.deleteAll()
-                .then(ingredientGroupRepository.save(new IngredientGroup(null, "веганс")))
+                .then(ingredientGroupRepository.save(new IngredientGroup(null, "vegan")))
                 .subscribe(group -> ingredientRepository.deleteAll()
                         .thenMany(ingredientRepository.saveAll(List.of(
-                                new Ingredient(null, "тофу", "some.png", BigDecimal.TEN, group.getId(), group),
-                                new Ingredient(null, "шпинат", "some.png", BigDecimal.TEN, group.getId(), group),
-                                new Ingredient(null, "фалафель", "some.png", BigDecimal.TEN, group.getId(), group)
+                                new Ingredient(null, "tofu", "some description about tofu", "some.png", BigDecimal.TEN, group.getId(), group),
+                                new Ingredient(null, "spinach", "some description about spinach", "some.png", BigDecimal.TEN, group.getId(), group),
+                                new Ingredient(null, "chickpeas", "some description about chickpeas", "some.png", BigDecimal.TEN, group.getId(), group)
 
                         )))
                         .map(Ingredient::getId)
                         .collectList()
                         .subscribe(ingredientIds -> pieRepository.deleteAll().thenMany(pieRepository.saveAll(List.of(
-                                new Pie(null, "pie 1", "some.png", BigDecimal.TEN, new HashSet<>(ingredientIds), null),
-                                new Pie(null, "pie 2", "some.png", BigDecimal.TEN, new HashSet<>(ingredientIds), null),
-                                new Pie(null, "pie 3", "some.png", BigDecimal.TEN, new HashSet<>(ingredientIds), null)
-                        ))).subscribe())
+                                new Pie(null, "pie 1", "some.png", BigDecimal.TEN, "some description about pie 1", new HashSet<>(ingredientIds), null),
+                                new Pie(null, "pie 2", "some.png", BigDecimal.TEN, "some description about pie 2", new HashSet<>(ingredientIds), null),
+                                new Pie(null, "pie 3", "some.png", BigDecimal.TEN, "some description about pie 3", new HashSet<>(ingredientIds), null)
+                        ))).subscribe(
+                                data -> log.info("[DATA_INITIALIZER] data:" + data), err -> log.error("error:" + err),
+                                () -> log.info("[DATA_INITIALIZER] done initialization...")
+                        ))
                 );
     }
 
 
     @EventListener(value = ApplicationReadyEvent.class)
     public void initAdditions() {
-        log.info("start additions data initialization...");
+        log.info("[DATA_INITIALIZER] start additions data initialization...");
         AdditionGroup additionGroup = additionGroupRepository.deleteAll()
-                .then(additionGroupRepository.save(new AdditionGroup(null, "грибочки")))
+                .then(additionGroupRepository.save(new AdditionGroup(null, "drinks")))
                 .block();
         assert additionGroup != null;
         additionRepository.deleteAll()
                 .thenMany(additionRepository.saveAll(List.of(
-                        new Addition(null, "підпеньки", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
-                        new Addition(null, "білий гриб", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
-                        new Addition(null, "пчих", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup)
-                )))
-                .map(a -> {
-                    log.debug("addition: " + a);
-                    return a;
-                })
-                .collectList().block();
+                        new Addition(null, "bottle of water", "some description about bottle of water", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
+                        new Addition(null, "kombucha", "some description about bottle of kombucha", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
+                        new Addition(null, "cider", "some description about bottle of cider", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup)
+                ))).collectList().block();
     }
 
     @EventListener(value = ApplicationReadyEvent.class)
     public void init() {
-        log.info("start user data initialization...");
+        log.info("[DATA_INITIALIZER] start user data initialization...");
         Flux<User> initUsers = this.userRepository.deleteAll()
                 .thenMany(
                         Flux.just("user", "admin")
@@ -106,8 +104,8 @@ public class DataInitializer {
                 );
 
         initUsers.subscribe(
-                data -> log.info("data:" + data), err -> log.error("error:" + err),
-                () -> log.info("done initialization...")
+                data -> log.info("[DATA_INITIALIZER] data:" + data), err -> log.error("error:" + err),
+                () -> log.info("[DATA_INITIALIZER] done initialization...")
         );
 
     }
