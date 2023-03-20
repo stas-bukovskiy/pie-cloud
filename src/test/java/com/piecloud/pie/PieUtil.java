@@ -1,9 +1,9 @@
 package com.piecloud.pie;
 
-import com.piecloud.RandomPriceUtil;
-import com.piecloud.RandomStringUtils;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientDto;
+import com.piecloud.util.RandomPriceUtil;
+import com.piecloud.util.RandomStringUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -19,6 +19,7 @@ public class PieUtil {
                 RandomStringUtils.random(),
                 IMAGE_NAME,
                 RandomPriceUtil.random(),
+                RandomStringUtils.random(100),
                 ingredients.stream().map(Ingredient::getId).collect(Collectors.toSet()),
                 new HashSet<>(ingredients)
         );
@@ -29,9 +30,10 @@ public class PieUtil {
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
                 IMAGE_NAME,
+                RandomStringUtils.random(100),
                 RandomPriceUtil.random(),
                 ingredientsId.stream()
-                        .map(ingredientId -> new IngredientDto(ingredientId, null, null, null, null))
+                        .map(ingredientId -> new IngredientDto(ingredientId, null, null, null, null, null))
                         .collect(Collectors.toList())
         );
     }

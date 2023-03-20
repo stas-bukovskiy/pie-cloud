@@ -1,7 +1,5 @@
 package com.piecloud.pie;
 
-import com.piecloud.RandomStringUtils;
-import com.piecloud.TestImageFilePart;
 import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientConverter;
@@ -9,6 +7,8 @@ import com.piecloud.ingredient.IngredientDto;
 import com.piecloud.ingredient.IngredientRepository;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
+import com.piecloud.util.RandomStringUtils;
+import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

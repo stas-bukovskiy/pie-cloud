@@ -1,10 +1,10 @@
 package com.piecloud.pie;
 
-import com.piecloud.RandomStringUtils;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientRepository;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
+import com.piecloud.util.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;

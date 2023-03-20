@@ -36,6 +36,9 @@ public class Pie {
     @Transient
     private BigDecimal price;
 
+    @NotBlank
+    private String description;
+
     @NotNull
     @Size(min = 1)
     @Field("ingredient_ids")

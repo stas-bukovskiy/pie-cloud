@@ -65,6 +65,7 @@ public class PieServiceImpl implements PieService {
                         pieDto.getName(),
                         imageUploadService.getDefaultImageName(),
                         null,
+                        pieDto.getDescription(),
                         pieDto.getIngredients().stream().map(IngredientDto::getId).collect(Collectors.toSet()),
                         null))
                 .flatMap(repository::save)
@@ -85,6 +86,7 @@ public class PieServiceImpl implements PieService {
                     Pie pieToUpdate = piePieDtoTuple2.getT1();
                     PieDto pieDto = piePieDtoTuple2.getT2();
                     pieToUpdate.setName(pieDto.getName());
+                    pieToUpdate.setDescription(pieDto.getDescription());
                     pieToUpdate.setIngredientIds(pieDto.getIngredients().stream()
                             .map(IngredientDto::getId)
                             .collect(Collectors.toSet()));

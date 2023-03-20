@@ -24,6 +24,10 @@ public class PieDto {
     @Size(min = 3, message = "pie name must have more than 3 characters")
     private String name;
 
+    @NotNull(message = "pie description must not be null")
+    @Size(min = 3, max = 500, message = "pie description must have more than 3 and less that 500 characters")
+    private String description;
+
     @JsonProperty("image_name")
     private String imageName;
 
