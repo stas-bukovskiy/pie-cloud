@@ -67,6 +67,7 @@ public class IngredientServiceImpl implements IngredientService {
                 .flatMap(this::checkIngredientGroupExisting)
                 .map(ingredientDto -> new Ingredient(null,
                         ingredientDto.getName(),
+                        ingredientDto.getDescription(),
                         imageUploadService.getDefaultImageName(),
                         ingredientDto.getPrice(),
                         ingredientDto.getGroup().getId(),
@@ -88,6 +89,7 @@ public class IngredientServiceImpl implements IngredientService {
                 .map(ingredientIngredientDtoTuple2 -> {
                     Ingredient ingredientToUpdate = ingredientIngredientDtoTuple2.getT1();
                     IngredientDto ingredientDto = ingredientIngredientDtoTuple2.getT2();
+                    ingredientToUpdate.setDescription(ingredientDto.getDescription());
                     ingredientToUpdate.setName(ingredientDto.getName());
                     ingredientToUpdate.setPrice(ingredientDto.getPrice());
                     ingredientToUpdate.setGroupId(ingredientDto.getGroup().getId());

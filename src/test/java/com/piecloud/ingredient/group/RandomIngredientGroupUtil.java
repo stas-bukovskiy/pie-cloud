@@ -1,6 +1,6 @@
 package com.piecloud.ingredient.group;
 
-import com.piecloud.RandomStringUtils;
+import com.piecloud.util.RandomStringUtils;
 
 import java.util.UUID;
 

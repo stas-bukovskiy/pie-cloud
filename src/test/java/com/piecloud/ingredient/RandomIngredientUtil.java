@@ -1,8 +1,8 @@
 package com.piecloud.ingredient;
 
-import com.piecloud.RandomStringUtils;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupDto;
+import com.piecloud.util.RandomStringUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -18,6 +18,7 @@ public class RandomIngredientUtil {
         return new Ingredient(
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
+                RandomStringUtils.random(100),
                 IMAGE_NAME,
                 PRICE,
                 group.getId(),
@@ -30,6 +31,7 @@ public class RandomIngredientUtil {
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
                 IMAGE_NAME,
+                RandomStringUtils.random(100),
                 PRICE,
                 new IngredientGroupDto(groupId, "")
         );

@@ -1,10 +1,10 @@
 package com.piecloud.order.line;
 
-import com.piecloud.RandomPriceUtil;
 import com.piecloud.addition.Addition;
 import com.piecloud.addition.AdditionDto;
 import com.piecloud.pie.Pie;
 import com.piecloud.pie.PieDto;
+import com.piecloud.util.RandomPriceUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -12,10 +12,10 @@ import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
 
-import static com.piecloud.RandomStringUtils.random;
 import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroupDto;
+import static com.piecloud.util.RandomStringUtils.random;
 
 public class RandomOrderLineUtil {
 
@@ -41,6 +41,7 @@ public class RandomOrderLineUtil {
                 new AdditionDto(additionId,
                         random(),
                         null,
+                        null,
                         RandomPriceUtil.random(),
                         randomAdditionGroupDto())
         );
@@ -61,7 +62,7 @@ public class RandomOrderLineUtil {
                 UUID.randomUUID().toString(),
                 randomAmount(),
                 null,
-                new PieDto(pieId, null, null, null, null),
+                new PieDto(pieId, null, null, null, null, null),
                 null
         );
     }

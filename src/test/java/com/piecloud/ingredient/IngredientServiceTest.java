@@ -1,9 +1,9 @@
 package com.piecloud.ingredient;
 
-import com.piecloud.TestImageFilePart;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import com.piecloud.ingredient.group.IngredientGroupService;
+import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

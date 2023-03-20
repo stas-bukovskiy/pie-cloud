@@ -25,6 +25,10 @@ public class IngredientDto {
     @Size(min = 3, max = 50, message = "ingredient name must have more than 3 and less that 50 characters")
     private String name;
 
+    @NotNull(message = "ingredient description must not be null")
+    @Size(min = 3, max = 500, message = "ingredient description must have more than 3 and less that 500 characters")
+    private String description;
+
     @JsonProperty("image_name")
     private String imageName;
 

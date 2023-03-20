@@ -33,6 +33,9 @@ public class Ingredient {
     @Field("image_name")
     private String imageName;
 
+    @NotBlank
+    private String description;
+
     @NotNull
     @DecimalMin(value = "0.0")
     @Field(targetType = DECIMAL128)

@@ -1,9 +1,9 @@
 package com.piecloud.ingredient;
 
-import com.piecloud.TestImageFilePart;
 import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
+import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
