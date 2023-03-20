@@ -1,4 +1,11 @@
 {
+  "groups": [
+    {
+      "name": "image-upload",
+      "type": "com.piecloud.image.ImageUploadProperties",
+      "sourceType": "com.piecloud.image.ImageUploadProperties"
+    }
+  ],
   "properties": [
     {
       "name": "com.pie-cloud.image-upload.default-image",
