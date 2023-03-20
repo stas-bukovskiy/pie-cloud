@@ -1,4 +1,4 @@
-package com.piecloud;
+package com.piecloud.util;
 
 import java.security.SecureRandom;
 import java.util.Random;

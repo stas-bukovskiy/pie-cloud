@@ -1,6 +1,6 @@
 package com.piecloud.user;
 
-import com.piecloud.RandomStringUtils;
+import com.piecloud.util.RandomStringUtils;
 
 import java.util.List;
 import java.util.UUID;
