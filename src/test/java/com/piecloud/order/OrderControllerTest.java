@@ -1,6 +1,5 @@
 package com.piecloud.order;
 
-import com.piecloud.RandomStringUtils;
 import com.piecloud.addition.Addition;
 import com.piecloud.addition.AdditionRepository;
 import com.piecloud.addition.group.AdditionGroup;
@@ -15,6 +14,7 @@ import com.piecloud.security.jwt.JwtTokenProvider;
 import com.piecloud.user.User;
 import com.piecloud.user.UserRepository;
 import com.piecloud.user.UserService;
+import com.piecloud.util.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,7 @@
 package com.piecloud.image;
 
-import com.piecloud.RandomStringUtils;
-import com.piecloud.TestImageFilePart;
+import com.piecloud.util.RandomStringUtils;
+import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;

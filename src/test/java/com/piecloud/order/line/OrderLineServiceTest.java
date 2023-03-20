@@ -1,8 +1,8 @@
 package com.piecloud.order.line;
 
-import com.piecloud.RandomStringUtils;
 import com.piecloud.addition.Addition;
 import com.piecloud.addition.AdditionService;
+import com.piecloud.util.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
