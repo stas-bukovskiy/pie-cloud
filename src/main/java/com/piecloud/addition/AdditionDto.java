@@ -25,6 +25,10 @@ public class AdditionDto {
     @Size(min = 3, max = 50, message = "addition name must have more than 3 and less that 50 characters")
     private String name;
 
+    @NotNull(message = "addition description must not be null")
+    @Size(min = 3, max = 500, message = "addition description must have more than 3 and less that 500 characters")
+    private String description;
+
     @Nullable
     @JsonProperty("image_name")
     private String imageName;

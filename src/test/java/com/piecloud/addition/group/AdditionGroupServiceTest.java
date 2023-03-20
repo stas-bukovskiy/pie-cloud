@@ -1,6 +1,6 @@
 package com.piecloud.addition.group;
 
-import com.piecloud.RandomStringUtils;
+import com.piecloud.util.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,9 +1,9 @@
 package com.piecloud.addition;
 
-import com.piecloud.TestImageFilePart;
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupRepository;
 import com.piecloud.addition.group.AdditionGroupServiceImpl;
+import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

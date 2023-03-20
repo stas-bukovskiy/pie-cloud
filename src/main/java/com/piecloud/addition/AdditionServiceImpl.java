@@ -62,6 +62,7 @@ public class AdditionServiceImpl implements AdditionService {
                 .map(additionDto -> new Addition(null,
                         additionDto.getName(),
                         imageUploadService.getDefaultImageName(),
+                        additionDto.getDescription(),
                         additionDto.getPrice(),
                         additionDto.getGroup().getId(),
                         null))
@@ -82,6 +83,7 @@ public class AdditionServiceImpl implements AdditionService {
                     AdditionDto additionDto = additionAndAdditionDtoAndGroup.getT2();
                     Addition updatedAddition = additionAndAdditionDtoAndGroup.getT1();
                     updatedAddition.setName(additionDto.getName());
+                    updatedAddition.setDescription(additionDto.getDescription());
                     updatedAddition.setPrice(additionDto.getPrice());
                     updatedAddition.setGroupId(additionDto.getGroup().getId());
                     return updatedAddition;

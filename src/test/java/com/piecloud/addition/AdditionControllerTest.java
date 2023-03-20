@@ -1,9 +1,9 @@
 package com.piecloud.addition;
 
-import com.piecloud.TestImageFilePart;
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupRepository;
 import com.piecloud.image.ImageUploadService;
+import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,6 +71,7 @@ public class AdditionControllerTest {
                 .value(postedAddition -> {
                     assertNotEquals(additionDto.getId(), postedAddition.getId());
                     assertEquals(additionDto.getName(), postedAddition.getName());
+                    assertEquals(additionDto.getDescription(), postedAddition.getDescription());
                     assertEquals(imageUploadService.getDefaultImageName(), postedAddition.getImageName());
                     assertEquals(additionDto.getPrice(), postedAddition.getPrice());
                     assertEquals(group.getId(), postedAddition.getGroup().getId());

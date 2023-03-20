@@ -31,6 +31,9 @@ public class Addition {
     private String name;
 
     @NotBlank
+    private String description;
+
+    @NotBlank
     @Field("image_name")
     private String imageName;
 
@@ -45,4 +48,5 @@ public class Addition {
 
     @Transient
     private AdditionGroup group;
+
 }

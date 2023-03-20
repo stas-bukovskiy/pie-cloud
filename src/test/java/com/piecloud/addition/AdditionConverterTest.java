@@ -25,7 +25,7 @@ public class AdditionConverterTest {
 
     @Test
     public void testConvertingDocumentToDto() {
-        Addition documentToConvert = new Addition("id", "name", "image.png", BigDecimal.TEN, group.getId(), group);
+        Addition documentToConvert = new Addition("id", "name", "description", "image.png", BigDecimal.TEN, group.getId(), group);
         AdditionDto convertedDto = converter.convertDocumentToDto(documentToConvert);
 
         assertEquals(documentToConvert.getId(), convertedDto.getId());
@@ -37,7 +37,7 @@ public class AdditionConverterTest {
 
     @Test
     public void testConvertingDtoToDocument() {
-        AdditionDto dtoToConvert = new AdditionDto("id", "name", "image.png", BigDecimal.TEN, groupDto);
+        AdditionDto dtoToConvert = new AdditionDto("id", "name", "description", "image.png", BigDecimal.TEN, groupDto);
         Addition convertedDocument = converter.convertDtoToDocument(dtoToConvert);
 
         assertNull(convertedDocument.getId());
