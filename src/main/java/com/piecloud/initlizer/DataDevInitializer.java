@@ -30,7 +30,7 @@ import java.util.List;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class DataInitializer {
+public class DataDevInitializer {
 
     private final AdditionRepository additionRepository;
     private final AdditionGroupRepository additionGroupRepository;
