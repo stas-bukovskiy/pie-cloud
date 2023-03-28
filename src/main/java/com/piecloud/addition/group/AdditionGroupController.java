@@ -1,5 +1,7 @@
 package com.piecloud.addition.group;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,31 +21,42 @@ public class AdditionGroupController {
 
     private final AdditionGroupService service;
 
+    @Operation(summary = "Get all addition groups")
     @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
-    public Flux<AdditionGroupDto> getAllAdditionGroups(@RequestParam(value = "sort", required = false,
-            defaultValue = "name,asc") String sortParams) {
+    public Flux<AdditionGroupDto> getAllAdditionGroups(@Parameter(name = "first part is field for sorting, second can be asc or desc")
+                                                       @RequestParam(value = "sort", required = false, defaultValue = "name,asc")
+                                                       String sortParams) {
         return service.getAllAdditionGroupsDto(sortParams);
     }
 
+    @Operation(summary = "Get a addition group by its id")
     @GetMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
-    public Mono<AdditionGroupDto> getAdditionGroup(@PathVariable String id) {
+    public Mono<AdditionGroupDto> getAdditionGroup(@Parameter(description = "id of addition group to be searched", required = true)
+                                                   @PathVariable String id) {
         return service.getAdditionGroupDto(id);
     }
 
+    @Operation(summary = "Update a addition group by its id")
     @PutMapping("/{id}")
-    public Mono<AdditionGroupDto> updateAdditionGroup(@PathVariable String id,
+    public Mono<AdditionGroupDto> updateAdditionGroup(@Parameter(description = "id of addition group to be updated", required = true)
+                                                      @PathVariable String id,
+                                                      @Parameter(description = "AdditionGroupDto with data to update", required = true)
                                                       @Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
         return service.updateAdditionGroup(id, groupDtoMono);
     }
 
+    @Operation(summary = "Create new addition group")
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<AdditionGroupDto> postAdditionGroup(@Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
+    public Mono<AdditionGroupDto> postAdditionGroup(@Parameter(description = "AdditionGroupDto with data to create new addition group", required = true)
+                                                    @Valid @RequestBody Mono<AdditionGroupDto> groupDtoMono) {
         return service.createAdditionGroup(groupDtoMono);
     }
 
+    @Operation(summary = "Delete a addition group by its id")
     @DeleteMapping(value = "/{id}", consumes = MediaType.ALL_VALUE)
-    public Mono<Void> deleteAdditionGroup(@PathVariable String id) {
+    public Mono<Void> deleteAdditionGroup(@Parameter(description = "id of addition group to be deleted", required = true)
+                                          @PathVariable String id) {
         return service.deleteAdditionGroup(id);
     }
 

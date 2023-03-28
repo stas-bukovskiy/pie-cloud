@@ -1,5 +1,7 @@
 package com.piecloud.order;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,20 +21,27 @@ public class OrderController {
 
     private final OrderService service;
 
+    @Operation(summary = "Get all user orders")
     @GetMapping(value = "/", consumes = MediaType.ALL_VALUE)
-    public Flux<OrderDto> getAllOrders(@RequestParam(value = "sort", required = false,
-            defaultValue = "createdDate,asc") String sortParams) {
+    public Flux<OrderDto> getAllOrders(@Parameter(name = "first part is field for sorting, second can be asc or desc")
+                                       @RequestParam(value = "sort", required = false, defaultValue = "createdDate,asc")
+                                       String sortParams) {
         return service.getOrders(sortParams);
     }
 
+    @Operation(summary = "Create new order")
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<OrderDto> postOrder(@RequestBody @Valid Mono<OrderDto> orderDtoMono) {
+    public Mono<OrderDto> postOrder(@Parameter(description = "OrderDto with data to create new order", required = true)
+                                    @RequestBody @Valid Mono<OrderDto> orderDtoMono) {
         return service.createOrder(orderDtoMono);
     }
 
+    @Operation(summary = "Change status of order by its id")
     @PatchMapping("/{id}/status")
-    public Mono<OrderDto> changeStatus(@RequestBody Mono<Map<String, String>> bodyMono,
+    public Mono<OrderDto> changeStatus(@Parameter(description = "new status for order", required = true)
+                                       @RequestBody Mono<Map<String, String>> bodyMono,
+                                       @Parameter(description = "id of order which status will be changed", required = true)
                                        @PathVariable String id) {
         return service.changeStatus(id, getStatusFromBody(bodyMono));
     }

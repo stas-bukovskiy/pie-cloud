@@ -1,6 +1,7 @@
 package com.piecloud.kitchen;
 
 import com.piecloud.order.OrderDto;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ public class KitchenController {
     private final KitchenService kitchenService;
 
 
+    @Operation(summary = "Get order event stream for kitchen")
     @GetMapping(value = "/order-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<OrderDto>> getOrders() {
         return kitchenService.getOrdersSseStream();

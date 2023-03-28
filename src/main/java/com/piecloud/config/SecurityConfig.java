@@ -22,6 +22,16 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 @Configuration
 public class SecurityConfig {
 
+    private static final String[] AUTH_WHITELIST = {
+            // -- swagger ui
+            "/v3/api-docs/**",
+            "/webjars/**",
+            "/swagger-ui/**",
+            "/v2/api-docs/**",
+            "/swagger-resources/**",
+            "/swagger-ui.html"
+    };
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
                                                          JwtTokenProvider tokenProvider,
@@ -29,8 +39,10 @@ public class SecurityConfig {
         return http
                 .csrf().disable()
                 .httpBasic().disable()
+                .formLogin().disable()
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .authorizeExchange()
+                .pathMatchers(AUTH_WHITELIST).permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/addition/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/ingredient/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/pie/**").permitAll()
@@ -52,7 +64,7 @@ public class SecurityConfig {
                 .matchers(EndpointRequest.toAnyEndpoint()
                         .excluding("health", "info")).hasRole("ADMIN")
                 .and()
-                .addFilterAt(new JwtTokenAuthenticationFilter(tokenProvider), SecurityWebFiltersOrder.HTTP_BASIC)
+                .addFilterAt(new JwtTokenAuthenticationFilter(tokenProvider), SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 
