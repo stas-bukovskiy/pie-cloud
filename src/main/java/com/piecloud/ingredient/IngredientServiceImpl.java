@@ -67,8 +67,8 @@ public class IngredientServiceImpl implements IngredientService {
                 .flatMap(this::checkIngredientGroupExisting)
                 .map(ingredientDto -> new Ingredient(null,
                         ingredientDto.getName(),
-                        ingredientDto.getDescription(),
                         imageUploadService.getDefaultImageName(),
+                        ingredientDto.getDescription(),
                         ingredientDto.getPrice(),
                         ingredientDto.getGroup().getId(),
                         null

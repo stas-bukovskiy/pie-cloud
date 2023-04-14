@@ -61,8 +61,8 @@ public class AdditionServiceImpl implements AdditionService {
                 .flatMap(this::checkAdditionGroupExisting)
                 .map(additionDto -> new Addition(null,
                         additionDto.getName(),
-                        imageUploadService.getDefaultImageName(),
                         additionDto.getDescription(),
+                        imageUploadService.getDefaultImageName(),
                         additionDto.getPrice(),
                         additionDto.getGroup().getId(),
                         null))

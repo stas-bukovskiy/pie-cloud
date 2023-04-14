@@ -2,6 +2,7 @@ package com.piecloud.image;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
@@ -10,11 +11,10 @@ import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.nio.file.Paths;
 
 import static com.piecloud.utils.ExtensionUtils.getFileExtension;
 
@@ -31,17 +31,44 @@ public class ImageUploadServiceImpl implements ImageUploadService {
         this.properties = properties;
         this.validator = validator;
         uploadDirectoryPath = tryToCreateUploadDirectoryPath();
+        checkDefaultImage();
     }
 
     private Path tryToCreateUploadDirectoryPath() {
         try {
-            Path uploadDirectoryPath = Path.of("public", properties.getUploadDirectory());
-            URL uploadFolderURL = getClass().getClassLoader().getResource(uploadDirectoryPath.toString());
-            assert uploadFolderURL != null;
-            return Path.of(uploadFolderURL.toURI());
-        } catch (URISyntaxException e) {
+            return createUploadDirectoryPath();
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Path createUploadDirectoryPath() throws IOException {
+        String resourceDirectory = "public/uploads";
+        String rootPath = System.getProperty("user.dir");
+        Path basePath;
+
+        if (runningFromIDE()) {
+            ClassPathResource classPathResource = new ClassPathResource(resourceDirectory);
+            basePath = classPathResource.getFile().toPath();
+        } else {
+            basePath = Paths.get(rootPath, resourceDirectory);
+            if (!Files.exists(basePath)) {
+                Files.createDirectories(basePath);
+            }
+        }
+
+        log.info("[IMAGE_UPLOAD] generated upload directory path: {}", basePath);
+        return basePath;
+    }
+
+    private void checkDefaultImage() {
+        if (!Files.exists(uploadDirectoryPath.resolve(properties.getDefaultImage())))
+            throw new IllegalArgumentException(String.format("default image '{}' does not exist", properties.getDefaultImage()));
+    }
+
+    private static boolean runningFromIDE() {
+        String classPath = System.getProperty("java.class.path");
+        return classPath != null && classPath.contains(File.pathSeparator);
     }
 
     @Override
@@ -58,7 +85,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
                     String prefix = imageAndPrefix.getT2();
                     FilePart imageFilePart = imageAndPrefix.getT1();
 
-                    removePreviousImages(prefix);
+                    removePreviousImage(prefix);
                     Path imageFilePath = createImageFilePath(prefix, imageFilePart);
                     File imageFile = tryToCreateImageFile(imageFilePath);
                     transferFilePartToFile(imageFilePart, imageFile);
@@ -66,14 +93,18 @@ public class ImageUploadServiceImpl implements ImageUploadService {
                 });
     }
 
-    private void removePreviousImages(String prefix) {
-        File[] imagesToBeRemoved = uploadDirectoryPath.toFile()
-                .listFiles((dir,name) -> name.matches(prefix + ".*"));
-        if (imagesToBeRemoved != null) {
-            Arrays.stream(imagesToBeRemoved).forEach(file -> {
-                if (file.delete())
-                    log.debug("[IMAGE_FILE] successfully delete file '{}'", file.getName());
-            });
+    private void removePreviousImage(String prefix) {
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(uploadDirectoryPath, prefix + "*")) {
+            for (Path filePath : directoryStream) {
+                if (Files.isRegularFile(filePath)) {
+                    if (Files.exists(filePath)) {
+                        Files.deleteIfExists(filePath);
+                        log.debug("[IMAGE_UPLOAD] successfully delete file '{}'", filePath.toFile().getName());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -87,7 +118,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
         try {
             return Files.createFile(imageFilePath).toFile();
         } catch (IOException ex) {
-            log.error("[IMAGE_FILE] error occurred while creating empty file '{}'", ex.getMessage(), ex);
+            log.error("[IMAGE_UPLOAD] error occurred while creating empty file '{}'", ex.getMessage(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "something went wrong while image was saving, try again");
         }
@@ -95,8 +126,8 @@ public class ImageUploadServiceImpl implements ImageUploadService {
 
     private void transferFilePartToFile(FilePart filePart, File destinationFile) {
         filePart.transferTo(destinationFile)
-                .doOnSuccess(destination -> log.debug("[IMAGE_FILE] successfully save image file: '{}'", destination))
-                .doOnError(throwable -> log.error("[IMAGE_FILE] error occurred while saving image '{}'", throwable.getMessage(), throwable))
+                .doOnSuccess(destination -> log.debug("[IMAGE_UPLOAD] successfully save image file: '{}'", destinationFile))
+                .doOnError(throwable -> log.error("[IMAGE_UPLOAD] error occurred while saving image '{}'", throwable.getMessage(), throwable))
                 .subscribe();
     }
 
@@ -110,7 +141,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
         try {
             Files.delete(imagePathToRemove);
         } catch (IOException ex) {
-            log.error("[IMAGE_FILE] error occurred while removing file '{}'", ex.getMessage(), ex);
+            log.error("[IMAGE_UPLOAD] error occurred while removing file '{}'", ex.getMessage(), ex);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "something went wrong while image was removing, try again");
         }
