@@ -1,22 +1,16 @@
 {
   "groups": [
     {
-      "name": "image-upload",
-      "type": "com.piecloud.image.ImageUploadProperties",
-      "sourceType": "com.piecloud.image.ImageUploadProperties"
+      "name": "image-service",
+      "type": "com.piecloud.image.ImageProperties",
+      "sourceType": "com.piecloud.image.ImageProperties"
     }
   ],
   "properties": [
     {
-      "name": "com.pie-cloud.image-upload.default-image",
+      "name": "image-service.default-image",
       "type": "java.lang.String",
-      "description": "Name of image that will be used as default for Addition, Ingredient and Pie documents. This image must be in upload-directory directory."
-    },
-    {
-      "name": "com.pie-cloud.image-upload.upload-directory",
-      "type": "java.lang.String",
-      "defaultValue": "uploads",
-      "description": "Directory for uploading images. Must be in resources/public directory."
+      "description": "Name for image that will be saved to db on the application startup and used as default for Ingredient, Addition and Pie."
     }
   ]
 }

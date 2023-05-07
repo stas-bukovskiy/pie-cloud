@@ -1,6 +1,5 @@
 package com.piecloud.config;
 
-import com.piecloud.image.ImageUploadProperties;
 import com.piecloud.security.jwt.JwtTokenAuthenticationFilter;
 import com.piecloud.security.jwt.JwtTokenProvider;
 import com.piecloud.user.UserRepository;
@@ -34,8 +33,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
-                                                         JwtTokenProvider tokenProvider,
-                                                         ImageUploadProperties imageUploadProperties) {
+                                                         JwtTokenProvider tokenProvider) {
         return http
                 .csrf().disable()
                 .httpBasic().disable()
@@ -46,8 +44,7 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.GET, "/api/addition/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/ingredient/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/pie/**").permitAll()
-                .pathMatchers(HttpMethod.GET,
-                        generateUrlToPublicResources(imageUploadProperties.getUploadDirectory())).permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/image/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/order/**").authenticated()
                 .pathMatchers(HttpMethod.PATCH, "/api/order/**").hasAnyRole("ADMIN", "COOK")
                 .pathMatchers(HttpMethod.POST, "/api/order/**").authenticated()
@@ -59,6 +56,7 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.POST, "/api/addition/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.POST, "/api/ingredient/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.POST, "/api/pie/**").hasRole("ADMIN")
+                .pathMatchers(HttpMethod.POST, "/api/image/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.PUT, "/**").hasRole("ADMIN")
                 .pathMatchers(HttpMethod.DELETE, "/**").hasRole("ADMIN")
                 .matchers(EndpointRequest.toAnyEndpoint()
@@ -66,11 +64,6 @@ public class SecurityConfig {
                 .and()
                 .addFilterAt(new JwtTokenAuthenticationFilter(tokenProvider), SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
-    }
-
-    private String generateUrlToPublicResources(String uploadDirectories) {
-        String path = "/" + uploadDirectories + "/**";
-        return path.replaceAll("[\\\\/]+", "/");
     }
 
     @Bean
