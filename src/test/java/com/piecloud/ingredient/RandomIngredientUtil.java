@@ -11,7 +11,6 @@ import java.util.UUID;
 
 public class RandomIngredientUtil {
 
-    private static final String IMAGE_NAME = "default.png";
     private static final BigDecimal PRICE = BigDecimal.TEN;
 
     public static Ingredient randomIngredient(IngredientGroup group) {
@@ -19,7 +18,6 @@ public class RandomIngredientUtil {
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
                 RandomStringUtils.random(100),
-                IMAGE_NAME,
                 PRICE,
                 group.getId(),
                 group
@@ -30,7 +28,6 @@ public class RandomIngredientUtil {
         return new IngredientDto(
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
-                IMAGE_NAME,
                 RandomStringUtils.random(100),
                 PRICE,
                 new IngredientGroupDto(groupId, "")

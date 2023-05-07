@@ -41,7 +41,6 @@ class PieConverterTest {
 
         assertEquals(documentToConvert.getId(), convertedDto.getId());
         assertEquals(documentToConvert.getName(), convertedDto.getName());
-        assertEquals(documentToConvert.getImageName(), convertedDto.getImageName());
         assertEquals(documentToConvert.getPrice(), convertedDto.getPrice());
         assertEquals(documentToConvert.getIngredients().size(), convertedDto.getIngredients().size());
     }
@@ -53,7 +52,6 @@ class PieConverterTest {
 
         assertNull(convertedDocument.getId());
         assertEquals(dtoToConvert.getName(), convertedDocument.getName());
-        assertEquals(dtoToConvert.getImageName(), convertedDocument.getImageName());
         assertEquals(dtoToConvert.getPrice(), convertedDocument.getPrice());
         assertEquals(dtoToConvert.getIngredients().size(), convertedDocument.getIngredients().size());
     }

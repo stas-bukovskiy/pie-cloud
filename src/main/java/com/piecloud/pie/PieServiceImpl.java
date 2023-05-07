@@ -1,6 +1,7 @@
 package com.piecloud.pie;
 
-import com.piecloud.image.ImageUploadService;
+import com.piecloud.image.Image;
+import com.piecloud.image.ImageService;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientDto;
 import com.piecloud.ingredient.IngredientService;
@@ -30,7 +31,7 @@ public class PieServiceImpl implements PieService {
     private final PieRepository repository;
     private final PieConverter converter;
     private final IngredientService ingredientService;
-    private final ImageUploadService imageUploadService;
+    private final ImageService imageService;
 
 
     @Override
@@ -63,7 +64,6 @@ public class PieServiceImpl implements PieService {
                 .flatMap(this::checkIngredientsForExisting)
                 .map(pieDto -> new Pie(null,
                         pieDto.getName(),
-                        imageUploadService.getDefaultImageName(),
                         null,
                         pieDto.getDescription(),
                         pieDto.getIngredients().stream().map(IngredientDto::getId).collect(Collectors.toSet()),
@@ -106,29 +106,18 @@ public class PieServiceImpl implements PieService {
     }
 
     @Override
-    public Mono<PieDto> addImageToPie(String id, Mono<FilePart> image) {
+    public Mono<Image> addImageToPie(String id, Mono<FilePart> image) {
         return getPie(id)
-                .zipWith(imageUploadService.saveImage(generatePrefixImageName(id), (image)))
-                .map(additionAndImageName -> {
-                    Pie pie = additionAndImageName.getT1();
-                    String imageName = additionAndImageName.getT2();
-                    pie.setImageName(imageName);
-                    return pie;
-                })
-                .flatMap(repository::save)
-                .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto)
+                .flatMap(pie -> imageService.saveOrUpdate(image, id))
                 .doOnSuccess(onSuccess -> log.debug("[PIE] successfully add image: {}", onSuccess))
                 .doOnError(onError -> log.error("[PIE] error occurred while image adding: {}", onError.getCause(), onError));
     }
 
     @Override
-    public Mono<PieDto> removeImageFromPie(String id) {
+    public Mono<Image> removeImageFromPie(String id) {
         return getPie(id)
-                .map(this::removeImage)
-                .flatMap(repository::save)
-                .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto)
+                .flatMap(pie -> imageService.deleteByForId(id))
+                .flatMap(aVoid -> imageService.getDefaultImage())
                 .doOnSuccess(onSuccess -> log.debug("[PIE] successfully remove image: {}", onSuccess))
                 .doOnError(onError -> log.error("[PIE] error occurred while image removing: {}", onError.getCause(), onError));
 
@@ -214,21 +203,6 @@ public class PieServiceImpl implements PieService {
                                 "pie mame is not unique");
                     return pieDto;
                 });
-    }
-
-    private Mono<String> generatePrefixImageName(String id) {
-        return Mono.just("pie-" + id);
-    }
-
-    private Pie removeImage(Pie pie) {
-        if (isAdditionNotHaveDefaultImage(pie))
-            imageUploadService.removeImage(pie.getImageName());
-        pie.setImageName(imageUploadService.getDefaultImageName());
-        return pie;
-    }
-
-    private boolean isAdditionNotHaveDefaultImage(Pie pie) {
-        return !pie.getImageName().equals(imageUploadService.getDefaultImageName());
     }
 
 }

@@ -1,6 +1,5 @@
 package com.piecloud.ingredient;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.piecloud.ingredient.group.IngredientGroupDto;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.DecimalMin;
@@ -28,9 +27,6 @@ public class IngredientDto {
     @NotNull(message = "ingredient description must not be null")
     @Size(min = 3, max = 500, message = "ingredient description must have more than 3 and less that 500 characters")
     private String description;
-
-    @JsonProperty("image_name")
-    private String imageName;
 
     @NotNull(message = "ingredient name must not be null")
     @DecimalMin(value = "0.0", inclusive = false, message = "ingredient price must be larger than 0")

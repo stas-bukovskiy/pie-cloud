@@ -41,7 +41,6 @@ public class RandomOrderLineUtil {
                 new AdditionDto(additionId,
                         random(),
                         null,
-                        null,
                         RandomPriceUtil.random(),
                         randomAdditionGroupDto())
         );
@@ -62,7 +61,7 @@ public class RandomOrderLineUtil {
                 UUID.randomUUID().toString(),
                 randomAmount(),
                 null,
-                new PieDto(pieId, null, null, null, null, null),
+                new PieDto(pieId, null, null, null, null),
                 null
         );
     }

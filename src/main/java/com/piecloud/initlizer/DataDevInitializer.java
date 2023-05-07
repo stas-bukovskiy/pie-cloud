@@ -47,17 +47,17 @@ public class DataDevInitializer {
                 .then(ingredientGroupRepository.save(new IngredientGroup(null, "vegan")))
                 .subscribe(group -> ingredientRepository.deleteAll()
                         .thenMany(ingredientRepository.saveAll(List.of(
-                                new Ingredient(null, "tofu", "some description about tofu", "some.png", BigDecimal.TEN, group.getId(), group),
-                                new Ingredient(null, "spinach", "some description about spinach", "some.png", BigDecimal.TEN, group.getId(), group),
-                                new Ingredient(null, "chickpeas", "some description about chickpeas", "some.png", BigDecimal.TEN, group.getId(), group)
+                                new Ingredient(null, "tofu", "some description about tofu", BigDecimal.TEN, group.getId(), group),
+                                new Ingredient(null, "spinach", "some description about spinach", BigDecimal.TEN, group.getId(), group),
+                                new Ingredient(null, "chickpeas", "some description about chickpeas", BigDecimal.TEN, group.getId(), group)
 
                         )))
                         .map(Ingredient::getId)
                         .collectList()
                         .subscribe(ingredientIds -> pieRepository.deleteAll().thenMany(pieRepository.saveAll(List.of(
-                                new Pie(null, "pie 1", "some.png", BigDecimal.TEN, "some description about pie 1", new HashSet<>(ingredientIds), null),
-                                new Pie(null, "pie 2", "some.png", BigDecimal.TEN, "some description about pie 2", new HashSet<>(ingredientIds), null),
-                                new Pie(null, "pie 3", "some.png", BigDecimal.TEN, "some description about pie 3", new HashSet<>(ingredientIds), null)
+                                new Pie(null, "pie 1", BigDecimal.TEN, "some description about pie 1", new HashSet<>(ingredientIds), null),
+                                new Pie(null, "pie 2", BigDecimal.TEN, "some description about pie 2", new HashSet<>(ingredientIds), null),
+                                new Pie(null, "pie 3", BigDecimal.TEN, "some description about pie 3", new HashSet<>(ingredientIds), null)
                         ))).subscribe(
                                 data -> log.info("[DATA_INITIALIZER] data:" + data), err -> log.error("error:" + err),
                                 () -> log.info("[DATA_INITIALIZER] done initialization...")
@@ -75,9 +75,9 @@ public class DataDevInitializer {
         assert additionGroup != null;
         additionRepository.deleteAll()
                 .thenMany(additionRepository.saveAll(List.of(
-                        new Addition(null, "bottle of water", "some description about bottle of water", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
-                        new Addition(null, "kombucha", "some description about bottle of kombucha", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup),
-                        new Addition(null, "cider", "some description about bottle of cider", "some.png", BigDecimal.TEN, additionGroup.getId(), additionGroup)
+                        new Addition(null, "bottle of water", "some description about bottle of water", BigDecimal.TEN, additionGroup.getId(), additionGroup),
+                        new Addition(null, "kombucha", "some description about bottle of kombucha", BigDecimal.TEN, additionGroup.getId(), additionGroup),
+                        new Addition(null, "cider", "some description about bottle of cider", BigDecimal.TEN, additionGroup.getId(), additionGroup)
                 ))).collectList().block();
     }
 

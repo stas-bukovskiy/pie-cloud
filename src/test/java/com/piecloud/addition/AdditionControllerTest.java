@@ -2,20 +2,16 @@ package com.piecloud.addition;
 
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupRepository;
-import com.piecloud.image.ImageUploadService;
-import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
@@ -38,8 +34,6 @@ public class AdditionControllerTest {
     private AdditionGroupRepository groupRepository;
     @Autowired
     private AdditionRepository repository;
-    @Autowired
-    private ImageUploadService imageUploadService;
     @Autowired
     private AdditionConverter converter;
     @Autowired
@@ -72,7 +66,6 @@ public class AdditionControllerTest {
                     assertNotEquals(additionDto.getId(), postedAddition.getId());
                     assertEquals(additionDto.getName(), postedAddition.getName());
                     assertEquals(additionDto.getDescription(), postedAddition.getDescription());
-                    assertEquals(imageUploadService.getDefaultImageName(), postedAddition.getImageName());
                     assertEquals(additionDto.getPrice(), postedAddition.getPrice());
                     assertEquals(group.getId(), postedAddition.getGroup().getId());
                     assertEquals(group.getName(), postedAddition.getGroup().getName());
@@ -224,50 +217,6 @@ public class AdditionControllerTest {
         StepVerifier.create(repository.findAll())
                 .expectNextCount(0)
                 .verifyComplete();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void testAddImageToAddition_shouldReturnWithNewImage() {
-        Addition addition = repository.save(randomAddition(group)).block();
-        assertNotNull(addition);
-
-        FilePart imageFilePart = new TestImageFilePart();
-        webTestClient
-                .post()
-                .uri("/api/addition/{id}/image", addition.getId())
-                .bodyValue(imageFilePart)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(AdditionDto.class)
-                .value(additionWithImage ->
-                        assertNotEquals(imageUploadService.getDefaultImageName(),
-                                additionWithImage.getImageName()));
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void testDeleteImageFromAddition_shouldReturnWithNewImage() {
-        Addition addition = repository.deleteAll()
-                .then(repository.save(randomAddition(group))).block();
-
-        assertNotNull(addition);
-        FilePart imageFilePart = new TestImageFilePart();
-        AdditionDto additionDto = service.addImageToAddition(addition.getId(), Mono.just(imageFilePart)).block();
-        assertNotNull(additionDto);
-        assertNotEquals(imageUploadService.getDefaultImageName(), additionDto.getImageName());
-
-        webTestClient
-                .delete()
-                .uri("/api/addition/{id}/image", addition.getId())
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(AdditionDto.class)
-                .value(postedAddition ->
-                        assertEquals(imageUploadService.getDefaultImageName(),
-                                postedAddition.getImageName()));
     }
 
 }

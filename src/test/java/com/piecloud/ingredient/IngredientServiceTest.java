@@ -1,5 +1,6 @@
 package com.piecloud.ingredient;
 
+import com.piecloud.image.Image;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
 import com.piecloud.ingredient.group.IngredientGroupService;
@@ -18,12 +19,10 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.List;
-import java.util.UUID;
 
 import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredient;
 import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 
 
@@ -191,19 +190,16 @@ public class IngredientServiceTest {
 
     @Test
     void testAddImageToIngredient() {
-        String ID = UUID.randomUUID().toString();
-        String imageName = "ingredient-" + ID + ".png";
-        Ingredient ingredient = randomIngredient(group);
-        Mockito.when(repository.findById(ID)).thenReturn(Mono.just(ingredient));
-        Mockito.when(groupService.getIngredientGroupAsRef(group.getId())).thenReturn(Mono.just(group));
-        ingredient.setImageName(imageName);
-        Mockito.when(repository.save(ingredient)).thenReturn(Mono.just(ingredient));
-        FilePart filePart = new TestImageFilePart();
+        Ingredient savedIngredient = randomIngredient(group);
 
-        Mono<IngredientDto> result = service.addImageToIngredient(ID, Mono.just(filePart));
+        Mockito.when(repository.findById(savedIngredient.getId())).thenReturn(Mono.just(savedIngredient));
+        FilePart filePart = new TestImageFilePart();
+        byte[] filePartBytes = TestImageFilePart.toByteArray(filePart);
+
+        Mono<Image> result = service.addImageToIngredient(savedIngredient.getId(), Mono.just(filePart));
 
         StepVerifier.create(result)
-                .consumeNextWith(updated -> assertEquals(imageName, updated.getImageName()))
+                .consumeNextWith(updated -> assertArrayEquals(filePartBytes, updated.getBinary().getData()))
                 .verifyComplete();
     }
 }

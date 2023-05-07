@@ -1,19 +1,15 @@
 package com.piecloud.ingredient;
 
-import com.piecloud.image.ImageUploadService;
 import com.piecloud.ingredient.group.IngredientGroup;
 import com.piecloud.ingredient.group.IngredientGroupRepository;
-import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
@@ -34,8 +30,6 @@ public class IngredientControllerTest {
     private IngredientGroupRepository groupRepository;
     @Autowired
     private IngredientRepository repository;
-    @Autowired
-    private ImageUploadService imageUploadService;
     @Autowired
     private IngredientConverter converter;
     @Autowired
@@ -66,7 +60,6 @@ public class IngredientControllerTest {
                 .value(postedIngredient -> {
                     assertNotEquals(ingredientDto.getId(), postedIngredient.getId());
                     assertEquals(ingredientDto.getName(), postedIngredient.getName());
-                    assertEquals(imageUploadService.getDefaultImageName(), postedIngredient.getImageName());
                     assertEquals(ingredientDto.getPrice(), postedIngredient.getPrice());
                     assertEquals(group.getId(), postedIngredient.getGroup().getId());
                     assertEquals(group.getName(), postedIngredient.getGroup().getName());
@@ -211,49 +204,5 @@ public class IngredientControllerTest {
                 .expectNextCount(0)
                 .verifyComplete();
     }
-
-    @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void testAddImageToIngredient_shouldReturnWithNewImage() {
-        Ingredient ingredient = repository.save(randomIngredient(group)).block();
-        assertNotNull(ingredient);
-
-        FilePart imageFilePart = new TestImageFilePart();
-        webTestClient
-                .post()
-                .uri("/api/ingredient/{id}/image", ingredient.getId())
-                .bodyValue(imageFilePart)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(IngredientDto.class)
-                .value(postedIngredient ->
-                        assertNotEquals(imageUploadService.getDefaultImageName(),
-                                postedIngredient.getImageName()));
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    void testDeleteImageFromIngredient_shouldReturnWithNewImage() {
-        Ingredient ingredient = repository.save(randomIngredient(group)).block();
-        assertNotNull(ingredient);
-
-        FilePart imageFilePart = new TestImageFilePart();
-        IngredientDto ingredientDto = service.addImageToIngredient(ingredient.getId(), Mono.just(imageFilePart)).block();
-        assertNotNull(ingredientDto);
-        assertNotEquals(imageUploadService.getDefaultImageName(), ingredientDto.getImageName());
-
-        webTestClient
-                .delete()
-                .uri("/api/ingredient/{id}/image", ingredient.getId())
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(IngredientDto.class)
-                .value(postedIngredient ->
-                        assertEquals(imageUploadService.getDefaultImageName(),
-                                postedIngredient.getImageName()));
-    }
-
 
 }

@@ -33,10 +33,6 @@ public class Addition {
     @NotBlank
     private String description;
 
-    @NotBlank
-    @Field("image_name")
-    private String imageName;
-
     @NotNull
     @DecimalMin(value = "0.0")
     @Field(targetType = DECIMAL128)

@@ -30,10 +30,6 @@ public class Ingredient {
     private String name;
 
     @NotBlank
-    @Field("image_name")
-    private String imageName;
-
-    @NotBlank
     private String description;
 
     @NotNull

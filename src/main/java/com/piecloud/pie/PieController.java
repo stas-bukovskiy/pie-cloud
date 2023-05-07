@@ -1,11 +1,13 @@
 package com.piecloud.pie;
 
+import com.piecloud.image.ImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -19,6 +21,7 @@ import reactor.core.publisher.Mono;
 public class PieController {
 
     private final PieService service;
+    private final ImageService imageService;
 
 
     @Operation(summary = "Get all pies")
@@ -62,17 +65,19 @@ public class PieController {
 
     @Operation(summary = "Add image to pie by its id")
     @PostMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
-    public Mono<PieDto> postImageToPie(@Parameter(description = "id of pie to which image will be added", required = true)
-                                       @PathVariable String id,
-                                       @Parameter(description = "Image to be added to pie", required = true)
-                                       @RequestPart("image") Mono<FilePart> image) {
-        return service.addImageToPie(id, image);
+    public Mono<ResponseEntity<byte[]>> postImageToPie(@Parameter(description = "id of pie to which image will be added", required = true)
+                                                       @PathVariable String id,
+                                                       @Parameter(description = "Image to be added to pie", required = true)
+                                                       @RequestPart("image") Mono<FilePart> image) {
+        return service.addImageToPie(id, image)
+                .map(imageService::toResponseEntity);
     }
 
     @Operation(summary = "Delete image from pie by its id")
     @DeleteMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
-    public Mono<PieDto> deleteImageFromPie(@Parameter(description = "id of addition from which image will be deleted", required = true)
-                                           @PathVariable String id) {
-        return service.removeImageFromPie(id);
+    public Mono<ResponseEntity<byte[]>> deleteImageFromPie(@Parameter(description = "id of addition from which image will be deleted", required = true)
+                                                           @PathVariable String id) {
+        return service.removeImageFromPie(id)
+                .map(imageService::toResponseEntity);
     }
 }

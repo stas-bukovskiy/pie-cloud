@@ -1,6 +1,6 @@
 package com.piecloud.pie;
 
-import com.piecloud.image.ImageUploadService;
+import com.piecloud.image.Image;
 import com.piecloud.ingredient.Ingredient;
 import com.piecloud.ingredient.IngredientDto;
 import com.piecloud.ingredient.IngredientService;
@@ -29,8 +29,7 @@ import static com.piecloud.ingredient.RandomIngredientUtil.randomIngredients;
 import static com.piecloud.ingredient.group.RandomIngredientGroupUtil.randomIngredientGroup;
 import static com.piecloud.pie.PieUtil.countPrice;
 import static com.piecloud.pie.PieUtil.randomPie;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 
 @SpringBootTest
@@ -45,9 +44,6 @@ class PieServiceTest {
     private IngredientService ingredientService;
     @Autowired
     private PieConverter converter;
-    @Autowired
-    private ImageUploadService imageUploadService;
-
     private Set<Ingredient> ingredients;
 
     @BeforeEach
@@ -154,7 +150,6 @@ class PieServiceTest {
         Mockito.when(repository.save(
                 new Pie(null,
                         pieToCreate.getName(),
-                        imageUploadService.getDefaultImageName(),
                         null,
                         pieToCreate.getDescription(),
                         pieToCreate.getIngredients().stream().map(Ingredient::getId).collect(Collectors.toSet()),
@@ -234,26 +229,17 @@ class PieServiceTest {
 
 
     @Test
-    void testAddImageToAddition() {
+    void testAddImageToPie() {
         Pie savedPie = randomPie(ingredients);
-        String imageName = "pie-" + savedPie.getId() + ".png";
 
         Mockito.when(repository.findById(savedPie.getId())).thenReturn(Mono.just(savedPie));
-        savedPie.setImageName(imageName);
-        Mockito.when(repository.save(savedPie)).thenReturn(Mono.just(savedPie));
-        savedPie.getIngredients().forEach(ingredient ->
-                Mockito.when(ingredientService.isIngredientExistById(ingredient.getId()))
-                        .thenReturn(Mono.just(Boolean.TRUE))
-        );
-        for (Ingredient ingredient : savedPie.getIngredients())
-            Mockito.when(ingredientService.getIngredientAsRef(ingredient.getId()))
-                    .thenReturn(Mono.just(ingredient));
         FilePart filePart = new TestImageFilePart();
+        byte[] filePartBytes = TestImageFilePart.toByteArray(filePart);
 
-        Mono<PieDto> result = service.addImageToPie(savedPie.getId(), Mono.just(filePart));
+        Mono<Image> result = service.addImageToPie(savedPie.getId(), Mono.just(filePart));
 
         StepVerifier.create(result)
-                .consumeNextWith(updated -> assertEquals(imageName, updated.getImageName()))
+                .consumeNextWith(updated -> assertArrayEquals(filePartBytes, updated.getBinary().getData()))
                 .verifyComplete();
     }
 }

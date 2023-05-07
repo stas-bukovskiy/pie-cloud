@@ -1,5 +1,6 @@
 package com.piecloud.util;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class TestImageFilePart implements FilePart {
 
@@ -58,4 +60,13 @@ public class TestImageFilePart implements FilePart {
                 new ByteArrayResource("name".getBytes(StandardCharsets.UTF_8)), factory, 1024);
 
     }
+
+    public static byte[] toByteArray(FilePart filePart) {
+        return Objects.requireNonNull(filePart.content().reduce(new byte[0], (data, buffer) -> {
+            byte[] bytes = new byte[buffer.readableByteCount()];
+            buffer.read(bytes);
+            return ArrayUtils.addAll(data, bytes);
+        }).block());
+    }
+
 }

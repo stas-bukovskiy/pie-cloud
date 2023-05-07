@@ -3,6 +3,7 @@ package com.piecloud.addition;
 import com.piecloud.addition.group.AdditionGroup;
 import com.piecloud.addition.group.AdditionGroupRepository;
 import com.piecloud.addition.group.AdditionGroupServiceImpl;
+import com.piecloud.image.Image;
 import com.piecloud.util.TestImageFilePart;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,7 @@ import java.util.List;
 
 import static com.piecloud.addition.RandomAdditionUtil.randomAddition;
 import static com.piecloud.addition.group.RandomAdditionGroupUtil.randomAdditionGroup;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 
 
@@ -188,20 +188,16 @@ class AdditionServiceTest {
 
     @Test
     void testAddImageToAddition() {
-        String ID = "id";
-        String imageName = "addition-" + ID + ".png";
-        Addition addition = randomAddition(group);
-        Mockito.when(repository.findById(ID)).thenReturn(Mono.just(addition));
-        addition.setImageName(imageName);
-        Mockito.when(repository.save(addition)).thenReturn(Mono.just(addition));
-        Mockito.when(groupService.getAdditionGroupAsRef(addition.getGroupId())).thenReturn(Mono.just(group));
+        Addition savedAddition = randomAddition(group);
 
+        Mockito.when(repository.findById(savedAddition.getId())).thenReturn(Mono.just(savedAddition));
         FilePart filePart = new TestImageFilePart();
+        byte[] filePartBytes = TestImageFilePart.toByteArray(filePart);
 
-        Mono<AdditionDto> result = service.addImageToAddition(ID, Mono.just(filePart));
+        Mono<Image> result = service.addImageToAddition(savedAddition.getId(), Mono.just(filePart));
 
         StepVerifier.create(result)
-                .consumeNextWith(updated -> assertEquals(imageName, updated.getImageName()))
+                .consumeNextWith(updated -> assertArrayEquals(filePartBytes, updated.getBinary().getData()))
                 .verifyComplete();
     }
 }

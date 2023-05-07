@@ -11,13 +11,11 @@ import java.util.stream.Collectors;
 
 public class PieUtil {
 
-    private static final String IMAGE_NAME = "default.png";
 
     public static Pie randomPie(Collection<Ingredient> ingredients) {
         return new Pie(
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
-                IMAGE_NAME,
                 RandomPriceUtil.random(),
                 RandomStringUtils.random(100),
                 ingredients.stream().map(Ingredient::getId).collect(Collectors.toSet()),
@@ -29,11 +27,10 @@ public class PieUtil {
         return new PieDto(
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
-                IMAGE_NAME,
                 RandomStringUtils.random(100),
                 RandomPriceUtil.random(),
                 ingredientsId.stream()
-                        .map(ingredientId -> new IngredientDto(ingredientId, null, null, null, null, null))
+                        .map(ingredientId -> new IngredientDto(ingredientId, null, null, null, null))
                         .collect(Collectors.toList())
         );
     }

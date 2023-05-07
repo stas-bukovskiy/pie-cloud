@@ -9,7 +9,6 @@ import java.util.UUID;
 
 public class RandomAdditionUtil {
 
-    private static final String IMAGE_NAME = "default.png";
     private static final BigDecimal PRICE = BigDecimal.TEN;
 
     public static Addition randomAddition(AdditionGroup group) {
@@ -17,7 +16,6 @@ public class RandomAdditionUtil {
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
                 RandomStringUtils.random(100),
-                IMAGE_NAME,
                 PRICE,
                 group.getId(),
                 group
@@ -28,7 +26,6 @@ public class RandomAdditionUtil {
         return new AdditionDto(
                 UUID.randomUUID().toString(),
                 RandomStringUtils.random(),
-                IMAGE_NAME,
                 RandomStringUtils.random(100),
                 PRICE,
                 new AdditionGroupDto(groupId, "")

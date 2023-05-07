@@ -29,10 +29,6 @@ public class Pie {
     @Size(min = 3, max = 50)
     private String name;
 
-    @NotBlank
-    @Field("image_name")
-    private String imageName;
-
     @Transient
     private BigDecimal price;
 

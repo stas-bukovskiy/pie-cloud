@@ -1,6 +1,5 @@
 package com.piecloud.pie;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.piecloud.ingredient.IngredientDto;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -27,9 +26,6 @@ public class PieDto {
     @NotNull(message = "pie description must not be null")
     @Size(min = 3, max = 500, message = "pie description must have more than 3 and less that 500 characters")
     private String description;
-
-    @JsonProperty("image_name")
-    private String imageName;
 
     @Nullable
     private BigDecimal price;

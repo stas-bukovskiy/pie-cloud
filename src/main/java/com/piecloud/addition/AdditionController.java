@@ -1,11 +1,13 @@
 package com.piecloud.addition;
 
+import com.piecloud.image.ImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -19,6 +21,7 @@ import reactor.core.publisher.Mono;
 public class AdditionController {
 
     private final AdditionService service;
+    private final ImageService imageService;
 
 
     @Operation(summary = "Get all additions")
@@ -68,17 +71,19 @@ public class AdditionController {
 
     @Operation(summary = "Add image to addition by its id")
     @PostMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
-    public Mono<AdditionDto> postImageToAddition(@Parameter(description = "id of addition to which image will be added", required = true)
-                                                 @PathVariable String id,
-                                                 @Parameter(description = "Image to be added to addition", required = true)
-                                                 @RequestPart("image") Mono<FilePart> image) {
-        return service.addImageToAddition(id, image);
+    public Mono<ResponseEntity<byte[]>> postImageToAddition(@Parameter(description = "id of addition to which image will be added", required = true)
+                                                            @PathVariable String id,
+                                                            @Parameter(description = "Image to be added to addition", required = true)
+                                                            @RequestPart("image") Mono<FilePart> image) {
+        return service.addImageToAddition(id, image)
+                .map(imageService::toResponseEntity);
     }
 
     @Operation(summary = "Delete image from addition by its id")
     @DeleteMapping(value = "/{id}/image", consumes = MediaType.ALL_VALUE)
-    public Mono<AdditionDto> deleteImageFromAddition(@Parameter(description = "id of addition from which image will be deleted", required = true)
-                                                     @PathVariable String id) {
-        return service.removeImageFromAddition(id);
+    public Mono<ResponseEntity<byte[]>> deleteImageFromAddition(@Parameter(description = "id of addition from which image will be deleted", required = true)
+                                                                @PathVariable String id) {
+        return service.removeImageFromAddition(id)
+                .map(imageService::toResponseEntity);
     }
 }

@@ -1,5 +1,6 @@
 package com.piecloud.ingredient;
 
+import com.piecloud.image.Image;
 import org.springframework.http.codec.multipart.FilePart;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,9 +22,9 @@ public interface IngredientService {
 
     Mono<Void> deleteIngredient(String id);
 
-    Mono<IngredientDto> addImageToIngredient(String id, Mono<FilePart> image);
+    Mono<Image> addImageToIngredient(String id, Mono<FilePart> image);
 
-    Mono<IngredientDto> removeImageFromIngredient(String id);
+    Mono<Image> removeImageFromIngredient(String id);
 
     Mono<Boolean> isIngredientExistById(String id);
 

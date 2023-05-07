@@ -1,7 +1,8 @@
 package com.piecloud.addition;
 
 import com.piecloud.addition.group.AdditionGroupService;
-import com.piecloud.image.ImageUploadService;
+import com.piecloud.image.Image;
+import com.piecloud.image.ImageService;
 import com.piecloud.utils.SortParamsParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -20,7 +22,7 @@ public class AdditionServiceImpl implements AdditionService {
     private final AdditionRepository repository;
     private final AdditionConverter converter;
     private final AdditionGroupService groupService;
-    private final ImageUploadService imageUploadService;
+    private final ImageService imageService;
 
 
     @Override
@@ -62,7 +64,6 @@ public class AdditionServiceImpl implements AdditionService {
                 .map(additionDto -> new Addition(null,
                         additionDto.getName(),
                         additionDto.getDescription(),
-                        imageUploadService.getDefaultImageName(),
                         additionDto.getPrice(),
                         additionDto.getGroup().getId(),
                         null))
@@ -102,31 +103,22 @@ public class AdditionServiceImpl implements AdditionService {
     }
 
     @Override
-    public Mono<AdditionDto> addImageToAddition(String id, Mono<FilePart> image) {
-        return getAddition(id)
-                .zipWith(imageUploadService.saveImage(generatePrefixImageName(id), (image)))
-                .map(additionAndImageName -> {
-                    Addition addition = additionAndImageName.getT1();
-                    String imageName = additionAndImageName.getT2();
-                    addition.setImageName(imageName);
-                    return addition;
-                })
-                .flatMap(repository::save)
-                .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto)
+    public Mono<Image> addImageToAddition(String id, Mono<FilePart> image) {
+        return checkAdditionId(id)
+                .flatMap(repository::findById)
+                .flatMap(addition -> imageService.saveOrUpdate(image, addition.getId()))
                 .doOnSuccess(onSuccess -> log.debug("[ADDITION] successfully add image: {}", onSuccess))
                 .doOnError(onError -> log.debug("[ADDITION] error occurred while image adding: {}", onError.getMessage(), onError));
     }
 
     @Override
-    public Mono<AdditionDto> removeImageFromAddition(String id) {
-        return getAddition(id)
-                .map(this::removeImage)
-                .flatMap(repository::save)
-                .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto)
+    public Mono<Image> removeImageFromAddition(String id) {
+        return checkAdditionId(id)
+                .flatMap(repository::findById)
+                .flatMap(addition -> imageService.deleteByForId(id))
+                .flatMap(aVoid -> imageService.getDefaultImage())
                 .doOnSuccess(onSuccess -> log.debug("[ADDITION] successfully remove image: {}", onSuccess))
-                .doOnError(onError -> log.debug("[ADDITION] error occurred while image removing: {}", onError.getCause(), onError));
+                .doOnError(onError -> log.debug("[ADDITION] error occurred while image removing: {}", onError.getMessage(), onError));
     }
 
     private Mono<Addition> addGroupReference(Addition addition) {
@@ -186,18 +178,4 @@ public class AdditionServiceImpl implements AdditionService {
                 });
     }
 
-    private Mono<String> generatePrefixImageName(String id) {
-        return Mono.just("addition-" + id);
-    }
-
-    private Addition removeImage(Addition addition) {
-        if (isAdditionNotHaveDefaultImage(addition))
-            imageUploadService.removeImage(addition.getImageName());
-        addition.setImageName(imageUploadService.getDefaultImageName());
-        return addition;
-    }
-
-    private boolean isAdditionNotHaveDefaultImage(Addition addition) {
-        return !addition.getImageName().equals(imageUploadService.getDefaultImageName());
-    }
 }

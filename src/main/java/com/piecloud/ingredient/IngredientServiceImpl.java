@@ -1,6 +1,7 @@
 package com.piecloud.ingredient;
 
-import com.piecloud.image.ImageUploadService;
+import com.piecloud.image.Image;
+import com.piecloud.image.ImageService;
 import com.piecloud.ingredient.group.IngredientGroupService;
 import com.piecloud.utils.SortParamsParser;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class IngredientServiceImpl implements IngredientService {
     private final IngredientRepository repository;
     private final IngredientConverter converter;
     private final IngredientGroupService groupService;
-    private final ImageUploadService imageUploadService;
+    private final ImageService imageService;
 
 
     @Override
@@ -67,7 +68,6 @@ public class IngredientServiceImpl implements IngredientService {
                 .flatMap(this::checkIngredientGroupExisting)
                 .map(ingredientDto -> new Ingredient(null,
                         ingredientDto.getName(),
-                        imageUploadService.getDefaultImageName(),
                         ingredientDto.getDescription(),
                         ingredientDto.getPrice(),
                         ingredientDto.getGroup().getId(),
@@ -109,29 +109,18 @@ public class IngredientServiceImpl implements IngredientService {
     }
 
     @Override
-    public Mono<IngredientDto> addImageToIngredient(String id, Mono<FilePart> image) {
+    public Mono<Image> addImageToIngredient(String id, Mono<FilePart> image) {
         return getIngredient(id)
-                .zipWith(imageUploadService.saveImage(generatePrefixImageName(id), (image)))
-                .map(ingredientAndImageName -> {
-                    Ingredient ingredient = ingredientAndImageName.getT1();
-                    String imageName = ingredientAndImageName.getT2();
-                    ingredient.setImageName(imageName);
-                    return ingredient;
-                })
-                .flatMap(repository::save)
-                .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto)
+                .flatMap(addition -> imageService.saveOrUpdate(image, addition.getId()))
                 .doOnSuccess(onSuccess -> log.debug("[INGREDIENT] successfully add image: {}", onSuccess))
                 .doOnError(onError -> log.error("[INGREDIENT] error occurred while image adding: {}", onError.getCause(), onError));
     }
 
     @Override
-    public Mono<IngredientDto> removeImageFromIngredient(String id) {
+    public Mono<Image> removeImageFromIngredient(String id) {
         return getIngredient(id)
-                .map(this::removeImage)
-                .flatMap(repository::save)
-                .flatMap(this::addGroupReference)
-                .map(converter::convertDocumentToDto)
+                .flatMap(addition -> imageService.deleteByForId(addition.getId()))
+                .flatMap(aVoid -> imageService.getDefaultImage())
                 .doOnSuccess(onSuccess -> log.debug("[INGREDIENT] successfully remove image: {}", onSuccess))
                 .doOnError(onError -> log.error("[INGREDIENT] error occurred while image removing: {}", onError.getCause(), onError));
     }
@@ -167,10 +156,6 @@ public class IngredientServiceImpl implements IngredientService {
                 );
     }
 
-    private Mono<String> generatePrefixImageName(String id) {
-        return Mono.just("ingredient-" + id);
-    }
-
     private Mono<IngredientDto> checkIngredientNameForUniqueness(IngredientDto ingredientDto) {
         return repository.existsByName(ingredientDto.getName())
                 .map(isExist -> {
@@ -201,14 +186,4 @@ public class IngredientServiceImpl implements IngredientService {
                 });
     }
 
-    private Ingredient removeImage(Ingredient ingredient) {
-        if (isAdditionNotHaveDefaultImage(ingredient))
-            imageUploadService.removeImage(ingredient.getImageName());
-        ingredient.setImageName(imageUploadService.getDefaultImageName());
-        return ingredient;
-    }
-
-    private boolean isAdditionNotHaveDefaultImage(Ingredient ingredient) {
-        return !ingredient.getImageName().equals(imageUploadService.getDefaultImageName());
-    }
 }

@@ -62,7 +62,6 @@ class PieRepositoryTest {
                 .consumeNextWith(savedPie -> {
                     assertNotNull(savedPie.getId());
                     assertEquals(pieToSave.getName(), savedPie.getName());
-                    assertNotNull(savedPie.getImageName());
                     assertEquals(ingredients, savedPie.getIngredients());
                 }).verifyComplete();
     }
