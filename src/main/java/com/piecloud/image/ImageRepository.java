@@ -9,6 +9,9 @@ public interface ImageRepository extends ReactiveMongoRepository<Image, String> 
 
     Mono<Image> findByForId(String forId);
 
+    Mono<Image> findByIsDefaultTrue();
+
     Mono<Void> deleteByForId(String forId);
 
+    Mono<Boolean> existsByIsDefaultTrue();
 }

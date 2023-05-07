@@ -6,10 +6,15 @@ import reactor.core.publisher.Mono;
 
 public interface ImageService {
 
-    Mono<ResponseEntity<byte[]>> getResponseEntityWithImageBytesByForId(String forId);
+    Mono<Image> getImageForIdOrDefault(String forId);
+
+    Mono<Image> getDefaultImage();
 
     Mono<Image> saveOrUpdate(Mono<FilePart> imageFilePart, String forId);
 
+    Mono<Image> saveOrUpdateAsDefault(Mono<FilePart> image);
+
     Mono<Void> deleteByForId(String forId);
 
+    ResponseEntity<byte[]> toResponseEntity(Image image);
 }

@@ -7,17 +7,14 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "com.pie-cloud.image-upload")
+@ConfigurationProperties(prefix = "image-service")
 @Getter
 @Setter
-public class ImageUploadProperties {
+public class ImageProperties {
 
     @NotNull
     @NotBlank
     @Pattern(regexp = "(\\S+(\\.(?i)(jpe?g|png|gif|))$)")
     private String defaultImage;
-
-    @Pattern(regexp = "(/?[a-z\\d.]+)+(/?)$|^(/)$")
-    private String uploadDirectory = "uploads";
 
 }
