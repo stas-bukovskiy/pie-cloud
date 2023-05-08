@@ -102,6 +102,10 @@ public class PieServiceImpl implements PieService {
     @Override
     public Mono<Void> deletePie(String id) {
         return checkPieId(id)
+                .map(forId -> {
+                    imageService.deleteByForId(forId).subscribe();
+                    return forId;
+                })
                 .flatMap(repository::deleteById);
     }
 

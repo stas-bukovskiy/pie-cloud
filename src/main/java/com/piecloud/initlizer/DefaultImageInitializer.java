@@ -26,7 +26,7 @@ public class DefaultImageInitializer {
     private final ImageProperties properties;
 
     @Order(1)
-    @Profile("dev")
+    @Profile({"dev", "test"})
     @EventListener(value = ApplicationReadyEvent.class)
     public void removeAllImages() {
         imageRepository.deleteAll().block();

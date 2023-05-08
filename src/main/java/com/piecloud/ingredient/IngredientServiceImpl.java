@@ -105,6 +105,10 @@ public class IngredientServiceImpl implements IngredientService {
     @Override
     public Mono<Void> deleteIngredient(String id) {
         return checkIngredientId(id)
+                .map(forId -> {
+                    imageService.deleteByForId(forId).subscribe();
+                    return forId;
+                })
                 .flatMap(repository::deleteById);
     }
 

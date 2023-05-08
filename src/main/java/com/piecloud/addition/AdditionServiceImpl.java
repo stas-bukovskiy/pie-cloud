@@ -99,6 +99,10 @@ public class AdditionServiceImpl implements AdditionService {
     @Override
     public Mono<Void> deleteAddition(String id) {
         return checkAdditionId(id)
+                .map(forId -> {
+                    imageService.deleteByForId(forId).subscribe();
+                    return forId;
+                })
                 .flatMap(repository::deleteById);
     }
 
