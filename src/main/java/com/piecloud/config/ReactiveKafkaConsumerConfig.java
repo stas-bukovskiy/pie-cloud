@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
 import reactor.kafka.receiver.ReceiverOptions;
 
-import java.util.Collections;
+import java.util.regex.Pattern;
 
 @Configuration
 public class ReactiveKafkaConsumerConfig {
@@ -17,7 +17,7 @@ public class ReactiveKafkaConsumerConfig {
                                                                   KafkaProperties kafkaProperties) {
         ReceiverOptions<String, OrderDto> basicReceiverOptions =
                 ReceiverOptions.create(kafkaProperties.buildConsumerProperties());
-        return basicReceiverOptions.subscription(Collections.singletonList(topic));
+        return basicReceiverOptions.subscription(Pattern.compile(topic + ".*"));
     }
 
     @Bean

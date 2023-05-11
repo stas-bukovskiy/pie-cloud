@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 
-@Profile("prod")
+@Profile({"prod", "docker"})
 @Component
 @Slf4j
 @RequiredArgsConstructor
