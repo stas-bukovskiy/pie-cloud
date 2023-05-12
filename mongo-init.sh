@@ -1,5 +1,3 @@
-set -e
-
 mongosh <<EOF
 db = db.getSiblingDB('$MONGO_DATABASE')
 
