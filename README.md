@@ -29,6 +29,7 @@ $ docker-compose up -d
     
 ## Usage
 Url to see Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
 And you will see something looks like:
 ![Swagger Ui Example](swagger-ui-example.png)
 
