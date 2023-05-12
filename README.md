@@ -6,7 +6,7 @@ Pie Cloud Project was started as part of learning new features of Spring Framewo
 ## Overview
 Pie Cloud is the **RESTful API** for café, which main features are pies and more pies that customer can order with ingredients they want. The application exposes the opportunity to create order with pies and additions and handle these orders by cooks.
 ## Key features
-* Application was built with [**Spring Boot 2**](https://spring.io/) and [**Project Reactor**](https://projectreactor.io/). 
+* Application was built with [**Spring Boot 3**](https://spring.io/) and [**Project Reactor**](https://projectreactor.io/). 
 * [**MongoDB**](https://www.mongodb.com/) was selected as the main database, combined with MongoDB database references and  `ReactiveMongoRepository` interfaces.
 * In order to implement **SSE**, there was used [**Apache Kafka**](https://kafka.apache.org/) message broker.
 * API gives opportunity to **upload, store and sent images** for additions, ingredients and pies. Images are saved in separate MongoDB collection.
